@@ -1,94 +1,202 @@
 ---
 version: 1.0
-purpose: Source of Truth for database schema and data model specifications.
+purpose: Source of Truth for local database schema and data model specifications.
 id_prefix: DBT-XXX
-last_updated: YYYY-MM-DD
+last_updated: 2026-03-11
 authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTRACTS.md, SoT.USER_JOURNEYS.md, EPICs
 ---
-<!-- SECTION: template-structure -->
 
 # Data Model (SoT File)
 
-> **Purpose**: Database tables, views, and relationships for the product.
+> **Purpose**: Local SQLite database tables for Transcript Shadow.
 > **ID Prefix**: DBT-XXX
 > **Status**: Active SoT file
-> **Cross-References**: Referenced by PRD.md, SoT.API_CONTRACTS.md, SoT.USER_JOURNEYS.md, SoT.BUSINESS_RULES.md, SoT.TESTING.md
+> **Note**: This is a local-only SQLite database stored in the app's Application Support directory. No cloud sync.
 
 ## Navigation by Category
 
 **Core Tables** (DBT-001 to DBT-099):
 
-- [DBT-001](#dbt-001-table-name) - {Table name}
+- [DBT-001](#dbt-001-transcripts) - Transcripts
+- [DBT-002](#dbt-002-speakers) - Speakers
+- [DBT-003](#dbt-003-segments) - Transcript Segments
 
-**Feature Tables** (DBT-101 to DBT-199):
+**Settings Tables** (DBT-101 to DBT-199):
 
-- [DBT-101](#dbt-101-table-name) - {Table name}
-
-**Junction Tables** (DBT-201 to DBT-299):
-
-- [DBT-201](#dbt-201-table-name) - {Table name}
-
-**Views** (DBT-301 to DBT-399):
-
-- [DBT-301](#dbt-301-view-name) - {View name}
+- [DBT-101](#dbt-101-app-settings) - App Settings
 
 ---
 
-## DBT-001: {Table Name}
+## DBT-001: Transcripts
 
 **ID**: DBT-001
-**Category**: Core | Feature | Junction | View
-**Status**: Active | Deprecated | Planned
-**Created**: YYYY-MM-DD
-**Last Updated**: YYYY-MM-DD
+**Category**: Core
+**Status**: Planned
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
 
 ### Purpose
 
-{What this table stores and why it exists.}
+Store transcript metadata and the full markdown content. One row per completed transcription.
 
 ### Columns
 
 | Column | Type | Required | Description |
 |--------|------|----------|-------------|
-| `id` | UUID | Yes | Primary key |
-| `user_id` | UUID | Yes | Owner reference |
-| `name` | TEXT | Yes | Display name |
-| `status` | TEXT | Yes | Record status |
-| `created_at` | TIMESTAMPTZ | Yes | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | Yes | Last update |
+| `id` | TEXT (UUID) | Yes | Primary key |
+| `title` | TEXT | Yes | Meeting title (auto-generated, user-editable) |
+| `date` | TEXT (ISO8601) | Yes | Meeting date |
+| `duration_seconds` | INTEGER | Yes | Recording duration in seconds |
+| `speaker_count` | INTEGER | Yes | Number of identified speakers |
+| `markdown_content` | TEXT | Yes | Full formatted transcript (markdown) |
+| `model_used` | TEXT | Yes | Whisper model name used |
+| `exported_path` | TEXT | No | File path if exported to Obsidian |
+| `created_at` | TEXT (ISO8601) | Yes | Record creation timestamp |
+| `updated_at` | TEXT (ISO8601) | Yes | Last update timestamp |
 
 ### Key Indexes
 
 - Primary key on `id`
-- Index on `user_id` for ownership lookups
-- Partial index on `status` where not deleted
+- Index on `date` for chronological listing
+- Full-text search index on `markdown_content` for search
 
 ### Related IDs
 
-- [API-XXX](SoT.API_CONTRACTS.md#api-xxx) - {Endpoint accessing this table}
-- [UJ-XXX](SoT.USER_JOURNEYS.md#uj-xxx) - {Journey using this data}
-- [BR-XXX](SoT.BUSINESS_RULES.md#br-xxx) - {Rule enforced by constraint}
-- [TEST-XXX](SoT.TESTING.md#test-xxx) - {Schema validation test}
+- [API-201](SoT.API_CONTRACTS.md#api-201-transcript-formatter) - Produces content
+- [API-202](SoT.API_CONTRACTS.md#api-202-obsidian-exporter) - Reads for export
+- [UJ-002](SoT.USER_JOURNEYS.md#uj-002-review-and-export-transcript) - Review journey
+- [SCR-006](SoT.USER_JOURNEYS.md#scr-006-transcript-history) - History view
+- [DBT-002](#dbt-002-speakers) - Related speakers
+- [DBT-003](#dbt-003-segments) - Related segments
+
+---
+
+## DBT-002: Speakers
+
+**ID**: DBT-002
+**Category**: Core
+**Status**: Planned
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Purpose
+
+Store speaker identities for each transcript. Maps auto-generated speaker IDs to user-assigned names.
+
+### Columns
+
+| Column | Type | Required | Description |
+|--------|------|----------|-------------|
+| `id` | TEXT (UUID) | Yes | Primary key |
+| `transcript_id` | TEXT (UUID) | Yes | FK to transcripts |
+| `speaker_key` | TEXT | Yes | Auto-assigned key (e.g., "SPEAKER_00") |
+| `display_name` | TEXT | Yes | User-assigned name (default: "Speaker 1") |
+| `color_index` | INTEGER | Yes | Index into speaker color palette |
+| `speaking_time_seconds` | REAL | No | Total speaking duration |
+
+### Key Indexes
+
+- Primary key on `id`
+- Index on `transcript_id` for lookup
+- Unique constraint on (`transcript_id`, `speaker_key`)
 
 ### Foreign Keys
 
-- **References**: `auth.users` (user_id → id)
-- **Referenced By**: [DBT-XXX](#dbt-xxx-child-table) (parent_id → id)
+- **References**: DBT-001 (transcript_id → id) ON DELETE CASCADE
 
-<!-- /SECTION: template-structure -->
+### Related IDs
+
+- [DBT-001](#dbt-001-transcripts) - Parent transcript
+- [DES-101](SoT.DESIGN_COMPONENTS.md#des-101-speaker-label) - Speaker label component
+- [UJ-002](SoT.USER_JOURNEYS.md#uj-002-review-and-export-transcript) - Speaker rename
 
 ---
-<!-- CUSTOMIZABLE: entries -->
+
+## DBT-003: Segments
+
+**ID**: DBT-003
+**Category**: Core
+**Status**: Planned
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Purpose
+
+Store individual transcript segments (speaker turns) with timestamps. Enables structured display and editing.
+
+### Columns
+
+| Column | Type | Required | Description |
+|--------|------|----------|-------------|
+| `id` | TEXT (UUID) | Yes | Primary key |
+| `transcript_id` | TEXT (UUID) | Yes | FK to transcripts |
+| `speaker_id` | TEXT (UUID) | Yes | FK to speakers |
+| `start_time` | REAL | Yes | Segment start (seconds) |
+| `end_time` | REAL | Yes | Segment end (seconds) |
+| `text` | TEXT | Yes | Spoken text content |
+| `sequence` | INTEGER | Yes | Display order |
+
+### Key Indexes
+
+- Primary key on `id`
+- Index on `transcript_id` for lookup
+- Index on (`transcript_id`, `sequence`) for ordered display
+
+### Foreign Keys
+
+- **References**: DBT-001 (transcript_id → id) ON DELETE CASCADE
+- **References**: DBT-002 (speaker_id → id) ON DELETE CASCADE
+
+### Related IDs
+
+- [DBT-001](#dbt-001-transcripts) - Parent transcript
+- [DBT-002](#dbt-002-speakers) - Speaker identity
+- [DES-003](SoT.DESIGN_COMPONENTS.md#des-003-transcript-block) - Display component
+- [API-201](SoT.API_CONTRACTS.md#api-201-transcript-formatter) - Produces segments
+
+---
+
+## DBT-101: App Settings
+
+**ID**: DBT-101
+**Category**: Settings
+**Status**: Planned
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Purpose
+
+Store user preferences. Key-value store for app configuration.
+
+### Columns
+
+| Column | Type | Required | Description |
+|--------|------|----------|-------------|
+| `key` | TEXT | Yes | Setting key (primary key) |
+| `value` | TEXT | Yes | Setting value (JSON-encoded) |
+| `updated_at` | TEXT (ISO8601) | Yes | Last update |
+
+### Default Settings
+
+| Key | Default Value | Description |
+|-----|---------------|-------------|
+| `audio_input_device` | system default | Selected microphone |
+| `capture_system_audio` | `true` | Enable system audio capture |
+| `obsidian_vault_path` | `null` | Path to Obsidian vault |
+| `obsidian_subfolder` | `"Meetings"` | Subfolder within vault |
+| `whisper_model` | `"base.en"` | Selected Whisper model |
+| `auto_export` | `false` | Auto-export after processing |
+
+### Related IDs
+
+- [SCR-005](SoT.USER_JOURNEYS.md#scr-005-settings-view) - Settings UI
+- [UJ-003](SoT.USER_JOURNEYS.md#uj-003-configure-app-settings) - Settings journey
+
+---
 
 ## Deprecated Tables
 
-### DBT-XXX: {Name} [DEPRECATED]
-
-**Status**: Deprecated (YYYY-MM-DD)
-**Replacement**: [DBT-YYY](#dbt-yyy-name) | None
-**Reason**: {Why deprecated}
-
-<!-- /CUSTOMIZABLE: entries -->
+_No deprecated tables._
 
 ---
 
@@ -96,11 +204,14 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 **Tables by API**:
 
-- API-001 accesses: DBT-001, DBT-101
+- API-201 writes: DBT-001, DBT-002, DBT-003
+- API-202 reads: DBT-001
 
 **Tables by Journey**:
 
-- UJ-001 uses: DBT-001, DBT-101
+- UJ-001 writes: DBT-001, DBT-002, DBT-003
+- UJ-002 reads: DBT-001, DBT-002, DBT-003
+- UJ-003 writes: DBT-101
 
 ---
 
@@ -110,7 +221,7 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 1. **New Table**: Core data entity for the product
 2. **New View**: Denormalized read model
-3. **Junction Table**: Many-to-many relationship
+3. **Schema Change**: New columns or constraints
 
 ### Bidirectional Reference Checklist
 
@@ -121,7 +232,6 @@ When adding a new DBT-XXX:
 - [ ] Update SoT.BUSINESS_RULES.md if constraint enforces rule
 - [ ] Update SoT.TESTING.md with schema tests
 - [ ] Update EPIC Section 2 "Context & IDs" list
-- [ ] Update SoT.UNIQUE_ID_SYSTEM.md registry if maintained
 
 ---
 

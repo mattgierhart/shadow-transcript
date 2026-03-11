@@ -1,11 +1,11 @@
 ---
 version: 2.0
 purpose: Progressive Product Requirements Document aligned to the PRD Led Context Engineering lifecycle.
-last_updated: 2025-12-22
+last_updated: 2026-03-11
 template_version: "3.0.0"
 ---
 
-# [Product Name] · Product Requirements Document (PRD)
+# Transcript Shadow · Product Requirements Document (PRD)
 
 **Authority & Workflow**
 
@@ -15,194 +15,266 @@ template_version: "3.0.0"
 - `epics/EPIC-{XX}-<slug>.md` — execution window. Updates IDs created/modified when advancing v0.7+.
 - See `README.md` for gate criteria and rituals.
 
-**Template Usage**
-
-1. Replace placeholders (`{}`) with product-specific data.
-2. Maintain strict version headers (v0.1 → v1.0). Never delete prior versions; append revisions.
-3. Use SoT IDs (BR-XXX, CFD-XXX, etc.) whenever referencing research, rules, or technical decisions.
-4. Log lifecycle transitions in the change log table below. Reference EPIC IDs for execution notes.
-
 ---
 
 ## PRD Metadata
 
 | Field                      | Value                              |
 | -------------------------- | ---------------------------------- |
-| **Current Lifecycle Gate** | v0.x                               |
-| **Last Updated**           | 2025-12-22                         |
-| **Last Editor**            | {Name / Agent}                     |
-| **Status**                 | Discovery / Build / Live           |
-| **Next Target Gate**       | v0.{x+1}                           |
-| **Related EPIC**           | EPIC-{XX}                          |
-| **SoT Snapshot**           | {List key IDs touched this update} |
+| **Current Lifecycle Gate** | v0.6                               |
+| **Last Updated**           | 2026-03-11                         |
+| **Last Editor**            | Claude Agent                       |
+| **Status**                 | Discovery                          |
+| **Next Target Gate**       | v0.7                               |
+| **Related EPIC**           | None (pre-v0.7)                    |
+| **SoT Snapshot**           | CFD-001→004, CFD-101→103, BR-101→103, BR-201→203, BR-301→302, BR-401→402, PER-001→002, UJ-001→003, SCR-001→006, DES-001→003, DES-101→102, DES-301, TECH-001→007, ARC-001→003, INT-001, INT-101, INT-201→202, API-001→002, API-101→102, API-201→202, API-301, DBT-001→003, DBT-101 |
 
 ## Lifecycle Change Log
 
-| Version                | Date       | Editor  | Summary                              | Linked IDs / EPIC   |
-| ---------------------- | ---------- | ------- | ------------------------------------ | ------------------- |
-| v0.1 Spark             | YYYY-MM-DD | {Owner} | Problem + outcomes framed            | CFD-###             |
-| v0.2 Market Definition | YYYY-MM-DD | {Owner} | ICP + segmentation                   | BR-###              |
-| v0.3 Commercial Model  | YYYY-MM-DD | {Owner} | Pricing & positioning hypotheses     | BR-###, CFD-###     |
-| v0.4 User Journeys     | YYYY-MM-DD | {Owner} | Journeys mapped to pains             | UJ-###              |
-| v0.5 Red Team Review   | YYYY-MM-DD | {Owner} | Risks + mitigations                  | BR-###, TEST-###    |
-| v0.6 Architecture      | YYYY-MM-DD | {Owner} | Stack, schema, contracts baseline    | API-###, DBT-###    |
-| v0.7 Build Execution   | YYYY-MM-DD | {Owner} | EPIC backlog & QA strategy           | EPIC-{XX}, TEST-### |
-| v0.8 Release & Deployment | YYYY-MM-DD | {Owner} | Release criteria + ops playbook   | DEP-###             |
-| v0.9 Go-to-Market      | YYYY-MM-DD | {Owner} | GTM, analytics, feedback loop        | GTM-### / CFD-###   |
-| v1.0 Market Adoption   | YYYY-MM-DD | {Owner} | Paying customers + optimization plan | BR-###, KPI-###     |
-
-> **Revision Pattern**: When looping back, add a new row (e.g., `v0.3r1`) and reference the EPIC that triggered the revision.
+| Version                | Date       | Editor       | Summary                              | Linked IDs / EPIC   |
+| ---------------------- | ---------- | ------------ | ------------------------------------ | ------------------- |
+| v0.1 Spark             | 2026-03-11 | Claude Agent | Problem + outcomes framed            | CFD-001→004, CFD-101→103 |
+| v0.2 Market Definition | 2026-03-11 | Claude Agent | ICP + segments defined               | BR-201→203          |
+| v0.3 Commercial Model  | 2026-03-11 | Claude Agent | Features + outcomes (pricing skipped) | FEA-001→006, KPI-001→003 |
+| v0.4 User Journeys     | 2026-03-11 | Claude Agent | Personas, journeys, screens mapped   | PER-001→002, UJ-001→003, SCR-001→006, DES-001→003, DES-101→102 |
+| v0.5 Red Team Review   | 2026-03-11 | Claude Agent | Risks + tech stack selected          | RISK-001→006, TECH-001→007 |
+| v0.6 Architecture      | 2026-03-11 | Claude Agent | Architecture, APIs, data model       | ARC-001→003, API-001→301, DBT-001→101, INT-001→202 |
 
 ---
 
 ## v0.1 Spark — Problem & Outcomes
 
-**Spark Summary**  
-{Short paragraph describing the spark, audience, and outcomes. Elevator pitch style.}
+**Spark Summary**
+Transcript Shadow is a local macOS app that records meeting audio, transcribes it with speaker identification, and exports the result as markdown to Obsidian. It replaces cloud-based meeting recording tools (like Notion AI) for privacy-conscious professionals who want their meeting data to stay on their machine.
 
 **Problem Statement**
 
-- **Who is hurting?** {Segment / persona}
-- **What pain exists today?** {Short description}
-- **Why now?** {Trigger or catalyst}
+- **Who is hurting?** Knowledge workers and privacy-conscious professionals who attend multiple meetings daily and need reliable transcripts.
+- **What pain exists today?** Cloud-based transcription tools (Notion, Otter.ai, Fireflies) require uploading audio to third-party servers, creating privacy concerns. Local alternatives exist (whisper.cpp) but lack integrated speaker diarization and require technical setup.
+- **Why now?** Apple Silicon ML capabilities make high-quality local transcription viable. WhisperKit and pyannote-audio have matured. macOS 15 ScreenCaptureKit enables system audio capture without virtual audio drivers.
 
 **Desired Outcomes**
 
-- {Outcome 1 — measurable}
-- {Outcome 2 — measurable}
+- Users can record, transcribe, and export meetings without audio leaving their machine (CFD-101)
+- Speaker-labeled transcripts reduce post-meeting processing time by eliminating manual attribution (CFD-102)
+- Transcripts appear directly in Obsidian vault as searchable, linked markdown (CFD-103)
 
 **Initial Success Signals**
 
-- Metric: {Signal / Source} (Target: {value})
-- Insight IDs: {CFD-###, note or link}
+- Metric: End-to-end pipeline works for a 30-minute meeting (Target: < 5 min processing)
+- Metric: Speaker diarization correctly identifies 2-4 speakers (Target: > 80% accuracy)
+- Insight IDs: CFD-001, CFD-002, CFD-003, CFD-004
 
 **Constraints & Non-goals**
 
-- {Constraint 1}
-- {Non-goal 1}
+- Constraint: All processing must be local (BR-101)
+- Constraint: No persistent audio storage (BR-102)
+- Constraint: macOS only, Apple Silicon only (BR-201, BR-401)
+- Non-goal: Real-time transcription during recording (deferred to post-MVP)
+- Non-goal: Multi-language support (BR-202, English only for MVP)
+- Non-goal: Revenue, pricing, or monetization (per project guardrails)
 
-**Open Questions** (must be answered before v0.2)
+**Open Questions** (answered in subsequent stages)
 
-- {Question}
-- {Question}
+- ~~Which transcription engine: WhisperKit vs whisper.cpp?~~ → WhisperKit (TECH-002)
+- ~~How to handle speaker diarization locally?~~ → pyannote-audio sidecar (TECH-006, ARC-002)
+- ~~System audio capture approach?~~ → ScreenCaptureKit (TECH-004)
 
 ---
 
 ## v0.2 Market Definition — ICP & Segments
 
-**Market Thesis**  
-{Short narrative referencing Spark outcomes.}
+> **Note**: Competitor research skipped per project guardrails (v0.1-v0.6).
+
+**Market Thesis**
+Privacy-conscious macOS users who use Obsidian as their knowledge base need a local meeting transcription tool. The intersection of "wants transcription" + "won't use cloud tools" + "uses Obsidian" defines a specific, underserved niche.
 
 **Primary Segments (max 3)**
-| Segment | Description | Size / TAM | Urgency | Source (ID) |
-|---------|-------------|------------|---------|-------------|
-| Segment A | {Persona / firmographics} | {Value} | {High/Med/Low} | CFD-### |
+
+| Segment | Description | Urgency | Source (ID) |
+|---------|-------------|---------|-------------|
+| Solo Knowledge Workers | Engineers, PMs, designers using Obsidian for notes. 3-8 meetings/day. Value local-first tools. | High | CFD-002, CFD-003 |
+| Privacy-Conscious Professionals | Legal, medical, executive, HR. Confidentiality requirements prohibit cloud processing. | High | CFD-001 |
+| Notion-to-Obsidian Migrants | Users leaving Notion who want meeting recording without ecosystem lock-in. | Medium | CFD-004 |
 
 **Not For**
 
-- {Who we explicitly exclude and why}
+- Teams needing collaborative real-time transcription (this is a single-user tool per BR-203)
+- Windows/Linux users (macOS only per BR-201)
+- Users without Apple Silicon (M1+ required per BR-401)
+- Non-English speakers (English only per BR-202)
 
 **Enabling Business Rules (BR-XXX)**
 
-- BR-### — {Rule description}
-- BR-### — {Rule description}
-
-**Research & Evidence**
-
-- CFD-### — {Interview / survey insight}
-- CFD-### — {Desk research}
+- BR-201 — macOS 14+ only (Sonoma minimum)
+- BR-202 — English-only transcription
+- BR-203 — Single-user local app, no accounts
+- BR-401 — Apple Silicon (M1+) required
 
 **Outstanding Work → v0.3**
 
-- {Hypothesis or question}
+- ~~Define feature set and success metrics~~ → Done in v0.3
 
 ---
 
-## v0.3 Commercial Model — Pricing & Positioning
+## v0.3 Commercial Model — Features & Outcomes
 
-> **ID Note**: FEA-XXX (Feature) IDs are defined inline in this section, not in a separate SoT file.
+> **Note**: Pricing, monetization, and competitor analysis skipped per project guardrails.
 
-**Anchor Competitors**
-| Competitor | Positioning | Pricing Signals | Reference |
-|------------|-------------|-----------------|-----------|
-| {Name} | {Value prop} | ${price}/unit | CFD-### |
+**Feature Definitions (FEA-XXX)**
 
-**Monetization Strategy**
+| ID | Feature | Priority | Description | Traced To |
+|----|---------|----------|-------------|-----------|
+| FEA-001 | Audio Capture | P0 (Must) | Capture microphone + system audio simultaneously on macOS | CFD-001, BR-101, TECH-003, TECH-004 |
+| FEA-002 | Local Transcription | P0 (Must) | Transcribe audio to text with timestamps using WhisperKit | CFD-002, BR-101, TECH-002 |
+| FEA-003 | Speaker Diarization | P0 (Must) | Identify and label different speakers in the transcript | CFD-002, CFD-102, TECH-006 |
+| FEA-004 | Markdown Output | P0 (Must) | Format transcript as standard markdown with speaker labels and timestamps | CFD-004, BR-301 |
+| FEA-005 | Obsidian Export | P0 (Must) | Export transcript directly to Obsidian vault with frontmatter | CFD-003, BR-302, INT-001 |
+| FEA-006 | Transcript History | P1 (Should) | Browse and search past transcripts locally | UJ-002, SCR-006, DBT-001 |
 
-- Model: {Usage / Seat / Tiered}
-- Primary KPI: {MRR / ACV / etc}
-- Pricing Guardrails: {Range or constraints}
+**Outcome Definitions (KPI-XXX)**
 
-**Moat Thesis**
+| ID | Metric | Target | Measurement | Source |
+|----|--------|--------|-------------|--------|
+| KPI-001 | Processing Speed | < 5 min for 30-min meeting | Pipeline end-to-end time | App telemetry (local) |
+| KPI-002 | Diarization Accuracy | > 80% speaker segment accuracy | Manual spot-check on test recordings | User validation |
+| KPI-003 | Daily Active Use | User records 1+ meeting/day | Local usage counter | App telemetry (local) |
 
-- {What makes us 1–10% better/cheaper}
-- Supporting IDs: BR-###, CFD-###
+**MVP Boundary Statement**
 
-**Experiments & Fast-Follow Plans**
+**IN scope (MVP)**:
+- Record mic + system audio on macOS 15+ / Apple Silicon
+- Transcribe using WhisperKit (base.en model, user-selectable)
+- Diarize speakers using pyannote-audio (post-recording batch process)
+- Output as markdown with speaker labels and timestamps
+- Export to Obsidian vault directory
+- Browse/search transcript history
+- Settings: audio source, vault path, model selection
 
-- {Experiment summary} → ID: BR-### / TEST-###
+**OUT of scope (MVP)**:
+- Real-time/streaming transcription during recording
+- Multi-language support
+- Cloud sync, accounts, collaboration
+- Audio retention or playback
+- AI summarization of transcripts
+- Custom Obsidian plugin
+- Windows/Linux/iOS support
+- Revenue or pricing features
 
 **Outstanding Work → v0.4**
 
-- {Hypothesis requiring user validation}
+- ~~Map user journeys from pain to value~~ → Done in v0.4
 
 ---
 
 ## v0.4 User Journeys — From Pain to Value
 
 **Journey Overview**
+
 | ID | Persona | Trigger | Key Steps | Pain Points | Moments of Value |
 |----|---------|---------|-----------|-------------|------------------|
-| UJ-### | {Persona} | {Trigger} | {Steps summary} | {Pain} | {Value}
+| UJ-001 | PER-001, PER-002 | Meeting starting | Open → Select source → Record → Stop → Process → View | Waiting during processing; permission prompts | Seeing speaker-labeled transcript appear |
+| UJ-002 | PER-001 | Transcript ready | View → Rename speakers → Export to Obsidian | Speaker names are auto-generated | Transcript in Obsidian vault, searchable |
+| UJ-003 | PER-001 | First launch / change needed | Open settings → Configure audio + vault + model | Initial setup friction | "Set and forget" configuration |
 
 **Journey Narratives**
 
-- **UJ-### – {Title}**
-  - Step Flow: {1 → 2 → 3}
-  - Dependencies: BR-###, API-###
-  - Opportunity Notes: {Design or build implications}
+- **UJ-001 – Record and Transcribe Meeting**
+  - Step Flow: SCR-001 → SCR-002 → SCR-003 → SCR-004
+  - Dependencies: BR-101, BR-102, BR-103, BR-402, TECH-002, TECH-003, TECH-004, TECH-006
+  - Opportunity Notes: Processing view (SCR-003) is critical for user confidence — must show clear progress
+
+- **UJ-002 – Review and Export Transcript**
+  - Step Flow: SCR-004 → (rename speakers) → Export → Obsidian
+  - Dependencies: BR-301, BR-302, INT-001
+  - Opportunity Notes: Speaker rename must propagate through entire transcript. Obsidian export should show confirmation with file path.
+
+- **UJ-003 – Configure App Settings**
+  - Step Flow: SCR-005 (settings panel)
+  - Dependencies: INT-001, INT-201, INT-202
+  - Opportunity Notes: First-launch onboarding should guide through critical settings (vault path, permissions)
+
+**Screen Flow Summary**
+
+| ID | Screen | Purpose | Key Components |
+|----|--------|---------|----------------|
+| SCR-001 | Main Window | Entry point, recording controls | DES-001 (Record Button) |
+| SCR-002 | Recording View | Active recording state | DES-001, DES-002 (Audio Level) |
+| SCR-003 | Processing View | Transcription/diarization progress | DES-102 (Progress Pipeline) |
+| SCR-004 | Transcript View | Review and export transcript | DES-003 (Transcript Block), DES-101 (Speaker Label) |
+| SCR-005 | Settings View | App configuration | Standard form controls |
+| SCR-006 | Transcript History | Browse past transcripts | List view with search |
 
 **UX / Research Assets**
 
-- Link: `SoT/SoT.USER_JOURNEYS.md#uj-###`
-- Additional references: {Figma / research IDs}
+- Design Reference: [ElevenLabs UI](https://ui.elevenlabs.io/docs/) — dark, minimal, audio-centric aesthetic
+- SoT: `SoT/SoT.USER_JOURNEYS.md`, `SoT/SoT.DESIGN_COMPONENTS.md`
 
 **Outstanding Work → v0.5**
 
-- {Risk or open question to stress-test}
+- ~~Identify risks and select tech stack~~ → Done in v0.5
 
 ---
 
 ## v0.5 Red Team Review — Risks & Mitigations
 
-> **ID Note**: RISK-XXX IDs are defined inline in this section, not in a separate SoT file.
-> **Scoring**: Each RISK- maps to a scoring category (Market/User/Technical). Score = Impact × Likelihood × Status Weight. See `assets/risk.md` for full scoring reference.
-> **Continuous**: This register is a living document. New RISK- entries can be added at any stage (v0.5–v1.0). Update the README Risk Scorecard when entries change.
-
 **Risk Register**
 
 | ID | Scoring | Risk | Impact | Likelihood | Raw | Status | Eff. Score | Mitigation | Linked IDs |
 |----|---------|------|--------|------------|-----|--------|------------|------------|------------|
-| RISK-### | {Market/User/Technical} | {Risk description} | {H/M/L} | {H/M/L} | {1-9} | {open} | {score} | {Mitigation action} | BR-### |
+| RISK-001 | Technical | pyannote diarization runs on CPU only on macOS (MPS unreliable), causing slow processing for long meetings | H (3) | H (3) | 9 | mitigating | 4.5 | Bundle pyannote via PyInstaller; process in background; show progress. Evaluate WeSpeaker ONNX as faster alternative. | TECH-006, ARC-002 |
+| RISK-002 | Technical | ScreenCaptureKit microphone capture requires macOS 15+, limiting user base | M (2) | H (3) | 6 | accepted | 6.0 | Accept macOS 15+ requirement; fallback to AVAudioEngine for mic on macOS 14 if needed. | TECH-004, BR-201 |
+| RISK-003 | Technical | PyInstaller-bundled diarization sidecar produces large app size (~400-600MB) | M (2) | H (3) | 6 | mitigating | 3.0 | Download diarization model on first launch. Compress sidecar binary. | ARC-002, TECH-006 |
+| RISK-004 | User | Users may not grant Screen Recording permission (required for system audio capture) | H (3) | M (2) | 6 | mitigating | 3.0 | Clear onboarding explaining why permission is needed. Allow mic-only mode as fallback. | INT-202, UJ-003 |
+| RISK-005 | Technical | Transcript-diarization alignment may produce misattributed speaker segments | M (2) | M (2) | 4 | open | 4.0 | Implement word-level timestamp alignment between WhisperKit output and pyannote segments. Allow manual correction in SCR-004. | API-201, FEA-003 |
+| RISK-006 | User | App crashes during recording could lose audio before processing | H (3) | L (1) | 3 | mitigating | 1.5 | Write audio to temp file continuously during recording (not buffered). Implement crash recovery that detects orphaned temp audio on next launch. | ARC-003, BR-103 |
 
 <!-- Risk Scoring Quick Reference:
   Impact: High=3, Medium=2, Low=1 | Likelihood: High=3, Medium=2, Low=1
-  Raw = Impact × Likelihood
+  Raw = Impact x Likelihood
   Status Weights: open=1.0, accepted=1.0, mitigating=0.5, mitigated=0.25, resolved=0.0
-  Effective Score = Raw × Status Weight
+  Effective Score = Raw x Status Weight
 -->
 
 **Development Challenges (Flag for EPIC Planning)**
 
-- {Challenge} → Impacted IDs: API-###, TEST-###
+- Python sidecar packaging and distribution (PyInstaller cross-compilation for ARM64) → TECH-006, ARC-002
+- ScreenCaptureKit audio mixing (mic + system → single WAV) → API-002
+- WhisperKit + pyannote output alignment (word timestamps ↔ speaker segments) → API-201, RISK-005
 
 **Security / Compliance Notes**
 
-- {Requirement} → BR-### / DEP-###
+- No network calls in core pipeline (BR-101) — can be verified by firewall testing
+- Temp audio in sandboxed app container — inaccessible to other apps
+- Secure deletion via APFS TRIM on Apple SSDs (ARC-003)
+
+**Technology Stack Decisions**
+
+| Decision | Choice | License | Rationale | ID |
+|----------|--------|---------|-----------|-----|
+| App Framework | Swift + SwiftUI | N/A | Native macOS APIs, small footprint | TECH-001 |
+| Transcription | WhisperKit | MIT | Native Swift SPM, CoreML/ANE | TECH-002 |
+| Microphone Capture | AVAudioEngine | N/A | First-party, all macOS versions | TECH-003 |
+| System Audio | ScreenCaptureKit | N/A | No driver needed, macOS 15+ | TECH-004 |
+| Obsidian Export | File system write | N/A | Zero dependency, file-based | TECH-005 |
+| Speaker Diarization | pyannote-audio + community-1 | MIT + CC-BY-4.0 | Best accuracy, open models | TECH-006 |
+| Local Storage | SQLite (GRDB.swift) | MIT | Serverless, single-user | TECH-007 |
+
+**Open-Source Repos Evaluated**
+
+| Repo | URL | License | Verdict |
+|------|-----|---------|---------|
+| WhisperKit | github.com/argmaxinc/WhisperKit | MIT | **Selected** — native Swift, CoreML |
+| whisper.cpp | github.com/ggml-org/whisper.cpp | MIT | Fallback — requires C bridging |
+| pyannote-audio | github.com/pyannote/pyannote-audio | MIT | **Selected** — best diarization |
+| community-1 model | huggingface.co/pyannote/speaker-diarization-community-1 | CC-BY-4.0 | **Selected** — free, open |
+| WeSpeaker | github.com/wenet-e2e/wespeaker | Apache-2.0 | Alternative — evaluate if pyannote too slow |
+| Azayaka | github.com/Mnpn/Azayaka | Open | Reference — ScreenCaptureKit patterns |
+| BlackHole | github.com/ExistentialAudio/BlackHole | GPL-3.0 | Rejected — user setup friction, GPL |
 
 **Outstanding Work → v0.6**
 
-- {Architecture question to resolve}
+- ~~Define architecture, API contracts, data model~~ → Done in v0.6
 
 ---
 
@@ -210,146 +282,121 @@ template_version: "3.0.0"
 
 **System Overview**
 
-- Architecture summary referencing TECHNICAL_ARCHITECTURE.md (ID: ARC-### if used).
+Transcript Shadow is a native macOS app (SwiftUI) with a Python sidecar for speaker diarization. The architecture follows a local-first sequential pipeline (ARC-001).
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  Transcript Shadow                   │
+│                  (SwiftUI macOS App)                 │
+│                                                     │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
+│  │ Audio    │  │ Whisper  │  │ Transcript       │  │
+│  │ Capture  │→ │ Kit      │→ │ Formatter        │  │
+│  │ Service  │  │ (CoreML) │  │ + Speaker Merge  │  │
+│  └──────────┘  └──────────┘  └──────────────────┘  │
+│       ↓              ↓              ↓               │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
+│  │ Temp WAV │  │ Word     │  │ Markdown Output  │  │
+│  │ File     │  │ Stamps   │  │ + Obsidian Export │  │
+│  └──────────┘  └──────────┘  └──────────────────┘  │
+│       ↓                                             │
+│  ┌──────────────────────┐                           │
+│  │ pyannote Sidecar     │  (PyInstaller binary)     │
+│  │ → Speaker Segments   │                           │
+│  └──────────────────────┘                           │
+│                                                     │
+│  ┌──────────┐  ┌──────────┐                         │
+│  │ SQLite   │  │ Settings │                         │
+│  │ (GRDB)   │  │ Store    │                         │
+│  └──────────┘  └──────────┘                         │
+└─────────────────────────────────────────────────────┘
+```
+
+Architecture decisions: ARC-001 (local pipeline), ARC-002 (Python sidecar), ARC-003 (temp audio lifecycle).
 
 **API Contracts (API-XXX)**
 
-- API-### — {Endpoint purpose} (Method, Auth, Success / Error states)
+| ID | Service | Type | Purpose |
+|----|---------|------|---------|
+| API-001 | AudioCaptureService | Swift protocol | Manage mic + system audio capture |
+| API-002 | AudioMixer | Swift utility | Mix mic + system into single WAV |
+| API-101 | TranscriptionService | Swift protocol | WhisperKit transcription with timestamps |
+| API-102 | Diarization Sidecar | CLI executable | pyannote speaker diarization (subprocess) |
+| API-201 | TranscriptFormatter | Swift protocol | Merge transcription + diarization → markdown |
+| API-202 | ObsidianExporter | Swift protocol | Write markdown to Obsidian vault |
+| API-301 | TempAudioCleanup | Swift background | Delete temp audio files reliably |
+
+Full contracts with interface signatures: `SoT/SoT.API_CONTRACTS.md`
 
 **Data Model (DBT-XXX)**
 
-- DBT-### — {Table / model} (Primary keys, relationships)
+| ID | Table | Purpose |
+|----|-------|---------|
+| DBT-001 | transcripts | Transcript metadata + full markdown content |
+| DBT-002 | speakers | Speaker identity mapping per transcript |
+| DBT-003 | segments | Individual speaker turns with timestamps |
+| DBT-101 | app_settings | User preferences (key-value) |
+
+Full schema: `SoT/SoT.DATA_MODEL.md`
 
 **Integration Notes**
 
-- External dependencies, rate limits, compliance.
+| ID | Integration | Approach |
+|----|-------------|----------|
+| INT-001 | Obsidian Vault | Direct file write to vault directory, YAML frontmatter |
+| INT-101 | WhisperKit Models | Download on first launch, cache in app support |
+| INT-201 | macOS Microphone | AVAudioEngine, requires mic permission |
+| INT-202 | ScreenCaptureKit | System audio, requires Screen Recording permission |
+
+Full details: `SoT/SoT.INTEGRATIONS.md`
 
 **Outstanding Work → v0.7**
 
-- {Implementation open question}
+- Create EPIC backlog for implementation
+- Define test cases (TEST-XXX) for each API contract
+- Set up Xcode project with SwiftUI + WhisperKit SPM dependency
+- Build and test pyannote PyInstaller sidecar packaging
+- Determine macOS 14 vs 15 minimum deployment target (RISK-002)
 
 ---
 
 ## v0.7 Build Execution — Plan for Delivery
 
-**EPIC Backlog Overview**
-| EPIC | Objective | Lifecycle Impact | Status | Notes |
-|------|-----------|------------------|--------|-------|
-| EPIC-{XX} | {Outcome} | Advances to v0.{x+1} | 🚧 | {Summary}
-
-**Testing Strategy Snapshot (TEST-XXX)**
-
-- TEST-### — {Scope}
-- TEST-### — {Scope}
-
-**Definition of Done**
-
-- [ ] All IDs created/modified logged in EPIC Section 2.
-- [ ] README metrics updated via workflow.
-- [ ] Coverage thresholds defined.
-
-### Deployment Configuration
-
-Deployment configuration should be established early in v0.7 to avoid late-stage integration issues. Document the following in `SoT/SoT.DEPLOYMENT.md`:
-
-#### Environments
-| Environment | Purpose | Trigger | URL Pattern |
-|-------------|---------|---------|-------------|
-| Production | Live users | Merge to main | Primary domain |
-| Preview/Staging | Pre-merge testing | Pull request | Branch-based URLs |
-| Development | Local development | N/A | localhost |
-
-#### Branch Strategy
-Define branch naming conventions and their deployment behavior:
-- `main` — Production deployments only
-- `feature/*` — Preview deployments for testing
-- `fix/*` — Preview deployments for bug verification
-- `experiment/*` — Preview deployments for exploration (may be abandoned)
-
-#### Quality Gates
-Specify required checks before code reaches production:
-1. **Automated** — Lint, type checking, unit tests (CI pipeline)
-2. **Manual** — Preview deployment smoke test
-3. **Optional** — E2E tests against preview environment
-
-#### Platform Configuration
-For each deployment target (web, mobile, API), document:
-- Hosting platform and tier
-- Environment variable management approach
-- Build configuration location
-- Secrets that require setup (reference `SoT/SoT.DEPLOYMENT.md` Secrets Inventory)
-
-#### Mobile-Specific (if applicable)
-- Code signing approach (manual, automated, or managed)
-- Beta distribution channel (TestFlight, Play Store Internal, etc.)
-- Release tagging convention (e.g., `v1.0.0` for production, `v1.0.0-beta.1` for beta)
-
-**Outstanding Work → v0.8**
-
-- {Deployment or operational prep item}
+_Not yet started. Pending v0.7 gate entry._
 
 ---
 
 ## v0.8 Release & Deployment — Operational Readiness
 
-**Release Checklist**
-
-- [ ] Deployment environments configured (DEP-###).
-- [ ] Monitoring & alerting baselined.
-- [ ] Runbooks documented.
-
-**Operational Policies**
-
-- {Policy} → DEP-###
-
-**Outstanding Work → v0.9**
-
-- {GTM requirement}
+_Not yet started._
 
 ---
 
 ## v0.9 Go-to-Market — Launch & Feedback
 
-> **ID Note**: GTM-XXX (Go-to-Market) IDs are defined inline in this section, not in a separate SoT file.
-
-**Launch Plan Summary**
-
-- Channels: {Email / Sales / Community}
-- Messaging Pillars: {1-3 bullets}
-- Launch Owner: {Name / Team}
-
-**Analytics & Feedback Loop**
-
-- Key Metrics: {Metric + target}
-- Feedback Sources: {CFD-###, analytics dashboards}
-
-**Outstanding Work → v1.0**
-
-- {Adoption / revenue milestone}
+_Not yet started._
 
 ---
 
 ## v1.0 Market Adoption — Optimize & Expand
 
-**Adoption Status**
-
-- Paying Customers: {# / MRR}
-- Usage Health: {Metric + target}
-
-**Optimization Backlog**
-
-- {Idea / hypothesis} → EPIC-{YY}
-
-**Future Bets & Loopbacks**
-
-- {Potential revisits to earlier lifecycle stages}
+_Not yet started._
 
 ---
 
 ## Appendices & References
 
-- **Glossary**: {Terms and definitions}
-- **ID Index**: Link to `SoT/SoT.UNIQUE_ID_SYSTEM.md` (Part 2: ID Registry).
-- **Supporting Docs**: {Links to research, design, architecture}
+- **Glossary**:
+  - **Diarization**: The process of identifying who spoke when in an audio recording
+  - **Sidecar**: A separate process bundled with the app for specific functionality
+  - **CoreML/ANE**: Apple's ML framework running on the Apple Neural Engine
+  - **GGML**: A tensor library format used by whisper.cpp models
+- **ID Index**: Link to `SoT/SoT.UNIQUE_ID_SYSTEM.md`
+- **Open-Source References**:
+  - [WhisperKit](https://github.com/argmaxinc/WhisperKit) — MIT, Swift transcription
+  - [pyannote-audio](https://github.com/pyannote/pyannote-audio) — MIT, speaker diarization
+  - [whisper.cpp](https://github.com/ggml-org/whisper.cpp) — MIT, C/C++ transcription
+  - [Azayaka](https://github.com/Mnpn/Azayaka) — ScreenCaptureKit reference
+  - [ElevenLabs UI](https://ui.elevenlabs.io/docs/) — Design reference
 
-> Maintain appendices as lightweight navigation helpers. All authoritative data must live in SoT files referenced above.
+> Maintain appendices as lightweight navigation helpers. All authoritative data lives in SoT files referenced above.

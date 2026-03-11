@@ -2,107 +2,328 @@
 version: 1.0
 purpose: Source of Truth for business rules and operational constraints.
 id_prefix: BR-XXX
-last_updated: YYYY-MM-DD
+last_updated: 2026-03-11
 authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTRACTS.md, EPICs, and code
 ---
-<!-- SECTION: template-structure -->
 
 # Business Rules (SoT File)
 
-> **Purpose**: Complete specifications for business constraints, pricing rules, and enforcement policies.
+> **Purpose**: Complete specifications for business constraints, privacy rules, and enforcement policies.
 > **ID Prefix**: BR-XXX
 > **Status**: Active SoT file
 > **Cross-References**: Referenced by PRD.md, SoT.API_CONTRACTS.md, SoT.USER_JOURNEYS.md, SoT.TESTING.md, EPICs
 
 ## Navigation by Category
 
-**Pricing & Entitlements** (BR-001 to BR-099):
-
-- [BR-001](#br-001-rule-name) - {Rule name}
-
 **Data & Security** (BR-101 to BR-199):
 
-- [BR-101](#br-101-rule-name) - {Rule name}
+- [BR-101](#br-101-local-only-processing) - Local-only processing
+- [BR-102](#br-102-no-persistent-audio-storage) - No persistent audio storage
+- [BR-103](#br-103-audio-deletion-after-processing) - Audio deletion after processing
 
-**User Permissions** (BR-201 to BR-299):
+**Platform & Scope** (BR-201 to BR-299):
 
-- [BR-201](#br-201-rule-name) - {Rule name}
+- [BR-201](#br-201-macos-only-platform) - macOS-only platform
+- [BR-202](#br-202-english-only-transcription) - English-only transcription
+- [BR-203](#br-203-single-user-local-app) - Single-user local app
 
-**Compliance & Legal** (BR-301 to BR-399):
+**Output & Format** (BR-301 to BR-399):
 
-- [BR-301](#br-301-rule-name) - {Rule name}
+- [BR-301](#br-301-markdown-output-format) - Markdown output format
+- [BR-302](#br-302-obsidian-vault-compatibility) - Obsidian vault compatibility
 
 **Performance & Limits** (BR-401 to BR-499):
 
-- [BR-401](#br-401-rule-name) - {Rule name}
+- [BR-401](#br-401-apple-silicon-required) - Apple Silicon required
+- [BR-402](#br-402-maximum-meeting-duration) - Maximum meeting duration
 
 ---
 
-## BR-001: {Rule Name}
+## BR-101: Local-Only Processing
 
-**ID**: BR-001
-**Category**: Pricing | Data | Permissions | Compliance | Performance
-**Status**: Active | Deprecated | Planned
-**Severity**: Critical | High | Medium | Low
-**Created**: YYYY-MM-DD
-**Last Updated**: YYYY-MM-DD
+**ID**: BR-101
+**Category**: Data & Security
+**Status**: Active
+**Severity**: Critical
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
 
 ### Rule Statement
 
-{Clear, enforceable statement of the business rule. Use imperative language.}
-
-**Example**: "Free tier users MUST be limited to 3 products. Attempts to exceed MUST show upgrade prompt."
+All audio capture, transcription, and speaker diarization MUST execute locally on the user's machine. No audio data, transcription data, or meeting metadata SHALL be transmitted to any external server or cloud service.
 
 ### Rationale
 
-- **Business Driver**: {Why this rule exists}
-- **User Impact**: {How it affects UX}
+- **Business Driver**: Core product differentiator — privacy-first local processing
+- **User Impact**: Users can confidently record sensitive meetings without privacy concerns
 
 ### Enforcement
 
-**Location**: {Where enforced - server/client/both}
-**Timing**: {When checked - on action, background, real-time}
+**Location**: Application architecture (no network calls for core pipeline)
+**Timing**: Design-time constraint; validated by architecture review
 
 ### Related IDs
 
-- [API-XXX](SoT.API_CONTRACTS.md#api-xxx) - {Endpoint enforcing this}
-- [UJ-XXX](SoT.USER_JOURNEYS.md#uj-xxx) - {Journey where rule applies}
-- [DBT-XXX](SoT.DATA_MODEL.md#dbt-xxx) - {Table with constraint}
-- [TEST-XXX](SoT.TESTING.md#test-xxx) - {Test validating compliance}
-
-### Error Handling
-
-- **Error Code**: `BR_001_VIOLATION`
-- **User Message**: "{User-friendly error}"
-- **Recovery**: {What user can do}
-
-<!-- /SECTION: template-structure -->
+- [CFD-001](SoT.customer_feedback.md#cfd-001-cloud-meeting-tools-force-privacy-tradeoffs) - driven-by
+- [CFD-101](SoT.customer_feedback.md#cfd-101-local-processing-eliminates-privacy-anxiety) - driven-by
+- [ARC-001](SoT.TECHNICAL_DECISIONS.md#arc-001-local-first-pipeline) - implements
 
 ---
-<!-- CUSTOMIZABLE: entries -->
+
+## BR-102: No Persistent Audio Storage
+
+**ID**: BR-102
+**Category**: Data & Security
+**Status**: Active
+**Severity**: Critical
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Rule Statement
+
+The application MUST NOT retain audio files after processing is complete. Audio exists only as a temporary artifact during the transcription pipeline. Once the transcript is generated and confirmed, audio files MUST be deleted.
+
+### Rationale
+
+- **Business Driver**: Privacy guarantee — no audio forensics possible after use
+- **User Impact**: Users know their recordings are ephemeral
+
+### Enforcement
+
+**Location**: Pipeline completion handler
+**Timing**: Immediately after successful transcript generation
+
+### Related IDs
+
+- [BR-103](#br-103-audio-deletion-after-processing) - implements
+- [CFD-101](SoT.customer_feedback.md#cfd-101-local-processing-eliminates-privacy-anxiety) - driven-by
+
+---
+
+## BR-103: Audio Deletion After Processing
+
+**ID**: BR-103
+**Category**: Data & Security
+**Status**: Active
+**Severity**: Critical
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Rule Statement
+
+Temporary audio files MUST be securely deleted upon: (a) successful transcript generation, (b) user cancellation of recording, or (c) application quit during recording. The app SHOULD use secure deletion (overwrite) where the OS supports it.
+
+### Rationale
+
+- **Business Driver**: Enforcement mechanism for BR-102
+- **User Impact**: No orphaned audio files on disk
+
+### Enforcement
+
+**Location**: Pipeline manager + app lifecycle handlers
+**Timing**: On pipeline completion, cancellation, or app termination
+
+### Related IDs
+
+- [BR-102](#br-102-no-persistent-audio-storage) - enforces
+- [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - applies during
+
+---
+
+## BR-201: macOS-Only Platform
+
+**ID**: BR-201
+**Category**: Platform & Scope
+**Status**: Active
+**Severity**: High
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Rule Statement
+
+The MVP targets macOS only (macOS 14 Sonoma or later). No cross-platform support is in scope for initial release.
+
+### Rationale
+
+- **Business Driver**: Focus on a single platform to ship faster; Apple Silicon ML capabilities
+- **User Impact**: Only macOS users can use the app
+
+### Related IDs
+
+- [BR-401](#br-401-apple-silicon-required) - related constraint
+- [TECH-001](SoT.TECHNICAL_DECISIONS.md#tech-001-swift-swiftui) - implements
+
+---
+
+## BR-202: English-Only Transcription
+
+**ID**: BR-202
+**Category**: Platform & Scope
+**Status**: Active
+**Severity**: Medium
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Rule Statement
+
+The MVP supports English language transcription only. Multi-language support is a future enhancement.
+
+### Rationale
+
+- **Business Driver**: Reduce scope; English Whisper models are most mature
+- **User Impact**: Non-English meetings are not supported in MVP
+
+### Related IDs
+
+- [FEA-002 in PRD](../PRD.md) - Transcription feature constraint
+
+---
+
+## BR-203: Single-User Local App
+
+**ID**: BR-203
+**Category**: Platform & Scope
+**Status**: Active
+**Severity**: Medium
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Rule Statement
+
+Transcript Shadow is a single-user desktop application. No user accounts, authentication, or multi-user collaboration features are in scope.
+
+### Rationale
+
+- **Business Driver**: Simplicity — no backend, no auth, no user management
+- **User Impact**: App works immediately after install, no sign-up required
+
+### Related IDs
+
+- [ARC-001](SoT.TECHNICAL_DECISIONS.md#arc-001-local-first-pipeline) - architectural constraint
+
+---
+
+## BR-301: Markdown Output Format
+
+**ID**: BR-301
+**Category**: Output & Format
+**Status**: Active
+**Severity**: High
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Rule Statement
+
+All transcripts MUST be output as standard Markdown (.md) files with speaker labels, timestamps, and proper formatting. The format must be human-readable without any special tooling.
+
+### Rationale
+
+- **Business Driver**: Portability — markdown is universal
+- **User Impact**: Transcripts work in any text editor or note-taking app
+
+### Related IDs
+
+- [CFD-004](SoT.customer_feedback.md#cfd-004-notion-recording-lock-in-frustration) - driven-by
+- [FEA-004 in PRD](../PRD.md) - Markdown output feature
+- [BR-302](#br-302-obsidian-vault-compatibility) - enables
+
+---
+
+## BR-302: Obsidian Vault Compatibility
+
+**ID**: BR-302
+**Category**: Output & Format
+**Status**: Active
+**Severity**: High
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Rule Statement
+
+Exported markdown files MUST be compatible with Obsidian vaults: valid frontmatter (YAML), no proprietary syntax, and file naming that works within Obsidian's conventions.
+
+### Rationale
+
+- **Business Driver**: Obsidian is the primary export target
+- **User Impact**: Transcripts appear correctly in Obsidian with metadata
+
+### Related IDs
+
+- [CFD-003](SoT.customer_feedback.md#cfd-003-obsidian-users-want-native-meeting-notes) - driven-by
+- [INT-001](SoT.INTEGRATIONS.md#int-001-obsidian-vault-export) - implements
+- [FEA-005 in PRD](../PRD.md) - Obsidian export feature
+
+---
+
+## BR-401: Apple Silicon Required
+
+**ID**: BR-401
+**Category**: Performance & Limits
+**Status**: Active
+**Severity**: High
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Rule Statement
+
+Transcript Shadow requires Apple Silicon (M1 or later) for acceptable ML inference performance. Intel Macs are not supported.
+
+### Rationale
+
+- **Business Driver**: Whisper and diarization models require Neural Engine / GPU acceleration
+- **User Impact**: Intel Mac users cannot run the app
+
+### Related IDs
+
+- [BR-201](#br-201-macos-only-platform) - related constraint
+- [TECH-002](SoT.TECHNICAL_DECISIONS.md#tech-002-whisper-cpp-transcription) - driven-by
+
+---
+
+## BR-402: Maximum Meeting Duration
+
+**ID**: BR-402
+**Category**: Performance & Limits
+**Status**: Active
+**Severity**: Medium
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Rule Statement
+
+The MVP supports meetings up to 2 hours in duration. Longer recordings MAY work but are not guaranteed. The app SHOULD warn users approaching the limit.
+
+### Rationale
+
+- **Business Driver**: Memory and disk constraints for local processing
+- **User Impact**: Very long meetings may need to be split
+
+### Related IDs
+
+- [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - applies during
+
+---
 
 ## Deprecated Rules
 
-### BR-XXX: {Rule Name} [DEPRECATED]
-
-**Status**: Deprecated (YYYY-MM-DD)
-**Replacement**: [BR-YYY](#br-yyy-rule-name) | None
-**Reason**: {Why deprecated}
-
-<!-- /CUSTOMIZABLE: entries -->
+_No deprecated rules._
 
 ---
 
 ## Cross-Reference Index
 
-**Rules by API**:
+**Rules by Category**:
 
-- API-045 enforces: BR-001, BR-102
+- Data & Security: BR-101, BR-102, BR-103
+- Platform & Scope: BR-201, BR-202, BR-203
+- Output & Format: BR-301, BR-302
+- Performance & Limits: BR-401, BR-402
 
 **Rules by Severity**:
 
-- Critical: BR-001, BR-305
-- High: BR-002, BR-103
+- Critical: BR-101, BR-102, BR-103
+- High: BR-201, BR-301, BR-302, BR-401
+- Medium: BR-202, BR-203, BR-402
 
 ---
 
@@ -111,8 +332,8 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 ### When to Add New BR-XXX IDs
 
 1. **New Business Constraint**: Rule affecting user behavior or system limits
-2. **Pricing Change**: New tier, limit, or entitlement rule
-3. **Compliance Requirement**: Legal/regulatory mandate
+2. **Privacy Requirement**: New data handling or deletion rule
+3. **Platform Constraint**: New scope or compatibility limitation
 
 ### Bidirectional Reference Checklist
 
@@ -122,7 +343,6 @@ When adding a new BR-XXX:
 - [ ] Update SoT.USER_JOURNEYS.md "Business Rules Enforced" section
 - [ ] Update SoT.TESTING.md with validation test
 - [ ] Update EPIC Section 2 "Context & IDs" list
-- [ ] Update SoT.UNIQUE_ID_SYSTEM.md registry if maintained
 
 ---
 
