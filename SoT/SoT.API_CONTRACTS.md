@@ -1,102 +1,339 @@
 ---
 version: 1.0
-purpose: Source of Truth for API endpoint specifications and contracts.
+purpose: Source of Truth for internal API/service contracts for Transcript Shadow.
 id_prefix: API-XXX
-last_updated: YYYY-MM-DD
+last_updated: 2026-03-11
 authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.USER_JOURNEYS.md, SoT.TESTING.md, EPICs, and code
 ---
-<!-- SECTION: template-structure -->
 
 # API Contracts (SoT File)
 
-> **Purpose**: Specifications for all API endpoints and integrations.
+> **Purpose**: Internal service contracts for Transcript Shadow (local app, no HTTP APIs).
 > **ID Prefix**: API-XXX
 > **Status**: Active SoT file
-> **Cross-References**: Referenced by PRD.md, SoT.USER_JOURNEYS.md, SoT.BUSINESS_RULES.md, SoT.TESTING.md, EPICs
+> **Note**: Transcript Shadow is a local macOS app — these are internal Swift service interfaces and the diarization sidecar CLI contract, not HTTP endpoints.
 
 ## Navigation by Category
 
-**Public APIs** (API-001 to API-099):
+**Audio Services** (API-001 to API-099):
 
-- [API-001](#api-001-endpoint-name) - {Endpoint name}
+- [API-001](#api-001-audio-capture-service) - Audio Capture Service
+- [API-002](#api-002-audio-mixer) - Audio Mixer (mic + system)
 
-**Internal APIs** (API-101 to API-199):
+**Transcription Services** (API-101 to API-199):
 
-- [API-101](#api-101-endpoint-name) - {Endpoint name}
+- [API-101](#api-101-transcription-service) - Transcription Service (WhisperKit)
+- [API-102](#api-102-diarization-sidecar-cli) - Diarization Sidecar CLI
 
-**Webhooks** (API-201 to API-299):
+**Output Services** (API-201 to API-299):
 
-- [API-201](#api-201-webhook-name) - {Webhook name}
+- [API-201](#api-201-transcript-formatter) - Transcript Formatter
+- [API-202](#api-202-obsidian-exporter) - Obsidian Exporter
 
 **Background Jobs** (API-301 to API-399):
 
-- [API-301](#api-301-job-name) - {Job name}
+- [API-301](#api-301-temp-audio-cleanup) - Temp Audio Cleanup
 
 ---
 
-## API-001: {Endpoint Name}
+## API-001: Audio Capture Service
 
 **ID**: API-001
-**Category**: Public | Internal | Webhook | Background
-**Status**: Active | Deprecated | Planned
-**Created**: YYYY-MM-DD
-**Last Updated**: YYYY-MM-DD
+**Category**: Internal
+**Status**: Planned
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
 
 ### Specification
 
-**Method**: GET | POST | PUT | PATCH | DELETE
-**Path**: `/api/v1/{resource}/{id}`
-**Auth**: Bearer Token | API Key | None
+**Type**: Swift protocol / service class
+**Interface**: `AudioCaptureService`
 
 ### Purpose
 
-{Brief description of what this endpoint does.}
+Manage microphone and system audio capture, producing a mixed WAV file for downstream processing.
 
-### Request
+### Interface
 
-**Parameters**: {Key parameters with types}
-**Body**: {Key fields for POST/PUT}
-
-### Response
-
-**Success (200)**: `{ success: true, data: {...} }`
-**Errors**: 400, 401, 403, 404, 422, 500
+```swift
+protocol AudioCaptureService {
+    func startCapture(mic: Bool, systemAudio: Bool) async throws
+    func stopCapture() async throws -> URL  // Returns temp WAV file path
+    func audioLevel() -> AsyncStream<Float> // Real-time audio level (0.0-1.0)
+    var isCapturing: Bool { get }
+    var elapsedTime: TimeInterval { get }
+}
+```
 
 ### Related IDs
 
-- [UJ-XXX](SoT.USER_JOURNEYS.md#uj-xxx) - {Journey using this API}
-- [BR-XXX](SoT.BUSINESS_RULES.md#br-xxx) - {Rule enforced}
-- [DBT-XXX](SoT.DATA_MODEL.md#dbt-xxx) - {Table accessed}
-- [INT-XXX](SoT.INTEGRATIONS.md#int-xxx) - {External service called}
-- [TEST-XXX](SoT.TESTING.md#test-xxx) - {Test validating this}
-
-<!-- /SECTION: template-structure -->
+- [TECH-003](SoT.TECHNICAL_DECISIONS.md#tech-003-avaudioengine-audio-capture) - Microphone tech
+- [TECH-004](SoT.TECHNICAL_DECISIONS.md#tech-004-screencapturekit-system-audio) - System audio tech
+- [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - Recording journey
+- [BR-402](SoT.BUSINESS_RULES.md#br-402-maximum-meeting-duration) - Duration limit
 
 ---
-<!-- CUSTOMIZABLE: entries -->
+
+## API-002: Audio Mixer
+
+**ID**: API-002
+**Category**: Internal
+**Status**: Planned
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Specification
+
+**Type**: Swift utility
+**Interface**: `AudioMixer`
+
+### Purpose
+
+Mix microphone and system audio streams into a single WAV file suitable for transcription and diarization.
+
+### Interface
+
+```swift
+struct AudioMixer {
+    static func mix(micBuffer: AVAudioPCMBuffer,
+                    systemBuffer: AVAudioPCMBuffer,
+                    to outputURL: URL) throws
+}
+```
+
+### Related IDs
+
+- [API-001](#api-001-audio-capture-service) - Upstream capture
+- [API-101](#api-101-transcription-service) - Downstream consumer
+
+---
+
+## API-101: Transcription Service
+
+**ID**: API-101
+**Category**: Internal
+**Status**: Planned
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Specification
+
+**Type**: Swift service wrapping WhisperKit
+**Interface**: `TranscriptionService`
+
+### Purpose
+
+Transcribe audio file to text with word-level timestamps using WhisperKit.
+
+### Interface
+
+```swift
+protocol TranscriptionService {
+    func transcribe(audioURL: URL,
+                    model: WhisperModel,
+                    progress: @escaping (Double) -> Void) async throws -> TranscriptionResult
+}
+
+struct TranscriptionResult {
+    let segments: [TranscriptSegment]
+    let language: String
+    let duration: TimeInterval
+}
+
+struct TranscriptSegment {
+    let text: String
+    let start: TimeInterval
+    let end: TimeInterval
+    let words: [WordTimestamp]?
+}
+```
+
+### Related IDs
+
+- [TECH-002](SoT.TECHNICAL_DECISIONS.md#tech-002-whisperkit-transcription) - WhisperKit
+- [ARC-001](SoT.TECHNICAL_DECISIONS.md#arc-001-local-first-pipeline) - Pipeline stage
+- [BR-101](SoT.BUSINESS_RULES.md#br-101-local-only-processing) - Local only
+
+---
+
+## API-102: Diarization Sidecar CLI
+
+**ID**: API-102
+**Category**: Internal (subprocess)
+**Status**: Planned
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Specification
+
+**Type**: CLI executable (PyInstaller-bundled Python)
+**Binary**: `TranscriptShadow.app/Contents/Resources/diarize`
+
+### Purpose
+
+Identify speaker segments in audio using pyannote-audio. Called as a subprocess by the Swift app.
+
+### Interface
+
+**Invocation**:
+```bash
+./diarize --audio /path/to/audio.wav --output /path/to/speakers.json [--num-speakers N]
+```
+
+**Output** (`speakers.json`):
+```json
+{
+  "speakers": [
+    {"speaker": "SPEAKER_00", "start": 0.5, "end": 12.3},
+    {"speaker": "SPEAKER_01", "start": 12.5, "end": 25.1}
+  ],
+  "num_speakers": 2
+}
+```
+
+**Exit Codes**: 0 = success, 1 = error (stderr contains message)
+
+**Progress**: Writes progress percentage to stdout (e.g., `PROGRESS:45`)
+
+### Related IDs
+
+- [TECH-006](SoT.TECHNICAL_DECISIONS.md#tech-006-pyannote-audio-diarization) - pyannote
+- [ARC-002](SoT.TECHNICAL_DECISIONS.md#arc-002-python-sidecar-for-diarization) - Sidecar architecture
+- [FEA-003 in PRD](../PRD.md) - Diarization feature
+
+---
+
+## API-201: Transcript Formatter
+
+**ID**: API-201
+**Category**: Internal
+**Status**: Planned
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Specification
+
+**Type**: Swift service
+**Interface**: `TranscriptFormatter`
+
+### Purpose
+
+Merge transcription results with diarization speaker segments. Produce formatted markdown with speaker labels and timestamps.
+
+### Interface
+
+```swift
+protocol TranscriptFormatter {
+    func format(transcription: TranscriptionResult,
+                diarization: DiarizationResult,
+                speakerNames: [String: String]?) -> FormattedTranscript
+}
+
+struct FormattedTranscript {
+    let markdown: String
+    let metadata: TranscriptMetadata
+    let speakerMap: [String: String]  // SPEAKER_00 → "Alice"
+}
+```
+
+### Related IDs
+
+- [API-101](#api-101-transcription-service) - Upstream transcription
+- [API-102](#api-102-diarization-sidecar-cli) - Upstream diarization
+- [BR-301](SoT.BUSINESS_RULES.md#br-301-markdown-output-format) - Markdown format
+
+---
+
+## API-202: Obsidian Exporter
+
+**ID**: API-202
+**Category**: Internal
+**Status**: Planned
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Specification
+
+**Type**: Swift service
+**Interface**: `ObsidianExporter`
+
+### Purpose
+
+Write formatted transcript to Obsidian vault directory with proper frontmatter and file naming.
+
+### Interface
+
+```swift
+protocol ObsidianExporter {
+    func export(transcript: FormattedTranscript,
+                vaultPath: URL,
+                subfolder: String?) throws -> URL  // Returns written file path
+}
+```
+
+### Related IDs
+
+- [INT-001](SoT.INTEGRATIONS.md#int-001-obsidian-vault-export) - Obsidian integration
+- [BR-302](SoT.BUSINESS_RULES.md#br-302-obsidian-vault-compatibility) - Compatibility rules
+- [UJ-002](SoT.USER_JOURNEYS.md#uj-002-review-and-export-transcript) - Export journey
+
+---
+
+## API-301: Temp Audio Cleanup
+
+**ID**: API-301
+**Category**: Background
+**Status**: Planned
+**Created**: 2026-03-11
+**Last Updated**: 2026-03-11
+
+### Specification
+
+**Type**: Swift background job
+**Interface**: `TempAudioCleanup`
+
+### Purpose
+
+Ensure temporary audio files are deleted after processing completes, on cancellation, app quit, or crash recovery.
+
+### Interface
+
+```swift
+struct TempAudioCleanup {
+    static func cleanupAfterProcessing(audioURL: URL) throws
+    static func cleanupOnCancel(audioURL: URL) throws
+    static func cleanupOrphanedFiles() throws  // Called on app launch
+}
+```
+
+### Related IDs
+
+- [BR-102](SoT.BUSINESS_RULES.md#br-102-no-persistent-audio-storage) - No persistent audio
+- [BR-103](SoT.BUSINESS_RULES.md#br-103-audio-deletion-after-processing) - Deletion rules
+- [ARC-003](SoT.TECHNICAL_DECISIONS.md#arc-003-temporary-audio-lifecycle) - Lifecycle architecture
+
+---
 
 ## Deprecated Endpoints
 
-### API-XXX: {Name} [DEPRECATED]
-
-**Status**: Deprecated (YYYY-MM-DD)
-**Replacement**: [API-YYY](#api-yyy-name) | None
-**Sunset Date**: YYYY-MM-DD
-**Reason**: {Why deprecated}
-
-<!-- /CUSTOMIZABLE: entries -->
+_No deprecated endpoints._
 
 ---
 
 ## Cross-Reference Index
 
-**Endpoints by Journey**:
+**Services by Journey**:
 
-- UJ-001 calls: API-001, API-002
+- UJ-001 calls: API-001, API-002, API-101, API-102, API-201, API-301
+- UJ-002 calls: API-202
+- UJ-003 configures: API-001, API-202
 
-**Endpoints by Business Rule**:
+**Services by Pipeline Stage**:
 
-- BR-001 enforced by: API-001
+- Capture: API-001, API-002
+- Process: API-101, API-102
+- Output: API-201, API-202
+- Cleanup: API-301
 
 ---
 
@@ -104,9 +341,9 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.USER_JOUR
 
 ### When to Add New API-XXX IDs
 
-1. **New Endpoint**: Public or internal API endpoint
-2. **Webhook**: Incoming webhook handler
-3. **Background Job**: Scheduled or queued task
+1. **New Service**: Internal service interface
+2. **New Sidecar Command**: CLI contract for subprocess
+3. **New Background Job**: Scheduled or triggered task
 
 ### Bidirectional Reference Checklist
 
@@ -114,9 +351,8 @@ When adding a new API-XXX:
 
 - [ ] Update SoT.USER_JOURNEYS.md "APIs Used" section
 - [ ] Update SoT.BUSINESS_RULES.md if rule is enforced
-- [ ] Update SoT.TESTING.md with endpoint tests
+- [ ] Update SoT.TESTING.md with service tests
 - [ ] Update EPIC Section 2 "Context & IDs" list
-- [ ] Update SoT.UNIQUE_ID_SYSTEM.md registry if maintained
 
 ---
 
