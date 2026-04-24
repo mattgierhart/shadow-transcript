@@ -27,6 +27,11 @@ authority: This is a SoT file - IDs here are referenced by SoT.USER_JOURNEYS.md,
 - [DES-101](#des-101-speaker-label) - Speaker Label
 - [DES-102](#des-102-progress-pipeline) - Progress Pipeline
 
+**Ambient / HUD Surfaces** (DES-201 to DES-299):
+
+- [DES-201](#des-201-recording-hud-notch) - Recording HUD — Notch
+- [DES-202](#des-202-recording-hud-menu-bar-extra) - Recording HUD — Menu Bar Extra
+
 **Design Tokens** (DES-301 to DES-399):
 
 - [DES-301](#des-301-color-system) - Color System
@@ -40,23 +45,26 @@ authority: This is a SoT file - IDs here are referenced by SoT.USER_JOURNEYS.md,
 **Status**: Planned
 **Platform**: macOS
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-04-24
 
 ### Description
 
-Primary action button for starting/stopping audio recording. Large, centered, with clear state changes. Inspired by ElevenLabs UI audio controls — minimal, dark theme, high contrast accent.
+Primary action button to **start** a recording. Lives only on SCR-001 (Main Window). Large, centered, with clear state changes. Inspired by ElevenLabs UI audio controls — minimal, dark theme, high contrast accent.
+
+> **Note**: Stopping a recording happens from the Recording HUD (DES-201 / DES-202), **not** from this button. Once recording starts the main window hides (BR-501), so this component is never shown in a "stop" state.
 
 ### Specifications
 
-**Dimensions**: 64px circular (idle), 56px rounded-square (recording)
-**Variants**: Idle (red circle), Recording (red square, pulsing), Disabled (gray)
-**States**: idle → recording → processing (transitions to progress view)
+**Dimensions**: 64px circular
+**Variants**: Idle (red circle), Disabled (gray — missing permissions or vault path)
+**States**: idle → (on click: initiates recording, main window dismisses) → idle (on next app open)
 
 ### Related IDs
 
-- [SCR-001](SoT.USER_JOURNEYS.md#scr-001-main-window) - Main window placement
-- [SCR-002](SoT.USER_JOURNEYS.md#scr-002-recording-view) - Recording state
-- [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - Step 3
+- [SCR-001](SoT.USER_JOURNEYS.md#scr-001-main-window) - Only surface this component appears on
+- [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - Step 3 (Start Recording)
+- [DES-201](#des-201-recording-hud-notch) / [DES-202](#des-202-recording-hud-menu-bar-extra) - Own the Stop affordance
+- [BR-501](SoT.BUSINESS_RULES.md#br-501-minimal-recording-ui) - Reason the stop state is not here
 
 ---
 
@@ -64,25 +72,25 @@ Primary action button for starting/stopping audio recording. Large, centered, wi
 
 **ID**: DES-002
 **Category**: Core
-**Status**: Planned
+**Status**: Planned (deferred to post-MVP)
 **Platform**: macOS
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-04-24
 
 ### Description
 
-Real-time audio waveform or level meter showing input volume during recording. Provides visual confirmation that audio is being captured.
+Real-time audio waveform or level meter for pre-record source verification on SCR-001 (e.g., "tap to test mic"). **Not used on the Recording HUD** — per BR-501, the recording surface shows only a recording indicator and Stop.
 
 ### Specifications
 
 **Dimensions**: Full-width, 48px height
 **Variants**: Waveform (animated bars), Simple (single level bar)
-**States**: Active (during recording), Silent (no input detected — warning color)
+**States**: Active (during pre-record preview), Silent (no input detected — warning color)
 
 ### Related IDs
 
-- [SCR-002](SoT.USER_JOURNEYS.md#scr-002-recording-view) - Recording view
-- [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - Step 4
+- [SCR-001](SoT.USER_JOURNEYS.md#scr-001-main-window) - Pre-record source verification (if shipped)
+- [BR-501](SoT.BUSINESS_RULES.md#br-501-minimal-recording-ui) - Excluded from Recording HUD
 
 ---
 
@@ -165,6 +173,109 @@ Multi-stage progress indicator showing pipeline stages: Transcribing → Diarizi
 
 ---
 
+## DES-201: Recording HUD — Notch
+
+**ID**: DES-201
+**Category**: Ambient / HUD
+**Status**: Planned
+**Platform**: macOS (notch-equipped MacBook Pro — 14" and 16", M1 Pro/Max and later)
+**Created**: 2026-04-24
+**Last Updated**: 2026-04-24
+
+### Description
+
+Primary recording surface on notch-equipped Macs. Treats the hardware display notch as an ambient HUD, similar in spirit to iOS Dynamic Island but constrained to this app's recording state. Stays out of the user's way while they run a meeting in another app; surfaces a single action — Stop — on demand.
+
+### Specifications
+
+**Mount**: Borderless, always-on-top panel (NSPanel with `.hud` style mask, `.statusBar + 1` level) positioned flush with the physical notch on the active screen.
+
+**Collapsed (resting)**
+- Dimensions: ~180 × 32 px, hugging notch geometry
+- Content: solid black background matching the bezel (blends with notch), a pulsing red dot (recording indicator), and a compact "● REC" label
+- No timer, waveform, or controls visible
+
+**Expanded (on hover / click)**
+- Dimensions: ~260 × 64 px, drops below the notch
+- Content: recording indicator + Stop button (pill, red fill, white glyph). Optional secondary text "Recording… tap Stop when done."
+- Expansion is a spring-animated transition (~180ms)
+- Collapses on pointer-leave after a 600ms delay, or immediately after Stop
+
+**States**: Appearing, Collapsed, Expanded, Dismissing, Error
+**Variants**: None — this is a single, opinionated surface.
+
+### Interaction
+
+- Hover → expand
+- Click on collapsed surface → also expands (for trackpad users who don't hover)
+- Click Stop → triggers recording stop; HUD dismisses; main window restores into SCR-003
+- Right-click → reveals tiny context menu: "Open Transcript Shadow", "Cancel recording (discard audio)"
+
+### Constraints & Fallbacks
+
+- **Required hardware**: Notch-equipped MacBook Pro with the app's window currently on that display's screen. If the user moves focus to an external display mid-recording, the HUD remains on the notch display (does not follow the cursor).
+- **If notch is not present on the active screen**: auto-swap to DES-202 (Menu Bar Extra).
+- **Menu bar hidden** (fullscreen meeting apps on the notch display): HUD remains visible — it is layered above the menu bar, so fullscreen apps do not cover it by default. Revisit this during implementation (may need display-link tricks).
+
+### Related IDs
+
+- [SCR-002](SoT.USER_JOURNEYS.md#scr-002-recording-hud) - Primary surface
+- [DES-202](#des-202-recording-hud-menu-bar-extra) - Fallback realization
+- [DES-301](#des-301-color-system) - Uses accent red
+- [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - Steps 3–5
+- [BR-501](SoT.BUSINESS_RULES.md#br-501-minimal-recording-ui) - Enforces single-action constraint
+- [RISK-007 in PRD](../PRD.md) - Hardware fragmentation risk
+
+---
+
+## DES-202: Recording HUD — Menu Bar Extra
+
+**ID**: DES-202
+**Category**: Ambient / HUD
+**Status**: Planned
+**Platform**: macOS (all — fallback for non-notch Macs, plus explicit opt-in)
+**Created**: 2026-04-24
+**Last Updated**: 2026-04-24
+
+### Description
+
+Fallback recording surface for Macs without a visible notch (MacBook Air, Intel MBP, iMac, Mac mini/Studio on any display, or any Mac with the app on an external display). An NSStatusItem in the system menu bar, with a compact popover that exposes Stop.
+
+### Specifications
+
+**Status Item (menu bar icon)**
+- Template icon: a red-filled circle (8px) overlaid on a monochrome app glyph, pulsing ~1Hz while recording
+- States: Recording (pulsing red dot), Idle (hidden — the status item only exists during a recording session)
+
+**Popover (on click)**
+- Dimensions: 240 × 96 px, standard NSPopover with arrow anchored to status item
+- Content (single column, centered): "Recording" label + Stop button (pill, red fill). Optional elapsed-time text is **not** shown (BR-501).
+- Dismissal: click Stop, click outside popover, or press Escape
+
+**States**: Recording (pulsing), Popover-open, Error
+**Variants**: None.
+
+### Interaction
+
+- Click status item → popover opens with Stop
+- Click Stop → recording stops; status item removed from menu bar; main window restores into SCR-003
+- Right-click status item → context menu: "Open Transcript Shadow", "Cancel recording (discard audio)"
+
+### Constraints & Fallbacks
+
+- Works on every Mac macOS 14+ supports. No hardware prerequisites beyond BR-401.
+- Persists across Spaces and fullscreen apps (standard macOS menu bar behavior).
+
+### Related IDs
+
+- [SCR-002](SoT.USER_JOURNEYS.md#scr-002-recording-hud) - Primary surface
+- [DES-201](#des-201-recording-hud-notch) - Preferred realization when available
+- [DES-301](#des-301-color-system) - Uses accent red
+- [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - Steps 3–5
+- [BR-501](SoT.BUSINESS_RULES.md#br-501-minimal-recording-ui) - Enforces single-action constraint
+
+---
+
 ## DES-301: Color System
 
 **ID**: DES-301
@@ -202,15 +313,15 @@ _No deprecated components._
 
 **Components by Screen**:
 
-- SCR-001 uses: DES-001
-- SCR-002 uses: DES-001, DES-002
+- SCR-001 uses: DES-001, DES-002 (optional pre-record preview)
+- SCR-002 uses: DES-201 (notch primary) or DES-202 (menu bar fallback)
 - SCR-003 uses: DES-102
 - SCR-004 uses: DES-003, DES-101
 
 **Components by Journey**:
 
-- UJ-001 uses: DES-001, DES-002, DES-102
-- UJ-002 uses: DES-003, DES-101
+- UJ-001 uses: DES-001, DES-201 / DES-202, DES-102
+- UJ-002 uses: DES-003, DES-101, DES-301 (speaker palette)
 
 ---
 
