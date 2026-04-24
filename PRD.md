@@ -21,13 +21,13 @@ template_version: "3.0.0"
 
 | Field                      | Value                              |
 | -------------------------- | ---------------------------------- |
-| **Current Lifecycle Gate** | v0.6                               |
-| **Last Updated**           | 2026-03-11                         |
+| **Current Lifecycle Gate** | v0.7                               |
+| **Last Updated**           | 2026-03-20                         |
 | **Last Editor**            | Claude Agent                       |
-| **Status**                 | Discovery                          |
-| **Next Target Gate**       | v0.7                               |
-| **Related EPIC**           | None (pre-v0.7)                    |
-| **SoT Snapshot**           | CFD-001→004, CFD-101→103, BR-101→103, BR-201→203, BR-301→302, BR-401→402, PER-001→002, UJ-001→003, SCR-001→006, DES-001→003, DES-101→102, DES-301, TECH-001→007, ARC-001→003, INT-001, INT-101, INT-201→202, API-001→002, API-101→102, API-201→202, API-301, DBT-001→003, DBT-101 |
+| **Status**                 | Build Execution                    |
+| **Next Target Gate**       | v0.8                               |
+| **Related EPIC**           | EPIC-01 through EPIC-08            |
+| **SoT Snapshot**           | CFD-001→004, CFD-101→103, BR-101→103, BR-201→203, BR-301→302, BR-401→402, PER-001→002, UJ-001→003, SCR-001→006, DES-001→005, DES-101→104, DES-201→203, DES-301→305, TECH-001→007, ARC-001→003, INT-001, INT-101, INT-201→202, API-001→002, API-101→102, API-201→202, API-301, DBT-001→003, DBT-101, TEST-001→005, TEST-101→104, TEST-201→204, TEST-301→303, TEST-401→405, TEST-501→504 |
 
 ## Lifecycle Change Log
 
@@ -37,8 +37,12 @@ template_version: "3.0.0"
 | v0.2 Market Definition | 2026-03-11 | Claude Agent | ICP + segments defined               | BR-201→203          |
 | v0.3 Commercial Model  | 2026-03-11 | Claude Agent | Features + outcomes (pricing skipped) | FEA-001→006, KPI-001→003 |
 | v0.4 User Journeys     | 2026-03-11 | Claude Agent | Personas, journeys, screens mapped   | PER-001→002, UJ-001→003, SCR-001→006, DES-001→003, DES-101→102 |
+| v0.4 Design Interview  | 2026-03-20 | Claude Agent | Visual identity, design tokens, layout principles | DES-004→005, DES-103→104, DES-201→203, DES-301→305 |
+| v0.4 Screen Flow Enrich | 2026-03-20 | Claude Agent | SCR/UJ enriched: navigation, features, actions, density, constraints | SCR-001→006 (v2), UJ-001→003 (v2), PER-001→002 (v2) |
+| v0.4 Visual Prototype  | 2026-03-20 | Claude Agent | Stitch prompts for all 6 screens, money shot identified | temp/visual-prototype-gate.md |
 | v0.5 Red Team Review   | 2026-03-11 | Claude Agent | Risks + tech stack selected          | RISK-001→006, TECH-001→007 |
 | v0.6 Architecture      | 2026-03-11 | Claude Agent | Architecture, APIs, data model       | ARC-001→003, API-001→301, DBT-001→101, INT-001→202 |
+| v0.7 Build Execution   | 2026-03-20 | Claude Agent | EPIC backlog, test cases, deployment target resolved | EPIC-01→08, TEST-001→504 |
 
 ---
 
@@ -210,6 +214,13 @@ Privacy-conscious macOS users who use Obsidian as their knowledge base need a lo
 - Design Reference: [ElevenLabs UI](https://ui.elevenlabs.io/docs/) — dark, minimal, audio-centric aesthetic
 - SoT: `SoT/SoT.USER_JOURNEYS.md`, `SoT/SoT.DESIGN_COMPONENTS.md`
 
+### Visual Identity Direction
+
+**Aesthetic**: Minimal, living, listening
+**Inspiration**: ElevenLabs UI (dark, audio-centric controls), Obsidian (sidebar+content layout, markdown-native)
+**Mode**: Dark only
+**Personality**: A quiet, attentive tool that feels alive when listening but never demands attention. Spacious and ambient during recording (peripheral-friendly), dense and focused during transcript review. Native macOS feel — not a web app port.
+
 **Outstanding Work → v0.5**
 
 - ~~Identify risks and select tech stack~~ → Done in v0.5
@@ -362,7 +373,41 @@ Full details: `SoT/SoT.INTEGRATIONS.md`
 
 ## v0.7 Build Execution — Plan for Delivery
 
-_Not yet started. Pending v0.7 gate entry._
+**Deployment Target Decision**: macOS 15+ (Sequoia). Rationale: Unified ScreenCaptureKit path for both mic and system audio capture simplifies the code significantly. AVAudioEngine mic-only fallback on macOS 14 added marginal complexity for a shrinking user base. RISK-002 status remains "accepted" — macOS 15+ is the floor.
+
+**Test Strategy**: 24 test cases defined in `SoT/SoT.TESTING.md` covering all 7 API contracts, critical business rules, and privacy guarantees. 13 are P0 (critical), 11 are P1. See TEST-001→504.
+
+**EPIC Backlog (8 EPICs)**
+
+| EPIC | Name | Depends On | Key IDs | Priority |
+|------|------|------------|---------|----------|
+| EPIC-01 | Project Scaffolding & Dev Environment | — | ENV-001, TECH-001, TECH-002, TECH-006, TECH-007 | P0 (foundation) |
+| EPIC-02 | Audio Capture Engine | EPIC-01 | API-001, API-002, FEA-001, INT-201, INT-202 | P0 |
+| EPIC-03 | Transcription Pipeline | EPIC-01 | API-101, FEA-002, INT-101, TECH-002 | P0 |
+| EPIC-04 | Speaker Diarization Sidecar | EPIC-01 | API-102, FEA-003, ARC-002, TECH-006 | P0 (highest risk) |
+| EPIC-05 | Transcript Formatting & Alignment | EPIC-03, EPIC-04 | API-201, FEA-004, BR-301, RISK-005 | P0 |
+| EPIC-06 | Storage & Obsidian Export | EPIC-01, EPIC-05 | API-202, DBT-001→101, FEA-005, FEA-006, INT-001 | P0 |
+| EPIC-07 | SwiftUI Interface | EPIC-02, EPIC-05, EPIC-06 | SCR-001→006, DES-XXX, UJ-001→003 | P1 |
+| EPIC-08 | Pipeline Integration & Audio Lifecycle | EPIC-02→07 | API-301, ARC-001, ARC-003, BR-101→103 | P0 (E2E validation) |
+
+**Execution Order (Parallelism)**
+
+```
+EPIC-01 (scaffolding)
+   ├→ EPIC-02 (audio)    ──┐
+   ├→ EPIC-03 (transcribe) ─┼→ EPIC-05 (format) → EPIC-06 (storage/export) ─┐
+   └→ EPIC-04 (diarize)  ──┘                                                 ├→ EPIC-08 (integration)
+                                                              EPIC-07 (UI) ──┘
+```
+
+EPICs 02, 03, 04 can run in parallel after EPIC-01. EPIC-05 merges transcription + diarization outputs. EPIC-07 can start with mock data early. EPIC-08 is the integration and validation capstone.
+
+**Outstanding Work → v0.8**
+
+- Package app as `.dmg` for distribution
+- Define deployment config (DEP-XXX), monitoring (MON-XXX), runbooks (RUN-XXX)
+- Code signing and notarization
+- First-launch model download UX
 
 ---
 
