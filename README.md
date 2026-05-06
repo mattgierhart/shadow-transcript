@@ -6,7 +6,7 @@ template_version: "3.0.0"
 
 > **Status**: Active
 > **Current PRD Version**: v0.7 (See `PRD.md`)
-> **Active EPIC**: EPIC-02 — Audio Capture Engine (next up; EPIC-01 complete) (See `epics/`)
+> **Active EPIC**: EPIC-03 — Transcription Pipeline (next up; EPIC-01 + EPIC-02 complete) (See `epics/`)
 
 ---
 
@@ -60,8 +60,8 @@ template_version: "3.0.0"
 | EPIC | Name | State | Depends On |
 |------|------|-------|------------|
 | EPIC-01 | Project Scaffolding & Dev Environment | ✅ Complete | — |
-| EPIC-02 | Audio Capture Engine | Active | EPIC-01 |
-| EPIC-03 | Transcription Pipeline | Planned | EPIC-01 |
+| EPIC-02 | Audio Capture Engine | ✅ Complete | EPIC-01 |
+| EPIC-03 | Transcription Pipeline | Active | EPIC-01 |
 | EPIC-04 | Speaker Diarization Sidecar | Planned | EPIC-01 |
 | EPIC-05 | Transcript Formatting & Alignment | Planned | EPIC-03, EPIC-04 |
 | EPIC-06 | Storage & Obsidian Export | Planned | EPIC-01, EPIC-05 |

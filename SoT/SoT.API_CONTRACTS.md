@@ -40,14 +40,14 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.USER_JOUR
 
 **ID**: API-001
 **Category**: Internal
-**Status**: Planned
+**Status**: Implemented (EPIC-02, 2026-05-06)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-06
 
 ### Specification
 
-**Type**: Swift protocol / service class
-**Interface**: `AudioCaptureService`
+**Type**: Swift protocol + actor
+**Interface**: `AudioCaptureService` (protocol) + `DefaultAudioCaptureService` (actor)
 
 ### Purpose
 
@@ -56,14 +56,35 @@ Manage microphone and system audio capture, producing a mixed WAV file for downs
 ### Interface
 
 ```swift
-protocol AudioCaptureService {
-    func startCapture(mic: Bool, systemAudio: Bool) async throws
-    func stopCapture() async throws -> URL  // Returns temp WAV file path
-    func audioLevel() -> AsyncStream<Float> // Real-time audio level (0.0-1.0)
-    var isCapturing: Bool { get }
-    var elapsedTime: TimeInterval { get }
+public protocol AudioCaptureService: Sendable {
+    func startCapture(configuration: AudioCaptureConfiguration) async throws
+    @discardableResult
+    func stopCapture() async throws -> URL
+    func audioLevels() -> AsyncStream<Float>          // 0.0–1.0, ~10 Hz
+    func milestones() -> AsyncStream<AudioCaptureMilestone>
+    var isCapturing: Bool { get async }
+    var elapsedTime: TimeInterval { get async }
+}
+
+public struct AudioCaptureConfiguration: Sendable, Equatable {
+    public var captureMicrophone: Bool        // default true
+    public var captureSystemAudio: Bool       // default true
+    public var maximumDuration: TimeInterval  // default 7200 (BR-402)
+    public var warningDuration: TimeInterval  // default 6600
+    public var sampleRate: Double             // default 48_000
+    public var channelCount: Int              // default 1
+}
+
+public enum AudioCaptureMilestone: Sendable, Equatable {
+    case durationWarningReached
+    case durationLimitReached
+    case systemAudioFellBackToMicOnly(reason: String)
 }
 ```
+
+### Notes vs. Original Sketch
+
+The original v0.6 sketch took `(mic: Bool, systemAudio: Bool)` parameters and exposed a single `audioLevel()` stream. The implemented signature wraps both into `AudioCaptureConfiguration` (extensible without breaking callers) and adds a `milestones()` stream so the UI can react to BR-402 warnings/limits and to system-audio fallback events without polling.
 
 ### Related IDs
 
@@ -78,9 +99,9 @@ protocol AudioCaptureService {
 
 **ID**: API-002
 **Category**: Internal
-**Status**: Planned
+**Status**: Implemented (EPIC-02, 2026-05-06)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-06
 
 ### Specification
 
@@ -94,12 +115,17 @@ Mix microphone and system audio streams into a single WAV file suitable for tran
 ### Interface
 
 ```swift
-struct AudioMixer {
-    static func mix(micBuffer: AVAudioPCMBuffer,
-                    systemBuffer: AVAudioPCMBuffer,
-                    to outputURL: URL) throws
+public enum AudioMixer {
+    public static func mix(
+        microphoneBuffer micBuffer: AVAudioPCMBuffer,
+        systemBuffer: AVAudioPCMBuffer,
+        sampleRate: Double = 48_000,
+        to outputURL: URL
+    ) throws
 }
 ```
+
+The mixer downmixes both inputs to mono and sums them with 0.5 attenuation per source so the result stays inside `[-1, 1]` without hard clipping. Output file format: 32-bit float, mono, 48 kHz, RIFF WAV. (SoT did not lock these values; they were chosen because WhisperKit ingests this format with no resampling.)
 
 ### Related IDs
 
