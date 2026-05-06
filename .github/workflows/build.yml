@@ -1,0 +1,98 @@
+# @implements ENV-001
+# Minimal build CI for Transcript Shadow.
+# - Generates Xcode project from project.yml via xcodegen
+# - Builds the macOS app target (Apple Silicon)
+# - Smoke-tests the Python sidecar's argparse stub
+#
+# Full PyInstaller bundle build is intentionally out of scope here — that's
+# multi-GB and only runs at release time. See sidecar/README.md.
+
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos-app:
+    name: Xcode build (macOS app)
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Show Xcode + Swift versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Cache SwiftPM packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/org.swift.swiftpm
+            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
+          key: spm-${{ runner.os }}-${{ hashFiles('project.yml') }}
+          restore-keys: |
+            spm-${{ runner.os }}-
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Resolve packages
+        run: |
+          xcodebuild -scheme TranscriptShadow \
+            -destination 'platform=macOS,arch=arm64' \
+            -resolvePackageDependencies
+
+      - name: Build
+        run: |
+          xcodebuild -scheme TranscriptShadow \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath build/DerivedData \
+            build | xcbeautify --renderer github-actions || exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: Test
+        run: |
+          xcodebuild -scheme TranscriptShadow \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath build/DerivedData \
+            test | xcbeautify --renderer github-actions || exit ${PIPESTATUS[0]}
+        shell: bash
+
+  python-sidecar:
+    name: Python sidecar smoke
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: sidecar/requirements.txt
+
+      - name: Install requirements
+        working-directory: sidecar
+        run: pip install -r requirements.txt
+
+      - name: Stub argparse smoke test
+        working-directory: sidecar
+        run: |
+          python diarize.py --help
+          python diarize.py --audio /tmp/example.wav --output /tmp/example.json
+          test -s /tmp/example.json
+          python -c "import json; d = json.load(open('/tmp/example.json')); assert d.get('stub') is True"
