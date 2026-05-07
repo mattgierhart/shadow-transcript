@@ -19,8 +19,13 @@ public final class AudioFileWriter: @unchecked Sendable {
 
         let directory = url.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        // Refuse to silently overwrite an existing file. Callers (the orchestrator)
+        // generate unique URLs via `AudioCaptureLocations.newRecordingURL`; if the
+        // file already exists at this point something else owns it (RISK-006).
         if FileManager.default.fileExists(atPath: url.path) {
-            try FileManager.default.removeItem(at: url)
+            throw AudioCaptureError.audioFileWriteFailed(
+                reason: "Refusing to overwrite existing file at \(url.lastPathComponent)."
+            )
         }
 
         do {
@@ -36,29 +41,30 @@ public final class AudioFileWriter: @unchecked Sendable {
     }
 
     public func write(buffer: AVAudioPCMBuffer) throws {
-        let toWrite: AVAudioPCMBuffer = try lock.withLock {
+        // Single critical section: validate, possibly convert, write, and bump
+        // the frame counter atomically. Splitting these across multiple
+        // `withLock` calls let `finish()` race in between and silently drop
+        // audio while still incrementing `totalFrames`.
+        try lock.withLock {
             guard !finished, let file else {
                 throw AudioCaptureError.audioFileWriteFailed(reason: "Writer is not open.")
             }
             let target = file.processingFormat
+            let toWrite: AVAudioPCMBuffer
             if buffer.format.isEquivalent(to: target) {
-                return buffer
-            }
-            guard let converted = AudioBufferConverter.convert(buffer, to: target) else {
+                toWrite = buffer
+            } else if let converted = AudioBufferConverter.convert(buffer, to: target) {
+                toWrite = converted
+            } else {
                 throw AudioCaptureError.audioFileWriteFailed(reason: "Could not convert buffer to writer format.")
             }
-            return converted
+            do {
+                try file.write(from: toWrite)
+            } catch {
+                throw AudioCaptureError.audioFileWriteFailed(reason: error.localizedDescription)
+            }
+            totalFrames += AVAudioFramePosition(toWrite.frameLength)
         }
-
-        let frames = AVAudioFramePosition(toWrite.frameLength)
-        do {
-            try lock.withLock { try file?.write(from: toWrite) }
-        } catch let error as AudioCaptureError {
-            throw error
-        } catch {
-            throw AudioCaptureError.audioFileWriteFailed(reason: error.localizedDescription)
-        }
-        lock.withLock { totalFrames += frames }
     }
 
     public func finish() throws {

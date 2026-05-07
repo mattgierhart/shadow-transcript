@@ -5,9 +5,9 @@ import Foundation
 /// Orchestrates microphone + system-audio capture. Each active source writes
 /// to its own per-session WAV in real time so concurrent buffers don't trample
 /// each other; on stop the two source files are mixed into one mono WAV via
-/// `AudioMixer.mixFiles`. Exposes an audio-level stream for UI and enforces
-/// the BR-402 duration limit. Sources + clock are injectable so tests run
-/// without hardware.
+/// `AudioMixer.mixFiles`. Exposes audio levels and lifecycle milestones to UI
+/// consumers and enforces the BR-402 duration limit. Sources + clock are
+/// injectable so tests run without hardware.
 public actor DefaultAudioCaptureService: AudioCaptureService {
 
     private let microphoneSource: MicrophoneSource
@@ -18,9 +18,15 @@ public actor DefaultAudioCaptureService: AudioCaptureService {
     private var session: ActiveSession?
     private var isStarting = false
 
-    private var levelObservers: [AsyncStream<Float>.Continuation] = []
-    private let milestoneStream: AsyncStream<AudioCaptureMilestone>
-    private let milestoneContinuation: AsyncStream<AudioCaptureMilestone>.Continuation
+    /// Synchronous broadcast bus for `milestones()`. Registration is sync
+    /// (lock-protected) so subscribers established right before `startCapture`
+    /// can never miss the early `.systemAudioFellBackToMicOnly` event.
+    private let milestoneBus = MilestoneBus()
+
+    /// Synchronous broadcast bus for `audioLevels()`. Subscribers are finished
+    /// at the end of every capture so the protocol contract
+    /// "terminates when the active capture ends" holds.
+    private let levelBus = LevelBus()
 
     public init(
         microphoneSource: MicrophoneSource = AVAudioEngineMicrophoneSource(),
@@ -36,10 +42,6 @@ public actor DefaultAudioCaptureService: AudioCaptureService {
         #endif
         self.clock = clock
         self.fileManager = fileManager
-
-        var milestoneCont: AsyncStream<AudioCaptureMilestone>.Continuation!
-        self.milestoneStream = AsyncStream(bufferingPolicy: .unbounded) { milestoneCont = $0 }
-        self.milestoneContinuation = milestoneCont
     }
 
     // MARK: AudioCaptureService
@@ -75,13 +77,14 @@ public actor DefaultAudioCaptureService: AudioCaptureService {
             systemWriter = try AudioFileWriter(url: outputURL, format: format)
         }
 
+        let levelBus = self.levelBus
         let micConsumer: AudioBufferConsumer = { [weak self] envelope in
             guard let self, let writer = micWriter else { return }
-            self.handleBuffer(envelope.buffer, writer: writer, levelGate: levelGate)
+            self.handleBuffer(envelope.buffer, writer: writer, levelGate: levelGate, levelBus: levelBus)
         }
         let systemConsumer: AudioBufferConsumer = { [weak self] envelope in
             guard let self, let writer = systemWriter else { return }
-            self.handleBuffer(envelope.buffer, writer: writer, levelGate: levelGate)
+            self.handleBuffer(envelope.buffer, writer: writer, levelGate: levelGate, levelBus: levelBus)
         }
 
         var startedMicrophone = false
@@ -102,12 +105,11 @@ public actor DefaultAudioCaptureService: AudioCaptureService {
                 try await systemAudioSource.start(configuration: configuration, consume: systemConsumer)
                 startedSystemAudio = true
             } catch AudioCaptureError.screenRecordingPermissionDenied where startedMicrophone {
-                // Discard the unused system writer; mic-only proceeds.
                 if let systemWriter {
                     try? systemWriter.finish()
                     try? fileManager.removeItem(at: systemWriter.url)
                 }
-                milestoneContinuation.yield(.systemAudioFellBackToMicOnly(reason: "Screen Recording permission denied."))
+                milestoneBus.broadcast(.systemAudioFellBackToMicOnly(reason: "Screen Recording permission denied."))
             } catch {
                 if startedMicrophone { await microphoneSource.stop() }
                 cleanupOnStartFailure(writers: [micWriter, systemWriter])
@@ -123,11 +125,8 @@ public actor DefaultAudioCaptureService: AudioCaptureService {
             micWriter: startedMicrophone ? micWriter : nil,
             systemWriter: startedSystemAudio ? systemWriter : nil,
             startedAt: started,
-            durationTask: nil,
-            levelObservers: levelObservers
+            durationTask: nil
         )
-        // Hand off observers to the session so stop() can finish them.
-        levelObservers.removeAll()
         self.session = session
         scheduleDurationGuard(for: &session)
         self.session = session
@@ -135,6 +134,10 @@ public actor DefaultAudioCaptureService: AudioCaptureService {
 
     @discardableResult
     public func stopCapture() async throws -> URL {
+        try await performStop(reason: .userRequested)
+    }
+
+    private func performStop(reason: AudioCaptureFinalizationReason) async throws -> URL {
         guard var session else { throw AudioCaptureError.noActiveCapture }
         self.session = nil
         session.durationTask?.cancel()
@@ -151,13 +154,16 @@ public actor DefaultAudioCaptureService: AudioCaptureService {
 
         let totalFrames = (session.micWriter?.totalFrameCount ?? 0)
             + (session.systemWriter?.totalFrameCount ?? 0)
-        defer { finishLevelObservers(session.levelObservers) }
+        // Always finish level subscribers when the capture ends, regardless
+        // of whether any audio was captured. New captures must re-subscribe.
+        defer { levelBus.finishAll() }
 
         guard totalFrames > 0 else {
             cleanupSessionFiles(session)
             throw AudioCaptureError.noAudioCaptured
         }
 
+        let finalURL: URL
         switch (session.micWriter, session.systemWriter) {
         case let (mic?, sys?):
             do {
@@ -168,23 +174,21 @@ public actor DefaultAudioCaptureService: AudioCaptureService {
             }
             try? fileManager.removeItem(at: mic.url)
             try? fileManager.removeItem(at: sys.url)
-            return session.outputURL
+            finalURL = session.outputURL
         case let (mic?, nil):
-            return mic.url
+            finalURL = mic.url
         case let (nil, sys?):
-            return sys.url
+            finalURL = sys.url
         case (nil, nil):
             throw AudioCaptureError.noAudioCaptured
         }
+
+        milestoneBus.broadcast(.recordingFinalized(url: finalURL, reason: reason))
+        return finalURL
     }
 
-    public nonisolated func audioLevels() -> AsyncStream<Float> {
-        AsyncStream { continuation in
-            Task { await self.registerLevelObserver(continuation) }
-        }
-    }
-
-    public nonisolated func milestones() -> AsyncStream<AudioCaptureMilestone> { milestoneStream }
+    public nonisolated func audioLevels() -> AsyncStream<Float> { levelBus.subscribe() }
+    public nonisolated func milestones() -> AsyncStream<AudioCaptureMilestone> { milestoneBus.subscribe() }
 
     public var isCapturing: Bool { session != nil }
 
@@ -198,36 +202,16 @@ public actor DefaultAudioCaptureService: AudioCaptureService {
     private nonisolated func handleBuffer(
         _ buffer: AVAudioPCMBuffer,
         writer: AudioFileWriter,
-        levelGate: LevelGate
+        levelGate: LevelGate,
+        levelBus: LevelBus
     ) {
         let level = AudioLevelComputer.level(for: buffer)
         if levelGate.shouldEmit() {
-            Task { await self.broadcastLevel(level) }
+            levelBus.broadcast(level)
         }
         // RISK-006: a single dropped write should not abort the capture; the
         // writer flushes incrementally so prior frames remain on disk.
         try? writer.write(buffer: buffer)
-    }
-
-    private func registerLevelObserver(_ continuation: AsyncStream<Float>.Continuation) {
-        if var current = session {
-            current.levelObservers.append(continuation)
-            session = current
-        } else {
-            levelObservers.append(continuation)
-        }
-    }
-
-    private func broadcastLevel(_ level: Float) {
-        if let current = session {
-            for observer in current.levelObservers { observer.yield(level) }
-        } else {
-            for observer in levelObservers { observer.yield(level) }
-        }
-    }
-
-    private nonisolated func finishLevelObservers(_ observers: [AsyncStream<Float>.Continuation]) {
-        for observer in observers { observer.finish() }
     }
 
     private func cleanupOnStartFailure(writers: [AudioFileWriter?]) {
@@ -267,12 +251,12 @@ public actor DefaultAudioCaptureService: AudioCaptureService {
 
     private func emitMilestoneIfActive(_ milestone: AudioCaptureMilestone, sessionId: UUID) {
         guard session?.id == sessionId else { return }
-        milestoneContinuation.yield(milestone)
+        milestoneBus.broadcast(milestone)
     }
 
     private func autoStopIfActive(sessionId: UUID) async {
         guard session?.id == sessionId else { return }
-        _ = try? await stopCapture()
+        _ = try? await performStop(reason: .durationLimitReached)
     }
 
     private struct ActiveSession {
@@ -283,7 +267,74 @@ public actor DefaultAudioCaptureService: AudioCaptureService {
         var systemWriter: AudioFileWriter?
         var startedAt: Date
         var durationTask: Task<Void, Never>?
-        var levelObservers: [AsyncStream<Float>.Continuation]
+    }
+}
+
+/// Thread-safe broadcast bus for `audioLevels()`. Registration is synchronous
+/// so subscribers can never miss yields from a capture that started right
+/// after their subscription call.
+public final class LevelBus: @unchecked Sendable {
+    private let lock = NSLock()
+    private var observers: [(id: UUID, continuation: AsyncStream<Float>.Continuation)] = []
+
+    public init() {}
+
+    public func subscribe() -> AsyncStream<Float> {
+        AsyncStream { continuation in
+            let id = UUID()
+            lock.withLock { observers.append((id, continuation)) }
+            continuation.onTermination = { [weak self] _ in
+                self?.unsubscribe(id: id)
+            }
+        }
+    }
+
+    public func broadcast(_ level: Float) {
+        let snapshot: [(id: UUID, continuation: AsyncStream<Float>.Continuation)] = lock.withLock { observers }
+        for entry in snapshot { entry.continuation.yield(level) }
+    }
+
+    /// Finishes all current subscribers. Called at the end of every capture
+    /// so `audioLevels()` honors its "terminates on stop" contract.
+    public func finishAll() {
+        let snapshot: [(id: UUID, continuation: AsyncStream<Float>.Continuation)] = lock.withLock {
+            let s = observers
+            observers.removeAll()
+            return s
+        }
+        for entry in snapshot { entry.continuation.finish() }
+    }
+
+    private func unsubscribe(id: UUID) {
+        lock.withLock { observers.removeAll { $0.id == id } }
+    }
+}
+
+/// Thread-safe broadcast bus for `milestones()`. Subscribers persist across
+/// captures (milestones are a service-lifetime event log, not session-scoped).
+public final class MilestoneBus: @unchecked Sendable {
+    private let lock = NSLock()
+    private var observers: [(id: UUID, continuation: AsyncStream<AudioCaptureMilestone>.Continuation)] = []
+
+    public init() {}
+
+    public func subscribe() -> AsyncStream<AudioCaptureMilestone> {
+        AsyncStream { continuation in
+            let id = UUID()
+            lock.withLock { observers.append((id, continuation)) }
+            continuation.onTermination = { [weak self] _ in
+                self?.unsubscribe(id: id)
+            }
+        }
+    }
+
+    public func broadcast(_ milestone: AudioCaptureMilestone) {
+        let snapshot: [(id: UUID, continuation: AsyncStream<AudioCaptureMilestone>.Continuation)] = lock.withLock { observers }
+        for entry in snapshot { entry.continuation.yield(milestone) }
+    }
+
+    private func unsubscribe(id: UUID) {
+        lock.withLock { observers.removeAll { $0.id == id } }
     }
 }
 

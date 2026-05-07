@@ -288,6 +288,111 @@ final class DefaultAudioCaptureServiceTests: XCTestCase {
         try? FileManager.default.removeItem(at: url)
     }
 
+    // MARK: EPIC-02b regressions (Codex synthesis review fixes)
+
+    func test_userInitiatedStop_emitsRecordingFinalized() async throws {
+        let mic = FakeMicrophoneSource()
+        let service = DefaultAudioCaptureService(
+            microphoneSource: mic,
+            systemAudioSource: FakeSystemAudioSource(),
+            clock: FakeAudioCaptureClock()
+        )
+        let milestones = service.milestones()
+
+        try await service.startCapture(configuration: .microphoneOnly)
+        mic.push(SyntheticPCMBuffer.make(frameCount: 4_800, amplitude: 0.3))
+
+        let waitForFinalized = Task { () -> URL? in
+            for await milestone in milestones {
+                if case let .recordingFinalized(url, reason) = milestone, reason == .userRequested {
+                    return url
+                }
+            }
+            return nil
+        }
+        let url = try await service.stopCapture()
+        let receivedURL = await withTimeout(seconds: 1) { await waitForFinalized.value } ?? nil
+        XCTAssertEqual(receivedURL, url, ".recordingFinalized milestone must carry the same URL stopCapture returns")
+        try? FileManager.default.removeItem(at: url)
+    }
+
+    func test_durationAutoStop_emitsRecordingFinalized_withSavedURL() async throws {
+        let mic = FakeMicrophoneSource()
+        let clock = FakeAudioCaptureClock()
+        let service = DefaultAudioCaptureService(
+            microphoneSource: mic,
+            systemAudioSource: FakeSystemAudioSource(),
+            clock: clock
+        )
+        let configuration = AudioCaptureConfiguration(
+            captureMicrophone: true,
+            captureSystemAudio: false,
+            maximumDuration: 60,
+            warningDuration: 30
+        )
+        let milestones = service.milestones()
+
+        try await service.startCapture(configuration: configuration)
+        mic.push(SyntheticPCMBuffer.make(frameCount: 4_800, amplitude: 0.3))
+
+        let waitForFinalized = Task { () -> URL? in
+            for await milestone in milestones {
+                if case let .recordingFinalized(url, reason) = milestone, reason == .durationLimitReached {
+                    return url
+                }
+            }
+            return nil
+        }
+
+        try await Task.sleep(nanoseconds: 50_000_000)
+        clock.advance(by: 35)   // past warning
+        try await Task.sleep(nanoseconds: 50_000_000)
+        clock.advance(by: 30)   // past hard limit (cumulative 65 > 60)
+
+        let url = await withTimeout(seconds: 2) { await waitForFinalized.value } ?? nil
+        XCTAssertNotNil(url, "duration auto-stop must emit .recordingFinalized with the saved URL")
+        let stillCapturing = await service.isCapturing
+        XCTAssertFalse(stillCapturing)
+        if let url { try? FileManager.default.removeItem(at: url) }
+    }
+
+    func test_milestones_areBroadcastToMultipleSubscribers() async throws {
+        let mic = FakeMicrophoneSource()
+        let sys = FakeSystemAudioSource()
+        sys.startError = AudioCaptureError.screenRecordingPermissionDenied
+        let service = DefaultAudioCaptureService(
+            microphoneSource: mic,
+            systemAudioSource: sys,
+            clock: FakeAudioCaptureClock()
+        )
+        let subscriberA = service.milestones()
+        let subscriberB = service.milestones()
+
+        let waitA = Task { () -> Bool in
+            for await milestone in subscriberA {
+                if case .systemAudioFellBackToMicOnly = milestone { return true }
+            }
+            return false
+        }
+        let waitB = Task { () -> Bool in
+            for await milestone in subscriberB {
+                if case .systemAudioFellBackToMicOnly = milestone { return true }
+            }
+            return false
+        }
+
+        try await service.startCapture(configuration: .default)
+        mic.push(SyntheticPCMBuffer.make(frameCount: 4_800, amplitude: 0.2))
+
+        let resultA = await withTimeout(seconds: 1) { await waitA.value } ?? false
+        let resultB = await withTimeout(seconds: 1) { await waitB.value } ?? false
+        XCTAssertTrue(resultA, "subscriber A must receive fallback milestone")
+        XCTAssertTrue(resultB, "subscriber B must receive fallback milestone (broadcast, not point-to-point)")
+
+        let url = try await service.stopCapture()
+        try? FileManager.default.removeItem(at: url)
+    }
+
     // MARK: helpers
 
     private func withTimeout<Value: Sendable>(

@@ -47,7 +47,7 @@ public final class ScreenCaptureKitSystemAudioSource: NSObject, SystemAudioSourc
         scConfiguration.capturesAudio = true
         scConfiguration.excludesCurrentProcessAudio = false
         scConfiguration.sampleRate = Int(configuration.sampleRate)
-        scConfiguration.channelCount = configuration.channelCount
+        scConfiguration.channelCount = AudioCaptureConfiguration.outputChannelCount
         scConfiguration.minimumFrameInterval = CMTime(value: 1, timescale: 60)
         scConfiguration.width = 2
         scConfiguration.height = 2
