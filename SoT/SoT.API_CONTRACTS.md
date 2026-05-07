@@ -40,9 +40,9 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.USER_JOUR
 
 **ID**: API-001
 **Category**: Internal
-**Status**: Implemented (EPIC-02, 2026-05-06)
+**Status**: Implemented (EPIC-02, 2026-05-06; hardened by EPIC-02b, 2026-05-07)
 **Created**: 2026-03-11
-**Last Updated**: 2026-05-06
+**Last Updated**: 2026-05-07
 
 ### Specification
 
@@ -60,8 +60,8 @@ public protocol AudioCaptureService: Sendable {
     func startCapture(configuration: AudioCaptureConfiguration) async throws
     @discardableResult
     func stopCapture() async throws -> URL
-    func audioLevels() -> AsyncStream<Float>          // 0.0–1.0, ~10 Hz
-    func milestones() -> AsyncStream<AudioCaptureMilestone>
+    func audioLevels() -> AsyncStream<Float>             // 0.0–1.0, ~10 Hz; finishes on stop
+    func milestones() -> AsyncStream<AudioCaptureMilestone>  // broadcast, service-lifetime
     var isCapturing: Bool { get async }
     var elapsedTime: TimeInterval { get async }
 }
@@ -72,19 +72,28 @@ public struct AudioCaptureConfiguration: Sendable, Equatable {
     public var maximumDuration: TimeInterval  // default 7200 (BR-402)
     public var warningDuration: TimeInterval  // default 6600
     public var sampleRate: Double             // default 48_000
-    public var channelCount: Int              // default 1
+    // Output is always mono — see AudioCaptureConfiguration.outputChannelCount.
 }
 
 public enum AudioCaptureMilestone: Sendable, Equatable {
     case durationWarningReached
     case durationLimitReached
     case systemAudioFellBackToMicOnly(reason: String)
+    /// Emitted after the WAV is finalized on disk (mixed if dual-source).
+    /// Fires for both user-initiated and duration-limit auto-stops so
+    /// subscribers don't need to differentiate between the two paths.
+    case recordingFinalized(url: URL, reason: AudioCaptureFinalizationReason)
+}
+
+public enum AudioCaptureFinalizationReason: Sendable, Equatable {
+    case userRequested
+    case durationLimitReached
 }
 ```
 
 ### Notes vs. Original Sketch
 
-The original v0.6 sketch took `(mic: Bool, systemAudio: Bool)` parameters and exposed a single `audioLevel()` stream. The implemented signature wraps both into `AudioCaptureConfiguration` (extensible without breaking callers) and adds a `milestones()` stream so the UI can react to BR-402 warnings/limits and to system-audio fallback events without polling.
+The original v0.6 sketch took `(mic: Bool, systemAudio: Bool)` parameters and exposed a single `audioLevel()` stream. The implemented signature wraps both into `AudioCaptureConfiguration` (extensible without breaking callers) and adds a `milestones()` stream so the UI can react to BR-402 warnings/limits and to system-audio fallback events without polling. EPIC-02b added `recordingFinalized` so duration-limit auto-stops surface their saved URL alongside user-initiated stops, and made both streams broadcast-safe via internal `LevelBus` / `MilestoneBus` helpers. `channelCount` was removed from the public configuration since the output is always mono (the only format the downstream transcription pipeline accepts).
 
 ### Related IDs
 
