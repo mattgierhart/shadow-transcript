@@ -19,6 +19,7 @@ public final class AVAudioEngineMicrophoneSource: MicrophoneSource, @unchecked S
     private let engine = AVAudioEngine()
     private let lock = NSLock()
     private var consumer: AudioBufferConsumer?
+    private var tapInstalled = false
 
     public init() {}
 
@@ -36,6 +37,7 @@ public final class AVAudioEngineMicrophoneSource: MicrophoneSource, @unchecked S
         inputNode.installTap(onBus: 0, bufferSize: 4_096, format: inputFormat) { [weak self] buffer, _ in
             self?.deliver(buffer)
         }
+        lock.withLock { tapInstalled = true }
 
         do {
             try engine.start()
@@ -46,9 +48,16 @@ public final class AVAudioEngineMicrophoneSource: MicrophoneSource, @unchecked S
     }
 
     public func stop() async {
-        lock.withLock { consumer = nil }
-        if engine.isRunning {
+        let shouldRemoveTap = lock.withLock { () -> Bool in
+            consumer = nil
+            let removing = tapInstalled
+            tapInstalled = false
+            return removing
+        }
+        if shouldRemoveTap {
             engine.inputNode.removeTap(onBus: 0)
+        }
+        if engine.isRunning {
             engine.stop()
         }
     }

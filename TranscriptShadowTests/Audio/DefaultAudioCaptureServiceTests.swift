@@ -195,6 +195,99 @@ final class DefaultAudioCaptureServiceTests: XCTestCase {
         try? FileManager.default.removeItem(at: url)
     }
 
+    // MARK: Codex-flagged regressions
+
+    func test_dualSource_mixesMicAndSystemIntoOneFile() async throws {
+        let mic = FakeMicrophoneSource()
+        let sys = FakeSystemAudioSource()
+        let service = DefaultAudioCaptureService(
+            microphoneSource: mic,
+            systemAudioSource: sys,
+            clock: FakeAudioCaptureClock()
+        )
+
+        try await service.startCapture(configuration: .default)
+        // Mic at 0.5 amplitude, system at 0.3 — mixed sample is (0.5 + 0.3) * 0.5 = 0.4
+        for _ in 0..<10 {
+            mic.push(SyntheticPCMBuffer.make(frameCount: 4_800, amplitude: 0.5))
+            sys.push(SyntheticPCMBuffer.make(frameCount: 4_800, amplitude: 0.3))
+        }
+        let url = try await service.stopCapture()
+        addTeardownBlock { try? FileManager.default.removeItem(at: url) }
+
+        let readback = try AVAudioFile(forReading: url)
+        XCTAssertGreaterThan(readback.length, 0)
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: readback.processingFormat, frameCapacity: AVAudioFrameCount(readback.length)) else {
+            XCTFail("could not allocate readback buffer"); return
+        }
+        try readback.read(into: buffer)
+        // First sample should be ≈ 0.4 (mixed); a serialized non-mixed file would
+        // have alternating 0.5 / 0.3 chunks. Sample the first 100 frames.
+        var sumAbsDelta: Float = 0
+        for i in 0..<min(100, Int(buffer.frameLength)) {
+            sumAbsDelta += abs((buffer.floatChannelData?[0][i] ?? 0) - 0.4)
+        }
+        XCTAssertLessThan(sumAbsDelta / 100.0, 0.05, "Dual-source output should be sample-summed mix, not interleaved")
+    }
+
+    func test_concurrentStartCalls_onlyOneSucceeds() async throws {
+        // Use a slow mic source so the first start() awaits long enough for a
+        // second concurrent caller to enter startCapture.
+        let mic = SlowFakeMicrophoneSource(startDelay: 0.2)
+        let service = DefaultAudioCaptureService(
+            microphoneSource: mic,
+            systemAudioSource: FakeSystemAudioSource(),
+            clock: FakeAudioCaptureClock()
+        )
+
+        async let first: Void = service.startCapture(configuration: .microphoneOnly)
+        async let secondResult: Result<Void, Error> = {
+            try? await Task.sleep(nanoseconds: 50_000_000)
+            do {
+                try await service.startCapture(configuration: .microphoneOnly)
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
+        }()
+
+        _ = try await first
+        let result = await secondResult
+
+        switch result {
+        case .success:
+            XCTFail("Second concurrent startCapture should reject")
+        case .failure(let error):
+            XCTAssertEqual(error as? AudioCaptureError, .captureAlreadyInProgress)
+        }
+        mic.push(SyntheticPCMBuffer.make(frameCount: 4_800, amplitude: 0.2))
+        let url = try await service.stopCapture()
+        try? FileManager.default.removeItem(at: url)
+    }
+
+    func test_audioLevels_streamFinishes_whenCaptureStops() async throws {
+        let mic = FakeMicrophoneSource()
+        let service = DefaultAudioCaptureService(
+            microphoneSource: mic,
+            systemAudioSource: FakeSystemAudioSource(),
+            clock: FakeAudioCaptureClock()
+        )
+        try await service.startCapture(configuration: .microphoneOnly)
+        let stream = service.audioLevels()
+        mic.push(SyntheticPCMBuffer.make(frameCount: 4_800, amplitude: 0.4))
+        try await Task.sleep(nanoseconds: 150_000_000)
+
+        let drainTask = Task { () -> Bool in
+            for await _ in stream { /* drain */ }
+            return true   // stream finished
+        }
+
+        let url = try await service.stopCapture()
+        let finished = await withTimeout(seconds: 1) { await drainTask.value } ?? false
+        XCTAssertTrue(finished, "audioLevels() must terminate when capture ends")
+        try? FileManager.default.removeItem(at: url)
+    }
+
     // MARK: helpers
 
     private func withTimeout<Value: Sendable>(
