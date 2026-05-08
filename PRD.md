@@ -382,30 +382,33 @@ Full details: `SoT/SoT.INTEGRATIONS.md`
 
 **Test Strategy**: 24 test cases defined in `SoT/SoT.TESTING.md` covering all 7 API contracts, critical business rules, and privacy guarantees. 13 are P0 (critical), 11 are P1. See TEST-001→504.
 
-**EPIC Backlog (8 EPICs)**
+**EPIC Backlog (8 EPICs at v0.7 entry; EPIC-04 split into 04a + 04b on 2026-05-08 → 9 EPIC files)**
 
-| EPIC | Name | Depends On | Key IDs | Priority |
-|------|------|------------|---------|----------|
-| EPIC-01 | Project Scaffolding & Dev Environment | — | ENV-001, TECH-001, TECH-002, TECH-006, TECH-007 | P0 (foundation) |
-| EPIC-02 | Audio Capture Engine | EPIC-01 | API-001, API-002, FEA-001, INT-201, INT-202 | P0 |
-| EPIC-03 | Transcription Pipeline | EPIC-01 | API-101, FEA-002, INT-101, TECH-002 | P0 |
-| EPIC-04 | Speaker Diarization Sidecar | EPIC-01 | API-102, FEA-003, ARC-002, TECH-006 | P0 (highest risk) |
-| EPIC-05 | Transcript Formatting & Alignment | EPIC-03, EPIC-04 | API-201, FEA-004, BR-301, RISK-005 | P0 |
-| EPIC-06 | Storage & Obsidian Export | EPIC-01, EPIC-05 | API-202, DBT-001→101, FEA-005, FEA-006, INT-001 | P0 |
-| EPIC-07 | SwiftUI Interface | EPIC-02, EPIC-05, EPIC-06 | SCR-001→006, DES-XXX, UJ-001→003 | P1 |
-| EPIC-08 | Pipeline Integration & Audio Lifecycle | EPIC-02→07 | API-301, ARC-001, ARC-003, BR-101→103 | P0 (E2E validation) |
+| EPIC | Name | State | Depends On | Key IDs | Priority |
+|------|------|-------|------------|---------|----------|
+| EPIC-01 | Project Scaffolding & Dev Environment | ✅ Complete (2026-05-06) | — | ENV-001, TECH-001, TECH-002, TECH-006, TECH-007 | P0 (foundation) |
+| EPIC-02 | Audio Capture Engine | ✅ Complete (2026-05-06) | EPIC-01 | API-001, API-002, FEA-001, INT-201, INT-202 | P0 |
+| EPIC-02b | Audio Artifact Contract Hardening | ✅ Complete (2026-05-07) | EPIC-02 | API-001, API-002 | P0 (Codex synthesis review fixes) |
+| EPIC-03 | Transcription Pipeline | ✅ Complete (2026-05-08) | EPIC-01, EPIC-02b | API-101, FEA-002, INT-101, TECH-002 | P0 |
+| EPIC-04 | Speaker Diarization Sidecar | Split → 04a + 04b (2026-05-08) | EPIC-01 | API-102, FEA-003, ARC-002, TECH-006 | P0 (highest risk) |
+| EPIC-04a | Diarization CLI & Packaging (Python) | Active | EPIC-01 | API-102 (CLI half), ARC-002, TECH-006, BR-101, FEA-003, TEST-201..204, RISK-001/003 | P0 |
+| EPIC-04b | Swift `DiarizationService` Bridge | Blocked on 04a | EPIC-04a | API-102 (Swift half) | P0 |
+| EPIC-05 | Transcript Formatting & Alignment | Planned | EPIC-03, EPIC-04b | API-201, FEA-004, BR-301, RISK-005 | P0 |
+| EPIC-06 | Storage & Obsidian Export | Planned | EPIC-01, EPIC-05 | API-202, DBT-001→101, FEA-005, FEA-006, INT-001 | P0 |
+| EPIC-07 | SwiftUI Interface | Planned | EPIC-02, EPIC-05, EPIC-06 | SCR-001→006, DES-XXX, UJ-001→003 | P1 |
+| EPIC-08 | Pipeline Integration & Audio Lifecycle | Planned | EPIC-02→07 | API-301, ARC-001, ARC-003, BR-101→103 | P0 (E2E validation) |
 
 **Execution Order (Parallelism)**
 
 ```
-EPIC-01 (scaffolding)
-   ├→ EPIC-02 (audio)    ──┐
-   ├→ EPIC-03 (transcribe) ─┼→ EPIC-05 (format) → EPIC-06 (storage/export) ─┐
-   └→ EPIC-04 (diarize)  ──┘                                                 ├→ EPIC-08 (integration)
-                                                              EPIC-07 (UI) ──┘
+EPIC-01 (scaffolding) ✅
+   ├→ EPIC-02 (audio) ✅ → EPIC-02b (hardening) ✅ ──┐
+   ├→ EPIC-03 (transcribe) ✅ ───────────────────────┼→ EPIC-05 (format) → EPIC-06 (storage/export) ─┐
+   └→ EPIC-04a (diarize CLI) → EPIC-04b (Swift bridge) ─┘                                            ├→ EPIC-08 (integration)
+                                                                                       EPIC-07 (UI) ──┘
 ```
 
-EPICs 02, 03, 04 can run in parallel after EPIC-01. EPIC-05 merges transcription + diarization outputs. EPIC-07 can start with mock data early. EPIC-08 is the integration and validation capstone.
+EPICs 02, 03, and the 04a/04b chain can run in parallel after EPIC-01. EPIC-04a's frozen JSON contract gates EPIC-04b. EPIC-05 merges transcription + diarization outputs (depends on EPIC-04b for the Swift `DiarizationResult` type). EPIC-07 can start with mock data early. EPIC-08 is the integration and validation capstone.
 
 **Outstanding Work → v0.8**
 

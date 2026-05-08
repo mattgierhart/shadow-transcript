@@ -117,7 +117,7 @@ committed**. Otherwise we'd be building a parser against a moving target.
 
 **Decision 1 — `Process` vs `swift-subprocess`**: Adopt **`swiftlang/swift-subprocess`** (pre-1.0, currently 0.4.x; `Process` + `readabilityHandler` is a documented foot-gun under Swift 6 strict concurrency — captures non-Sendable state, fires after EOF). swift-subprocess provides `for try await line in outputSequence.lines()`, `PlatformOptions.teardownSequence = [.gracefulShutDown(allowedDurationToNextStep: .seconds(5))]` for SIGTERM-then-SIGKILL, and clean Task cancellation. Acceptable for v0.7 milestone; flag for revisit before public ship if it hasn't reached 1.0.
 
-**Decision 2 — Binary location**: `.app/Contents/Resources/diarize/` (the `--onedir` tree from EPIC-04a). Located via `Bundle.main.url(forResource: "diarize", withExtension: nil, subdirectory: "Resources/diarize")`. **Not** an XPC service — XPC's serialization overhead would slow down audio path passing, and we'd lose the ability to stream stdout for progress.
+**Decision 2 — Binary location**: `.app/Contents/Resources/diarize/` (the `--onedir` tree from EPIC-04a). Located via `Bundle.main.resourceURL?.appendingPathComponent("diarize/diarize")` — the `subdirectory:` parameter on `Bundle.url(forResource:)` is **already** relative to `Resources/`, so the path passed to it is just `"diarize"` (not `"Resources/diarize"`). **Not** an XPC service — XPC's serialization overhead would slow down audio path passing, and we'd lose the ability to stream stdout for progress.
 
 **Decision 3 — File access (audio path → child)**: **Security-scoped bookmarks**. The child does not inherit Powerbox grants from `NSOpenPanel` even though `inherit=true` propagates the sandbox. Parent calls `url.bookmarkData(options: .withSecurityScope)`, base64-encodes, passes via `Process.environment["TRANSCRIPT_SHADOW_AUDIO_BOOKMARK"]`. Child resolves with `URL(resolvingBookmarkData:options:.withSecurityScope...)` and brackets reads with `startAccessingSecurityScopedResource()`. FD-passing is the alternative but breaks for >2 GB files and complicates streaming for the Python side.
 
@@ -184,12 +184,12 @@ Swift-side contract that consumes EPIC-04a's binary.)
 **Context Window 2: Process Bridge**
 
 - [ ] `PyannoteSidecarDiarizationService` final class (parallel to `WhisperKitEngine`'s class-not-actor pattern)
-- [ ] Locate binary: `Bundle.main.url(forResource: "diarize", withExtension: nil, subdirectory: "Resources")` (path TBD)
-- [ ] Spawn via `Process`, stdin closed, stdout piped (progress regex parser), stderr piped (capture for error messages), output file path passed via `--output`
+- [ ] Locate binary: `Bundle.main.resourceURL?.appendingPathComponent("diarize/diarize")` (per Phase A Decision 2; `subdirectory:` is relative to `Resources/`, so use `resourceURL` directly to avoid the `Resources/Resources/diarize/...` mistake)
+- [ ] Spawn via **`swiftlang/swift-subprocess`** (per Phase A Decision 1 — Foundation `Process` + `readabilityHandler` is the documented foot-gun under Swift 6 strict concurrency). Use `outputSequence.lines()` for stdout streaming; `errorSequence` for stderr capture; output file path passed via `--output`
 - [ ] Per-line progress parsing (`PROGRESS:0.42`) → forward to a `progress: (Double) -> Void` closure
 - [ ] Wait + parse JSON file → `DiarizationResult`
 - [ ] Map exit codes → typed errors per the matrix in EPIC-04a
-- [ ] Cancellation: spawn the wait inside a `Task` that monitors `Task.isCancelled`, SIGTERM on cancel, SIGKILL after 5s
+- [ ] Cancellation: rely on swift-subprocess's `PlatformOptions.teardownSequence = [.gracefulShutDown(allowedDurationToNextStep: .seconds(5))]` to do SIGTERM-then-SIGKILL automatically; wrap the call in `withTaskCancellationHandler` so a parent-Task cancel propagates
 
 **Context Window 3: Tests**
 

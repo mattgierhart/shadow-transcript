@@ -4,7 +4,7 @@ template_version: "3.0.0"
 
 # EPIC-04a Diarization Sidecar — Python CLI & Packaging
 
-> **State**: `Planned` (active EPIC after the split)
+> **State**: `Active`
 > **Lifecycle**: v0.7 Build Execution
 > **Epic Lead**: TBD
 > **Depends On**: EPIC-01 (sidecar scaffold), EPIC-03 (artifact handoff shape)
@@ -223,7 +223,7 @@ The `warnings` array is reserved for non-fatal issues (e.g., "fewer than `min_sp
 **Context Window 2: PyInstaller Spec**
 
 - [ ] Update `sidecar/diarize.spec` with all hidden imports the spike surfaced
-- [ ] `target_arch='arm64'`, `console=True`, `--onefile` (or `--onedir` if onefile breaks pyannote model lookup at runtime — TBD from the spike)
+- [ ] `target_arch='arm64'`, `console=True`, **`--onedir`** (locked in Phase A Decision 4 — onefile re-extracts ~1.5 GB on every cold launch and pays a 5–15 s Gatekeeper rescan on Apple Silicon)
 - [ ] Test the binary runs against the fixture WAV on a fresh path with no Python in PATH
 - [ ] Record final binary size in this EPIC's observations
 - [ ] **Tests**: TEST-203 (progress format regex test), TEST-204 (each error exit code reachable from a fixture)
