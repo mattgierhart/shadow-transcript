@@ -6,7 +6,7 @@ template_version: "3.0.0"
 
 > **Status**: Active
 > **Current PRD Version**: v0.7 (See `PRD.md`)
-> **Active EPIC**: EPIC-03 — Transcription Pipeline (next up; EPIC-01 + EPIC-02 + EPIC-02b complete) (See `epics/`)
+> **Active EPIC**: EPIC-04 — Speaker Diarization Sidecar (next up; EPIC-01, 02, 02b, 03 complete) (See `epics/`)
 
 ---
 
@@ -62,8 +62,8 @@ template_version: "3.0.0"
 | EPIC-01 | Project Scaffolding & Dev Environment | ✅ Complete | — |
 | EPIC-02 | Audio Capture Engine | ✅ Complete | EPIC-01 |
 | EPIC-02b | Audio Artifact Contract Hardening (Codex synthesis review fixes) | ✅ Complete | EPIC-02 |
-| EPIC-03 | Transcription Pipeline | Active | EPIC-01, EPIC-02b |
-| EPIC-04 | Speaker Diarization Sidecar | Planned | EPIC-01 |
+| EPIC-03 | Transcription Pipeline | ✅ Complete | EPIC-01, EPIC-02b |
+| EPIC-04 | Speaker Diarization Sidecar | Active | EPIC-01 |
 | EPIC-05 | Transcript Formatting & Alignment | Planned | EPIC-03, EPIC-04 |
 | EPIC-06 | Storage & Obsidian Export | Planned | EPIC-01, EPIC-05 |
 | EPIC-07 | SwiftUI Interface | Planned | EPIC-02, EPIC-05, EPIC-06 |

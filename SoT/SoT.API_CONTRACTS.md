@@ -147,14 +147,14 @@ The mixer downmixes both inputs to mono and sums them with 0.5 attenuation per s
 
 **ID**: API-101
 **Category**: Internal
-**Status**: Planned
+**Status**: Implemented (EPIC-03, 2026-05-08)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-08
 
 ### Specification
 
-**Type**: Swift service wrapping WhisperKit
-**Interface**: `TranscriptionService`
+**Type**: Swift protocol + actor
+**Interface**: `TranscriptionService` (protocol) + `DefaultTranscriptionService` (actor)
 
 ### Purpose
 
@@ -163,25 +163,56 @@ Transcribe audio file to text with word-level timestamps using WhisperKit.
 ### Interface
 
 ```swift
-protocol TranscriptionService {
-    func transcribe(audioURL: URL,
-                    model: WhisperModel,
-                    progress: @escaping (Double) -> Void) async throws -> TranscriptionResult
+public protocol TranscriptionService: Sendable {
+    /// Loads the requested model into memory; downloads on first use.
+    /// Idempotent for the same model.
+    func prepare(model: WhisperModel) async throws
+
+    /// Transcribes the WAV at `audioURL`. The progress closure receives
+    /// monotonic fractional values in [0, 1] and is guaranteed to fire at
+    /// least once with 0.0 at the start and 1.0 on success. English-only
+    /// per BR-202; entirely on-device per BR-101.
+    func transcribe(
+        audioURL: URL,
+        model: WhisperModel,
+        progress: @escaping @Sendable (Double) -> Void
+    ) async throws -> Transcript
+
+    var loadedModel: WhisperModel? { get async }
 }
 
-struct TranscriptionResult {
-    let segments: [TranscriptSegment]
-    let language: String
-    let duration: TimeInterval
+public struct Transcript: Sendable, Equatable {
+    public let segments: [TranscriptSegment]
+    public let language: String
+    public let duration: TimeInterval
+    public let model: WhisperModel
+    public var text: String { /* segment text joined with spaces */ }
+    public var allWords: [WordTimestamp] { /* flattened */ }
 }
 
-struct TranscriptSegment {
-    let text: String
-    let start: TimeInterval
-    let end: TimeInterval
-    let words: [WordTimestamp]?
+public struct TranscriptSegment: Sendable, Equatable {
+    public let text: String
+    public let start: TimeInterval
+    public let end: TimeInterval
+    public let words: [WordTimestamp]   // empty if engine did not produce them
+}
+
+public struct WordTimestamp: Sendable, Equatable {
+    public let word: String
+    public let start: TimeInterval
+    public let end: TimeInterval
+}
+
+public enum WhisperModel: String, Sendable, CaseIterable {
+    case baseEN = "openai_whisper-base.en"     // ~148 MB, default
+    case smallEN = "openai_whisper-small.en"   // ~488 MB
+    case mediumEN = "openai_whisper-medium.en" // ~1.5 GB
 }
 ```
+
+### Notes vs. Original Sketch
+
+The v0.6 sketch named the return type `TranscriptionResult` and made `words` optional. The implementation renames the return type to `Transcript` because WhisperKit exports its own top-level `TranscriptionResult` from a same-named module — `import WhisperKit` shadows the module name with the class name and the qualified form `WhisperKit.TranscriptionResult` no longer resolves to the module's top-level type. Renaming our type to `Transcript` removes the ambiguity. The `words` array was made non-optional (empty when missing) because every consumer immediately defaulted nil to empty anyway. `prepare(model:)` was added so the UI (EPIC-07) can warm up a model during onboarding without immediately requesting a transcription.
 
 ### Related IDs
 
