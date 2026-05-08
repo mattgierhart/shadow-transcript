@@ -42,7 +42,10 @@ public enum AudioCaptureLocations {
         let stamp = formatter
             .string(from: date)
             .replacingOccurrences(of: ":", with: "-")
-        let suffix = String(UUID().uuidString.prefix(4))
+        // 8 hex chars (32 bits) keeps collision risk negligible even at
+        // hundreds of same-millisecond calls. The 4-char form (16 bits) hit
+        // the birthday-paradox edge in stress tests.
+        let suffix = String(UUID().uuidString.prefix(8))
         return directory.appendingPathComponent("recording-\(stamp)-\(suffix).wav", isDirectory: false)
     }
 }
