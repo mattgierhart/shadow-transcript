@@ -47,6 +47,7 @@ template_version: "3.0.0"
 | v0.7 EPIC-02 Complete  | 2026-05-06 | Claude Agent | Audio capture (mic + system + mixer) implemented + Codex review caught 4 follow-on bugs (dual-source mix, actor reentrancy, level stream termination, mic tap leak) all fixed in same session | EPIC-02, API-001, API-002, TEST-001→005 |
 | v0.7 EPIC-02b Complete | 2026-05-07 | Claude Agent | Audio artifact contract hardening: recordingFinalized milestone, atomic writer, unique filenames, broadcast buses, channelCount removal, docstring tightening — all 6 issues from Codex synthesis review fixed before EPIC-03 started | EPIC-02b, API-001, API-002 |
 | v0.7 EPIC-03 Complete  | 2026-05-08 | Claude Agent | Transcription pipeline (TranscriptionService + WhisperKit engine) implemented + Codex review caught 3 follow-on bugs (downloadBase init, AsyncTaskQueue serialization, CancellationError surfacing) all fixed in same session | EPIC-03, API-101, INT-101, TEST-101→104 |
+| v0.7 EPIC-04 Split     | 2026-05-08 | Claude Agent | Original EPIC-04 split into EPIC-04a (Python CLI + PyInstaller) and EPIC-04b (Swift Process bridge). Reason: BROAD-scope hook firing (12 SoT items) + Codex's recommendation that the two risk profiles are categorically different. EPIC-04 file converted to an index pointing at the children. | EPIC-04, EPIC-04a, EPIC-04b |
 
 ---
 
