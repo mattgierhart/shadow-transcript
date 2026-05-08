@@ -1,0 +1,9 @@
+# Python sidecar dependencies
+# @implements TECH-006, ARC-002, ENV-001
+# Python 3.11 required (TECH-006).
+# pyannote.audio 3.x is the current stable line; pinned ranges allow patch updates.
+
+pyannote.audio>=3.3.0,<3.4
+torch>=2.4.0,<2.5
+torchaudio>=2.4.0,<2.5
+pyinstaller>=6.10.0,<7.0

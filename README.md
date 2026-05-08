@@ -6,7 +6,7 @@ template_version: "3.0.0"
 
 > **Status**: Active
 > **Current PRD Version**: v0.7 (See `PRD.md`)
-> **Active EPIC**: EPIC-01 (next up) (See `epics/`)
+> **Active EPIC**: EPIC-04 — Speaker Diarization Sidecar (next up; EPIC-01, 02, 02b, 03 complete) (See `epics/`)
 
 ---
 
@@ -59,10 +59,11 @@ template_version: "3.0.0"
 
 | EPIC | Name | State | Depends On |
 |------|------|-------|------------|
-| EPIC-01 | Project Scaffolding & Dev Environment | Planned | — |
-| EPIC-02 | Audio Capture Engine | Planned | EPIC-01 |
-| EPIC-03 | Transcription Pipeline | Planned | EPIC-01 |
-| EPIC-04 | Speaker Diarization Sidecar | Planned | EPIC-01 |
+| EPIC-01 | Project Scaffolding & Dev Environment | ✅ Complete | — |
+| EPIC-02 | Audio Capture Engine | ✅ Complete | EPIC-01 |
+| EPIC-02b | Audio Artifact Contract Hardening (Codex synthesis review fixes) | ✅ Complete | EPIC-02 |
+| EPIC-03 | Transcription Pipeline | ✅ Complete | EPIC-01, EPIC-02b |
+| EPIC-04 | Speaker Diarization Sidecar | Active | EPIC-01 |
 | EPIC-05 | Transcript Formatting & Alignment | Planned | EPIC-03, EPIC-04 |
 | EPIC-06 | Storage & Obsidian Export | Planned | EPIC-01, EPIC-05 |
 | EPIC-07 | SwiftUI Interface | Planned | EPIC-02, EPIC-05, EPIC-06 |
@@ -127,14 +128,23 @@ template_version: "3.0.0"
 ## 5. Quick Commands
 
 ```bash
+# One-time: install build tools
+brew install xcodegen python@3.11
+
+# Generate the Xcode project (regenerates TranscriptShadow.xcodeproj from project.yml)
+xcodegen generate
+
 # Build (Xcode)
-xcodebuild build -scheme TranscriptShadow
+xcodebuild build -scheme TranscriptShadow -destination 'platform=macOS,arch=arm64'
 
 # Run tests
-xcodebuild test -scheme TranscriptShadow
+xcodebuild test -scheme TranscriptShadow -destination 'platform=macOS,arch=arm64'
 
-# Build diarization sidecar
-cd sidecar && pyinstaller diarize.spec
+# Set up + build diarization sidecar
+cd sidecar
+python3.11 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+pyinstaller diarize.spec   # release-only; multi-GB / multi-minute
 ```
 
 ---

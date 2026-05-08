@@ -73,10 +73,11 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 ## TEST-001: Audio Capture Starts and Stops
 
 **ID**: TEST-001
-**Category**: Integration
-**Status**: Planned
+**Category**: Unit (uses fakes; runs without hardware)
+**Status**: Implemented (EPIC-02, 2026-05-06)
 **Priority**: P0 (Critical)
 **Created**: 2026-03-20
+**Last Updated**: 2026-05-06
 
 ### Test Case (Given-When-Then)
 
@@ -91,7 +92,7 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/AudioCaptureTests.swift`
+**File**: `TranscriptShadowTests/Audio/DefaultAudioCaptureServiceTests.swift` (`test_TEST_001_startThenStop_returnsValidWAV_andTogglesIsCapturing`)
 **Traceability**: `// @implements TEST-001`
 
 ---
@@ -99,10 +100,11 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 ## TEST-002: Audio Level Stream Emits Values
 
 **ID**: TEST-002
-**Category**: Integration
-**Status**: Planned
+**Category**: Unit
+**Status**: Implemented (EPIC-02, 2026-05-06; covered also by `AudioLevelComputerTests` + EPIC-02b broadcast bus regression test)
 **Priority**: P1
 **Created**: 2026-03-20
+**Last Updated**: 2026-05-07
 
 ### Test Case (Given-When-Then)
 
@@ -117,7 +119,7 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/AudioCaptureTests.swift`
+**File**: `TranscriptShadowTests/Audio/DefaultAudioCaptureServiceTests.swift` (`test_TEST_002_audioLevels_streamEmitsValuesInUnitRange`, `test_audioLevels_streamFinishes_whenCaptureStops`) + `TranscriptShadowTests/Audio/AudioLevelComputerTests.swift`
 **Traceability**: `// @implements TEST-002`
 
 ---
@@ -126,9 +128,10 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 **ID**: TEST-003
 **Category**: Unit
-**Status**: Planned
+**Status**: Implemented (EPIC-02, 2026-05-06)
 **Priority**: P0 (Critical)
 **Created**: 2026-03-20
+**Last Updated**: 2026-05-06
 
 ### Test Case (Given-When-Then)
 
@@ -142,7 +145,7 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/AudioMixerTests.swift`
+**File**: `TranscriptShadowTests/Audio/AudioMixerTests.swift` (`test_mix_writesValidWAV_andPreservesFrameCount`, `test_mix_unequalLengthBuffers_usesShorter`); dual-source path covered by `DefaultAudioCaptureServiceTests.test_dualSource_mixesMicAndSystemIntoOneFile`
 **Traceability**: `// @implements TEST-003`
 
 ---
@@ -150,10 +153,11 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 ## TEST-004: Capture Respects Duration Limit
 
 **ID**: TEST-004
-**Category**: Unit
-**Status**: Planned
+**Category**: Unit (uses `FakeAudioCaptureClock` so the 2-hour limit fires in milliseconds)
+**Status**: Implemented (EPIC-02, 2026-05-06; payload extended to `recordingFinalized` in EPIC-02b 2026-05-07)
 **Priority**: P1
 **Created**: 2026-03-20
+**Last Updated**: 2026-05-07
 
 ### Test Case (Given-When-Then)
 
@@ -168,7 +172,7 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/AudioCaptureTests.swift`
+**File**: `TranscriptShadowTests/Audio/DefaultAudioCaptureServiceTests.swift` (`test_TEST_004_durationGuard_emitsWarningThenLimitAndAutoStops`, `test_durationAutoStop_emitsRecordingFinalized_withSavedURL`)
 **Traceability**: `// @implements TEST-004`
 
 ---
@@ -176,10 +180,11 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 ## TEST-005: Mic-Only Fallback
 
 **ID**: TEST-005
-**Category**: Integration
-**Status**: Planned
+**Category**: Unit (uses fake `SystemAudioSource` injected with `screenRecordingPermissionDenied` error)
+**Status**: Implemented (EPIC-02, 2026-05-06)
 **Priority**: P1
 **Created**: 2026-03-20
+**Last Updated**: 2026-05-06
 
 ### Test Case (Given-When-Then)
 
@@ -194,7 +199,7 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/AudioCaptureTests.swift`
+**File**: `TranscriptShadowTests/Audio/DefaultAudioCaptureServiceTests.swift` (`test_TEST_005_systemAudioDenied_fallsBackToMicOnly`)
 **Traceability**: `// @implements TEST-005`
 
 ---
@@ -202,10 +207,11 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 ## TEST-101: WhisperKit Transcribes Sample Audio
 
 **ID**: TEST-101
-**Category**: Integration
-**Status**: Planned
+**Category**: Unit (uses `FakeTranscriptionEngine`; the real-WhisperKit integration test is deferred — would require ~150 MB model download per run)
+**Status**: Implemented (EPIC-03, 2026-05-08)
 **Priority**: P0 (Critical)
 **Created**: 2026-03-20
+**Last Updated**: 2026-05-08
 
 ### Test Case (Given-When-Then)
 
@@ -220,7 +226,7 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/TranscriptionTests.swift`
+**File**: `TranscriptShadowTests/Transcription/DefaultTranscriptionServiceTests.swift` (`test_TEST_101_transcribe_returnsSegmentsAndLanguage`)
 **Traceability**: `// @implements TEST-101`
 
 ---
@@ -228,10 +234,11 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 ## TEST-102: Word-Level Timestamps
 
 **ID**: TEST-102
-**Category**: Integration
-**Status**: Planned
+**Category**: Unit
+**Status**: Implemented (EPIC-03, 2026-05-08)
 **Priority**: P0 (Critical)
 **Created**: 2026-03-20
+**Last Updated**: 2026-05-08
 
 ### Test Case (Given-When-Then)
 
@@ -246,7 +253,7 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/TranscriptionTests.swift`
+**File**: `TranscriptShadowTests/Transcription/DefaultTranscriptionServiceTests.swift` (`test_TEST_102_wordTimestamps_areMonotonic`)
 **Traceability**: `// @implements TEST-102`
 
 ---
@@ -255,9 +262,10 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 **ID**: TEST-103
 **Category**: Unit
-**Status**: Planned
+**Status**: Implemented (EPIC-03, 2026-05-08)
 **Priority**: P1
 **Created**: 2026-03-20
+**Last Updated**: 2026-05-08
 
 ### Test Case (Given-When-Then)
 
@@ -272,7 +280,7 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/TranscriptionTests.swift`
+**File**: `TranscriptShadowTests/Transcription/DefaultTranscriptionServiceTests.swift` (`test_TEST_103_progressCallback_fires_monotonic_andEndsAtOne`)
 **Traceability**: `// @implements TEST-103`
 
 ---
@@ -280,10 +288,11 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 ## TEST-104: Model Download and Cache
 
 **ID**: TEST-104
-**Category**: Integration
-**Status**: Planned
+**Category**: Unit (cache invariant tested via fake-engine load-call counter; on-disk download verified by `TranscriptionModelStoreTests`)
+**Status**: Implemented (EPIC-03, 2026-05-08; service-side cache fix verified post-Codex review same day)
 **Priority**: P1
 **Created**: 2026-03-20
+**Last Updated**: 2026-05-08
 
 ### Test Case (Given-When-Then)
 
@@ -297,7 +306,7 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/ModelCacheTests.swift`
+**File**: `TranscriptShadowTests/Transcription/DefaultTranscriptionServiceTests.swift` (`test_TEST_104_prepare_isIdempotent_andTranscribeReuses`, `test_TEST_104_switchingModel_unloadsAndReloads`); model-folder layout covered by `TranscriptShadowTests/Transcription/TranscriptionModelStoreTests.swift`
 **Traceability**: `// @implements TEST-104`
 
 ---

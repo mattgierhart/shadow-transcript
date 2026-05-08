@@ -40,14 +40,14 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.USER_JOUR
 
 **ID**: API-001
 **Category**: Internal
-**Status**: Planned
+**Status**: Implemented (EPIC-02, 2026-05-06; hardened by EPIC-02b, 2026-05-07)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-07
 
 ### Specification
 
-**Type**: Swift protocol / service class
-**Interface**: `AudioCaptureService`
+**Type**: Swift protocol + actor
+**Interface**: `AudioCaptureService` (protocol) + `DefaultAudioCaptureService` (actor)
 
 ### Purpose
 
@@ -56,14 +56,44 @@ Manage microphone and system audio capture, producing a mixed WAV file for downs
 ### Interface
 
 ```swift
-protocol AudioCaptureService {
-    func startCapture(mic: Bool, systemAudio: Bool) async throws
-    func stopCapture() async throws -> URL  // Returns temp WAV file path
-    func audioLevel() -> AsyncStream<Float> // Real-time audio level (0.0-1.0)
-    var isCapturing: Bool { get }
-    var elapsedTime: TimeInterval { get }
+public protocol AudioCaptureService: Sendable {
+    func startCapture(configuration: AudioCaptureConfiguration) async throws
+    @discardableResult
+    func stopCapture() async throws -> URL
+    func audioLevels() -> AsyncStream<Float>             // 0.0–1.0, ~10 Hz; finishes on stop
+    func milestones() -> AsyncStream<AudioCaptureMilestone>  // broadcast, service-lifetime
+    var isCapturing: Bool { get async }
+    var elapsedTime: TimeInterval { get async }
+}
+
+public struct AudioCaptureConfiguration: Sendable, Equatable {
+    public var captureMicrophone: Bool        // default true
+    public var captureSystemAudio: Bool       // default true
+    public var maximumDuration: TimeInterval  // default 7200 (BR-402)
+    public var warningDuration: TimeInterval  // default 6600
+    public var sampleRate: Double             // default 48_000
+    // Output is always mono — see AudioCaptureConfiguration.outputChannelCount.
+}
+
+public enum AudioCaptureMilestone: Sendable, Equatable {
+    case durationWarningReached
+    case durationLimitReached
+    case systemAudioFellBackToMicOnly(reason: String)
+    /// Emitted after the WAV is finalized on disk (mixed if dual-source).
+    /// Fires for both user-initiated and duration-limit auto-stops so
+    /// subscribers don't need to differentiate between the two paths.
+    case recordingFinalized(url: URL, reason: AudioCaptureFinalizationReason)
+}
+
+public enum AudioCaptureFinalizationReason: Sendable, Equatable {
+    case userRequested
+    case durationLimitReached
 }
 ```
+
+### Notes vs. Original Sketch
+
+The original v0.6 sketch took `(mic: Bool, systemAudio: Bool)` parameters and exposed a single `audioLevel()` stream. The implemented signature wraps both into `AudioCaptureConfiguration` (extensible without breaking callers) and adds a `milestones()` stream so the UI can react to BR-402 warnings/limits and to system-audio fallback events without polling. EPIC-02b added `recordingFinalized` so duration-limit auto-stops surface their saved URL alongside user-initiated stops, and made both streams broadcast-safe via internal `LevelBus` / `MilestoneBus` helpers. `channelCount` was removed from the public configuration since the output is always mono (the only format the downstream transcription pipeline accepts).
 
 ### Related IDs
 
@@ -78,9 +108,9 @@ protocol AudioCaptureService {
 
 **ID**: API-002
 **Category**: Internal
-**Status**: Planned
+**Status**: Implemented (EPIC-02, 2026-05-06)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-06
 
 ### Specification
 
@@ -94,12 +124,17 @@ Mix microphone and system audio streams into a single WAV file suitable for tran
 ### Interface
 
 ```swift
-struct AudioMixer {
-    static func mix(micBuffer: AVAudioPCMBuffer,
-                    systemBuffer: AVAudioPCMBuffer,
-                    to outputURL: URL) throws
+public enum AudioMixer {
+    public static func mix(
+        microphoneBuffer micBuffer: AVAudioPCMBuffer,
+        systemBuffer: AVAudioPCMBuffer,
+        sampleRate: Double = 48_000,
+        to outputURL: URL
+    ) throws
 }
 ```
+
+The mixer downmixes both inputs to mono and sums them with 0.5 attenuation per source so the result stays inside `[-1, 1]` without hard clipping. Output file format: 32-bit float, mono, 48 kHz, RIFF WAV. (SoT did not lock these values; they were chosen because WhisperKit ingests this format with no resampling.)
 
 ### Related IDs
 
@@ -112,14 +147,14 @@ struct AudioMixer {
 
 **ID**: API-101
 **Category**: Internal
-**Status**: Planned
+**Status**: Implemented (EPIC-03, 2026-05-08)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-08
 
 ### Specification
 
-**Type**: Swift service wrapping WhisperKit
-**Interface**: `TranscriptionService`
+**Type**: Swift protocol + actor
+**Interface**: `TranscriptionService` (protocol) + `DefaultTranscriptionService` (actor)
 
 ### Purpose
 
@@ -128,25 +163,56 @@ Transcribe audio file to text with word-level timestamps using WhisperKit.
 ### Interface
 
 ```swift
-protocol TranscriptionService {
-    func transcribe(audioURL: URL,
-                    model: WhisperModel,
-                    progress: @escaping (Double) -> Void) async throws -> TranscriptionResult
+public protocol TranscriptionService: Sendable {
+    /// Loads the requested model into memory; downloads on first use.
+    /// Idempotent for the same model.
+    func prepare(model: WhisperModel) async throws
+
+    /// Transcribes the WAV at `audioURL`. The progress closure receives
+    /// monotonic fractional values in [0, 1] and is guaranteed to fire at
+    /// least once with 0.0 at the start and 1.0 on success. English-only
+    /// per BR-202; entirely on-device per BR-101.
+    func transcribe(
+        audioURL: URL,
+        model: WhisperModel,
+        progress: @escaping @Sendable (Double) -> Void
+    ) async throws -> Transcript
+
+    var loadedModel: WhisperModel? { get async }
 }
 
-struct TranscriptionResult {
-    let segments: [TranscriptSegment]
-    let language: String
-    let duration: TimeInterval
+public struct Transcript: Sendable, Equatable {
+    public let segments: [TranscriptSegment]
+    public let language: String
+    public let duration: TimeInterval
+    public let model: WhisperModel
+    public var text: String { /* segment text joined with spaces */ }
+    public var allWords: [WordTimestamp] { /* flattened */ }
 }
 
-struct TranscriptSegment {
-    let text: String
-    let start: TimeInterval
-    let end: TimeInterval
-    let words: [WordTimestamp]?
+public struct TranscriptSegment: Sendable, Equatable {
+    public let text: String
+    public let start: TimeInterval
+    public let end: TimeInterval
+    public let words: [WordTimestamp]   // empty if engine did not produce them
+}
+
+public struct WordTimestamp: Sendable, Equatable {
+    public let word: String
+    public let start: TimeInterval
+    public let end: TimeInterval
+}
+
+public enum WhisperModel: String, Sendable, CaseIterable {
+    case baseEN = "openai_whisper-base.en"     // ~148 MB, default
+    case smallEN = "openai_whisper-small.en"   // ~488 MB
+    case mediumEN = "openai_whisper-medium.en" // ~1.5 GB
 }
 ```
+
+### Notes vs. Original Sketch
+
+The v0.6 sketch named the return type `TranscriptionResult` and made `words` optional. The implementation renames the return type to `Transcript` because WhisperKit exports its own top-level `TranscriptionResult` from a same-named module — `import WhisperKit` shadows the module name with the class name and the qualified form `WhisperKit.TranscriptionResult` no longer resolves to the module's top-level type. Renaming our type to `Transcript` removes the ambiguity. The `words` array was made non-optional (empty when missing) because every consumer immediately defaulted nil to empty anyway. `prepare(model:)` was added so the UI (EPIC-07) can warm up a model during onboarding without immediately requesting a transcription.
 
 ### Related IDs
 
