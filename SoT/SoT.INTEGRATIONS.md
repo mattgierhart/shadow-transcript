@@ -21,7 +21,7 @@ authority: This is a SoT file - IDs here are referenced by SoT.API_CONTRACTS.md,
 
 **ML Model Integrations** (INT-101 to INT-199):
 
-- [INT-101](#int-101-whisper-cpp-model-loading) - whisper.cpp Model Loading
+- [INT-101](#int-101-whisperkit-model-loading) - WhisperKit Model Loading
 
 **System Integrations** (INT-201 to INT-299):
 
@@ -80,40 +80,45 @@ tags: [meeting, transcript]
 
 ---
 
-## INT-101: whisper.cpp Model Loading
+## INT-101: WhisperKit Model Loading
 
 **ID**: INT-101
 **Category**: ML Model
-**Status**: Planned
-**Provider**: ggerganov/whisper.cpp (MIT License)
+**Status**: Implemented (EPIC-03, 2026-05-08)
+**Provider**: argmaxinc/WhisperKit 0.18.0 (MIT License) — superseded the original whisper.cpp choice during v0.5 stack selection
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-08
 
 ### Description
 
-Load and run Whisper GGML models for local speech-to-text transcription. Models are bundled with the app or downloaded on first launch. CoreML-optimized variants available for Apple Silicon acceleration.
+Load and run Whisper models for local speech-to-text transcription via WhisperKit (CoreML-optimised for Apple Silicon). Models are downloaded on first launch via WhisperKit's built-in download mechanism into a per-variant directory under `~/Library/Application Support/TranscriptShadow/Models/`.
 
 ### Configuration
 
 **Model Files**:
 
-- Bundled: `whisper-base.en` (~148MB, good quality/speed balance)
-- Optional download: `whisper-small.en` (~488MB, better accuracy)
-- Optional download: `whisper-medium.en` (~1.5GB, best accuracy)
+- Default: `openai_whisper-base.en` (~148 MB, good quality/speed balance)
+- Optional: `openai_whisper-small.en` (~488 MB, better accuracy)
+- Optional: `openai_whisper-medium.en` (~1.5 GB, best accuracy)
 
-**Environment Variables**: N/A (local binary/library)
+**Environment Variables**: N/A (no network beyond the one-off model download from Hugging Face).
+
+**Download Path**: Driven by `WhisperKit(model:downloadBase:load:)` — `downloadBase` points at `TranscriptionModelStore.directory`. WhisperKit creates `<downloadBase>/<model.rawValue>/` per variant. (EPIC-03 Codex review fixed an earlier mistake where this was passed as `modelFolder`, which would have made WhisperKit treat the empty cache root as an already-downloaded model and refuse to fetch on first run.)
 
 ### Constraints
 
 - **Memory**: Model loaded into RAM during processing (base ~300MB, medium ~2GB)
-- **Disk**: Model files stored in app support directory
+- **Disk**: Model files stored in app support directory; cache check by directory non-empty (`TranscriptionModelStore.isCached(model:)`)
 - **Performance**: Real-time factor ~0.1x on M1 (base model), ~0.3x (medium model)
+- **Concurrency**: All `WhisperKit` calls serialized through `AsyncTaskQueue` in `WhisperKitEngine` so concurrent transcribe/load requests cannot collide
 
 ### Related IDs
 
-- [TECH-002](SoT.TECHNICAL_DECISIONS.md#tech-002-whisper-cpp-transcription) - Technology decision
+- [TECH-002](SoT.TECHNICAL_DECISIONS.md#tech-002-whisperkit-transcription) - Technology decision
+- [API-101](SoT.API_CONTRACTS.md#api-101-transcription-service) - Public surface
 - [FEA-002 in PRD](../PRD.md) - Transcription feature
 - [BR-101](SoT.BUSINESS_RULES.md#br-101-local-only-processing) - Must run locally
+- [TEST-104](SoT.TESTING.md#test-104-model-download-and-cache) - Cache invariant
 
 ---
 
@@ -121,10 +126,10 @@ Load and run Whisper GGML models for local speech-to-text transcription. Models 
 
 **ID**: INT-201
 **Category**: System
-**Status**: Planned
+**Status**: Implemented (EPIC-02, 2026-05-06; tap-leak fix 2026-05-06; lock migration to `withLock` for Swift 6 strict concurrency 2026-05-06)
 **Provider**: Apple AVFoundation / AVAudioEngine
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-06
 
 ### Description
 
@@ -158,10 +163,10 @@ Capture microphone audio using AVAudioEngine. Requires microphone permission (NS
 
 **ID**: INT-202
 **Category**: System
-**Status**: Planned
-**Provider**: Apple ScreenCaptureKit (macOS 13+)
+**Status**: Implemented (EPIC-02, 2026-05-06; channelCount config knob removed 2026-05-07 in favor of internal `AudioCaptureConfiguration.outputChannelCount`)
+**Provider**: Apple ScreenCaptureKit (macOS 13+; we target macOS 15+ for unified mic + system audio)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-07
 
 ### Description
 

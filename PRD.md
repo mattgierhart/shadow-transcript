@@ -1,7 +1,7 @@
 ---
 version: 2.0
 purpose: Progressive Product Requirements Document aligned to the PRD Led Context Engineering lifecycle.
-last_updated: 2026-03-11
+last_updated: 2026-05-08
 template_version: "3.0.0"
 ---
 
@@ -22,7 +22,7 @@ template_version: "3.0.0"
 | Field                      | Value                              |
 | -------------------------- | ---------------------------------- |
 | **Current Lifecycle Gate** | v0.7                               |
-| **Last Updated**           | 2026-03-20                         |
+| **Last Updated**           | 2026-05-08                         |
 | **Last Editor**            | Claude Agent                       |
 | **Status**                 | Build Execution                    |
 | **Next Target Gate**       | v0.8                               |
@@ -43,6 +43,10 @@ template_version: "3.0.0"
 | v0.5 Red Team Review   | 2026-03-11 | Claude Agent | Risks + tech stack selected          | RISK-001→006, TECH-001→007 |
 | v0.6 Architecture      | 2026-03-11 | Claude Agent | Architecture, APIs, data model       | ARC-001→003, API-001→301, DBT-001→101, INT-001→202 |
 | v0.7 Build Execution   | 2026-03-20 | Claude Agent | EPIC backlog, test cases, deployment target resolved | EPIC-01→08, TEST-001→504 |
+| v0.7 EPIC-01 Complete  | 2026-05-06 | Claude Agent | Project scaffold via XcodeGen + WhisperKit + GRDB SPM deps + Python sidecar skeleton + macos-15 CI workflow | EPIC-01, TECH-001/002/006/007, ENV-001 |
+| v0.7 EPIC-02 Complete  | 2026-05-06 | Claude Agent | Audio capture (mic + system + mixer) implemented + Codex review caught 4 follow-on bugs (dual-source mix, actor reentrancy, level stream termination, mic tap leak) all fixed in same session | EPIC-02, API-001, API-002, TEST-001→005 |
+| v0.7 EPIC-02b Complete | 2026-05-07 | Claude Agent | Audio artifact contract hardening: recordingFinalized milestone, atomic writer, unique filenames, broadcast buses, channelCount removal, docstring tightening — all 6 issues from Codex synthesis review fixed before EPIC-03 started | EPIC-02b, API-001, API-002 |
+| v0.7 EPIC-03 Complete  | 2026-05-08 | Claude Agent | Transcription pipeline (TranscriptionService + WhisperKit engine) implemented + Codex review caught 3 follow-on bugs (downloadBase init, AsyncTaskQueue serialization, CancellationError surfacing) all fixed in same session | EPIC-03, API-101, INT-101, TEST-101→104 |
 
 ---
 
