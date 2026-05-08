@@ -65,7 +65,12 @@ public actor DefaultTranscriptionService: TranscriptionService {
             )
         } catch let error as TranscriptionError {
             throw error
+        } catch is CancellationError {
+            throw TranscriptionError.cancelled
         } catch {
+            if Task.isCancelled {
+                throw TranscriptionError.cancelled
+            }
             throw TranscriptionError.transcriptionFailed(reason: error.localizedDescription)
         }
 

@@ -16,6 +16,9 @@ final class WhisperKitEngine: TranscriptionEngine, @unchecked Sendable {
     private let lock = NSLock()
     private var whisperKit: WhisperKit?
     private var loadedModel: WhisperModel?
+    /// Serializes load + transcribe so two concurrent callers cannot drive
+    /// the same `WhisperKit` instance at once (Codex P2 review finding).
+    private let queue = AsyncTaskQueue()
 
     init() {}
 
@@ -24,6 +27,12 @@ final class WhisperKitEngine: TranscriptionEngine, @unchecked Sendable {
     }
 
     func load(model: WhisperModel, store: TranscriptionModelStore) async throws {
+        try await queue.enqueue {
+            try await self.loadLocked(model: model, store: store)
+        }
+    }
+
+    private func loadLocked(model: WhisperModel, store: TranscriptionModelStore) async throws {
         if let alreadyLoaded = lock.withLock({ loadedModel }), alreadyLoaded == model,
            lock.withLock({ whisperKit != nil }) {
             return
@@ -33,15 +42,21 @@ final class WhisperKitEngine: TranscriptionEngine, @unchecked Sendable {
             loadedModel = nil
         }
         do {
+            // Pass the cache root as `downloadBase` (where WhisperKit *places*
+            // downloads), not `modelFolder` (which would tell WhisperKit "this
+            // is already a model directory" and skip the download path
+            // entirely on a fresh install). Codex P1 review finding.
             let kit = try await WhisperKit(
                 model: model.rawValue,
-                modelFolder: store.directory.path,
+                downloadBase: store.directory,
                 load: true
             )
             lock.withLock {
                 self.whisperKit = kit
                 self.loadedModel = model
             }
+        } catch is CancellationError {
+            throw TranscriptionError.cancelled
         } catch {
             throw TranscriptionError.modelLoadFailed(
                 model: model,
@@ -51,6 +66,16 @@ final class WhisperKitEngine: TranscriptionEngine, @unchecked Sendable {
     }
 
     func transcribe(
+        audioURL: URL,
+        language: String,
+        progress: @escaping @Sendable (Double) -> Void
+    ) async throws -> EngineTranscription {
+        try await queue.enqueue {
+            try await self.transcribeLocked(audioURL: audioURL, language: language, progress: progress)
+        }
+    }
+
+    private func transcribeLocked(
         audioURL: URL,
         language: String,
         progress: @escaping @Sendable (Double) -> Void
@@ -90,10 +115,18 @@ final class WhisperKitEngine: TranscriptionEngine, @unchecked Sendable {
                 audioPath: audioURL.path,
                 decodeOptions: options
             ) { whisperProgress in
+                if Task.isCancelled { return false }
                 progressBox.report(elapsedSeconds: whisperProgress.timings.fullPipeline)
                 return true
             }
+        } catch is CancellationError {
+            // Codex P2 review: surface user cancellation as `.cancelled`
+            // rather than collapsing it into `.transcriptionFailed`.
+            throw TranscriptionError.cancelled
         } catch {
+            if Task.isCancelled {
+                throw TranscriptionError.cancelled
+            }
             throw TranscriptionError.transcriptionFailed(reason: error.localizedDescription)
         }
 
