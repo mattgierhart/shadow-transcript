@@ -111,24 +111,67 @@ committed**. Otherwise we'd be building a parser against a moving target.
 
 ## Execution Plan (The 5 Phases)
 
-### Phase A: Plan
+### Phase A: Plan — Research-Driven Decisions (2026-05-08)
 
-- [ ] **Context Loaded**: EPIC-04a closing artifacts (JSON schema, golden fixture, exit code map), API-102 SoT entry, EPIC-01 entitlements file, EPIC-03 cancellation patterns
-- [ ] **Strategy**: Build the protocol + types from the schema, then the `Process` bridge against the binary path. Tests use the golden JSON fixture from 04a + a `FakeDiarizationEngine` for non-binary paths.
-- [ ] **Decision points** (filled in during planning research; see below):
-  - HF token storage: env-var-only for MVP vs Keychain
-  - Binary location strategy: `.app/Contents/Resources/diarize` vs an XPC service
-  - Whether to add `AsyncTaskQueue` upfront or wait for evidence of concurrent use
+- [x] **Context Loaded**: EPIC-04a Phase B (JSON schema), API-102 SoT entry, EPIC-01 entitlements file, EPIC-03 cancellation + `AsyncTaskQueue` patterns. Web research synthesized below.
 
-### Phase B: Design — Sandbox + Entitlements
+**Decision 1 — `Process` vs `swift-subprocess`**: Adopt **`swiftlang/swift-subprocess`** (pre-1.0, currently 0.4.x; `Process` + `readabilityHandler` is a documented foot-gun under Swift 6 strict concurrency — captures non-Sendable state, fires after EOF). swift-subprocess provides `for try await line in outputSequence.lines()`, `PlatformOptions.teardownSequence = [.gracefulShutDown(allowedDurationToNextStep: .seconds(5))]` for SIGTERM-then-SIGKILL, and clean Task cancellation. Acceptable for v0.7 milestone; flag for revisit before public ship if it hasn't reached 1.0.
 
-- [ ] Document the entitlement deltas vs EPIC-01's tight default:
-  - Add `com.apple.security.cs.disable-library-validation` (required for any embedded binary)
-  - Add `com.apple.security.cs.allow-unsigned-executable-memory` if torch MPS path JIT-loads (TBD from 04a's runtime behavior)
-  - **Keep** `com.apple.security.app-sandbox = true`
-- [ ] Document the bundle-embedding approach in `project.yml`: copy `sidecar/dist/diarize` into `Contents/Resources/` via a Run Script Build Phase or XcodeGen `buildPhases.copyFiles`
-- [ ] Decide HF token source: env var (passthrough at spawn) vs Keychain (more secure, more code). For MVP: env var or app config; Keychain comes when EPIC-07 builds the settings UI.
-- [ ] Decide cancellation contract: `Task.checkCancellation()` polled at the I/O boundary; SIGTERM on cancel; if process doesn't exit in 5s, SIGKILL.
+**Decision 2 — Binary location**: `.app/Contents/Resources/diarize/` (the `--onedir` tree from EPIC-04a). Located via `Bundle.main.url(forResource: "diarize", withExtension: nil, subdirectory: "Resources/diarize")`. **Not** an XPC service — XPC's serialization overhead would slow down audio path passing, and we'd lose the ability to stream stdout for progress.
+
+**Decision 3 — File access (audio path → child)**: **Security-scoped bookmarks**. The child does not inherit Powerbox grants from `NSOpenPanel` even though `inherit=true` propagates the sandbox. Parent calls `url.bookmarkData(options: .withSecurityScope)`, base64-encodes, passes via `Process.environment["TRANSCRIPT_SHADOW_AUDIO_BOOKMARK"]`. Child resolves with `URL(resolvingBookmarkData:options:.withSecurityScope...)` and brackets reads with `startAccessingSecurityScopedResource()`. FD-passing is the alternative but breaks for >2 GB files and complicates streaming for the Python side.
+
+**Decision 4 — HF token storage**: **Env var passthrough at spawn**, sourced from a configurable location. For MVP: a settings file under `~/Library/Application Support/TranscriptShadow/`. Keychain wrapping comes when EPIC-07 builds the settings UI. The child reads `HF_TOKEN`; if missing and the model isn't cached, exits with code 3 → mapped to `DiarizationError.huggingFaceAuthRequired`.
+
+**Decision 5 — Concurrency**: A diarization run holds the entire pyannote pipeline in memory; running two simultaneously would 2× memory + thrash. **Add `AsyncTaskQueue` upfront** (same one we shipped in EPIC-03 for `WhisperKitEngine`). Cheaper than discovering the bug from a UI race in EPIC-07.
+
+### Phase B: Design — Sandbox + Entitlements Matrix
+
+**Parent app (`TranscriptShadow.entitlements`)** — additions to the EPIC-01 baseline:
+
+| Entitlement | Reason | Status |
+|------------|--------|--------|
+| `com.apple.security.app-sandbox` | (existing) | Keep |
+| `com.apple.security.device.audio-input` | (existing — mic) | Keep |
+| `com.apple.security.network.client` | (existing — WhisperKit model download) | Keep |
+| **`com.apple.security.cs.disable-library-validation`** | **Required** — PyInstaller bootloader loads `*.dylib` / `*.so` under `Resources/diarize/_internal/` not signed by our Team ID. Without this, dyld refuses under hardened runtime. | Add |
+| **`com.apple.security.cs.allow-unsigned-executable-memory`** | **Required** — CPython bytecode + ctypes paths and torch's runtime memory. Documented in every PyInstaller-on-mac entitlements file in the wild (Buzz, txoof gist). | Add |
+| `com.apple.security.cs.allow-jit` | Recommended alongside `allow-unsigned-executable-memory`. PyTorch MPS goes through Metal compilers; cheap to add, expensive to debug if missing. | Add |
+| `com.apple.security.files.user-selected.read-only` | `NSOpenPanel` returns a usable URL for the audio file picker. | Add |
+| `com.apple.security.files.bookmarks.app-scope` | Persist bookmarks across launches (settings + recent recordings). | Add |
+
+**Child binary (`Resources/diarize/diarize.entitlements`)** — separate file:
+
+| Entitlement | Value | Reason |
+|------------|-------|--------|
+| `com.apple.security.app-sandbox` | true | Inherit sandbox |
+| `com.apple.security.inherit` | true | Pull sandbox from parent — **only entitlement that may be set on the child**. Per Apple's helper-tool doc + indie-stack post, any other sandbox entitlement on the child causes `_libsecinit_appsandbox` crash. |
+
+**Critical**: The `com.apple.security.get-task-allow` entitlement that Xcode auto-injects in debug builds **kills the child instantly**. Strip it post-build with `codesign --entitlements diarize.entitlements --force` overwriting the auto-generated one.
+
+### Codesigning Sequence
+
+Bottom-up, **never `--deep`** (deprecated since macOS 13; notarization-rejection trigger):
+
+1. Every `.dylib` / `.so` under `Resources/diarize/_internal/` — `codesign --force --options=runtime --timestamp -s "Developer ID..."`
+2. The inner `Resources/diarize/diarize` binary — same flags **plus** `--entitlements diarize.entitlements`
+3. The app's `Contents/MacOS/TranscriptShadow` (Xcode handles)
+4. The `.app` bundle — `--entitlements TranscriptShadow.entitlements`
+5. Verify: `codesign --verify --deep --strict --verbose=2` (verify only — `--deep` is OK on verify, just not on sign)
+
+XcodeGen note: this needs a **Run Script Build Phase** that walks the embedded tree and signs each binary individually before bundle-signing. Reference template: Buzz's Makefile at `chidiwilliams/buzz`.
+
+### Phase B: Design — Process bridge contract
+
+(Sandbox + entitlements are above in Phase A. This section locks the
+Swift-side contract that consumes EPIC-04a's binary.)
+
+- [x] **Stdout parsing**: line-by-line via swift-subprocess's `outputSequence.lines()`. Match `^PROGRESS:(\d+(?:\.\d+)?)$` → forward the float to the `progress: (Double) -> Void` closure. Anything else on stdout is logged as a warning (shouldn't happen in success path per 04a Phase B).
+- [x] **Stderr parsing**: collect entirely; on non-zero exit, parse `^ERROR:(\d+):(.+)$` to extract code + message for the `DiarizationError.binaryFailed(...)` case.
+- [x] **Output reading**: pass `--output <tmpfile>` to the binary. After exit, read the tmpfile and `JSONDecoder` it into `DiarizationResult`. Don't try to parse stdout for JSON.
+- [x] **Cancellation**: `withTaskCancellationHandler { ... }` wrapping the `subprocess.run` call. swift-subprocess's `teardownSequence = [.gracefulShutDown(allowedDurationToNextStep: .seconds(5))]` handles SIGTERM-then-SIGKILL automatically.
+- [x] **Timeout**: 30 s per minute of input audio (rough RTF×3 ceiling) with a 5-minute floor. Configurable via initializer parameter for future tuning.
+- [x] **Concurrency**: All `diarize()` calls go through `AsyncTaskQueue` (the same one we shipped in EPIC-03). Two concurrent calls would 2× the pipeline's memory footprint.
 
 ### Phase C: Build
 
@@ -172,7 +215,11 @@ committed**. Otherwise we'd be building a parser against a moving target.
 
 | # | Observation | Proposed Action | Triage |
 |---|-------------|-----------------|--------|
-| 1 | | | Pending |
+| 1 | swift-subprocess is **0.4.x / pre-1.0**. Acceptable for a v0.7 internal milestone but flag for revisit before public ship. Alternative is to fall back to Foundation `Process` with the actor-wrap workaround documented in the Swift Forums thread on `Process+NSPipe` under strict concurrency. | Adopt swift-subprocess for now; create a follow-up issue to re-evaluate before EPIC-08 / public ship. | Pending |
+| 2 | `com.apple.security.cs.allow-jit` may not be strictly required if pyannote / torch MPS doesn't actually JIT user code. Empirical test in EPIC-04a's spike — add only if "MAP_JIT" failures appear in Console. | Default to including it; cheap to add. | Pending (verify in 04a spike) |
+| 3 | First launch on Sequoia+ shows a "downloaded from internet" Gatekeeper prompt for the inner binary unless the `.app` is launched once via Finder (LaunchServices then trusts the spawn). | Document in QA plan; mention in EPIC-07 onboarding flow. | Carry-forward to EPIC-07 |
+| 4 | Reference template for the codesign sequence is Buzz (`chidiwilliams/buzz`) — closest OSS precedent for a PyInstaller-bundled torch app shipped notarized. **No public OSS macOS app shipping `pyannote.audio` + torch via PyInstaller specifically** — pyannote inheritance is ours to debug. | Mirror Buzz's Makefile; budget extra debugging time when notarization first runs. | Pending |
+| 5 | Audio file passed to the child via security-scoped bookmark in `Process.environment["TRANSCRIPT_SHADOW_AUDIO_BOOKMARK"]` (base64-encoded). The child's CLI contract from EPIC-04a needs to support reading this env var as an alternative to `--audio <path>` when the path is sandboxed. | Coordinate with EPIC-04a Phase C to add bookmark-resolution to the binary. | Carry-forward to EPIC-04a |
 
 ---
 

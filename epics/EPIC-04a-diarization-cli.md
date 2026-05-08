@@ -112,32 +112,52 @@ The full carry-forward block lives in `epics/EPIC-04-speaker-diarization.md`
 
 ## Execution Plan (The 5 Phases)
 
-### Phase A: Plan (Risk Spike First)
+### Phase A: Plan — Research-Driven Decisions (2026-05-08)
 
-> **Goal of this phase**: produce `temp/epic-04a-spike-results.md` with
-> answers to the five spike questions below before writing the real
-> `diarize.py`. The spike's findings dictate the version pins, the bundle
-> strategy, and the JSON schema's level of detail.
+> Most of the spike unknowns from the original EPIC have answers from
+> research now (pyannote.audio docs via Context7, PyInstaller-on-macOS
+> precedents via web search). The spike still needs to *empirically*
+> confirm RTF and bundle size on the dev machine, but the design
+> decisions below are locked.
 
-- [ ] **Context Loaded**: Read API-102, ARC-002, TECH-006, RISK-001/003, EPIC-01 sidecar scaffolding, EPIC-04 (now-index) cumulative-carry-forward block
-- [ ] **Spike question 1**: Does `pyannote.audio` 3.3.x install cleanly on Python 3.11 on macOS arm64 with our pinned `torch` + `torchaudio`? Record any hidden-import or build-from-source surprises.
-- [ ] **Spike question 2**: Does `speaker-diarization-community-1` require a Hugging Face token at first download? If yes, where does the user provide it (env var, CLI flag, both)?
-- [ ] **Spike question 3**: What is the real-time factor on a known 5-minute, 3-speaker recording on the active dev machine (M3 MBP / M2 Max Studio)? RISK-001 said "~31s per hour" — ground-truth that.
-- [ ] **Spike question 4**: PyInstaller bundle size with everything packed (`pyannote.audio + torch + torchaudio + sklearn + numpy`)? Decide whether < 500 MB is achievable or we accept larger.
-- [ ] **Spike question 5**: What does pyannote's actual output object look like? Speaker IDs (str vs int), boundary precision, confidence per segment? — drives the JSON schema.
+- [x] **Context Loaded**: API-102, ARC-002, TECH-006, RISK-001/003, EPIC-01 sidecar scaffolding, EPIC-04-index cumulative-carry-forward.
+
+**Decision 1 — pyannote.audio version**: Bump to **`pyannote.audio>=4.0,<5`**. Community-1 was introduced in pyannote 4.0; our current `sidecar/requirements.txt` (pinned `>=3.3.0,<3.4`) is wrong and would not load `speaker-diarization-community-1`. Pinning blocked-pending: confirm 4.x torch compatibility before locking the patch range.
+
+**Decision 2 — Hugging Face token**: Required at **first download only**. Pipeline supports the modern `token=` kwarg (the `use_auth_token=` form is deprecated). Plumb via `--hf-token` CLI flag winning over `HF_TOKEN` env var; exit code `3` if neither and the model isn't already cached. After first download, the binary runs offline with `HF_HUB_OFFLINE=1` and `Pipeline.from_pretrained(..., local_files_only=True)`.
+
+**Decision 3 — Cache location**: Set `HF_HOME=~/Library/Caches/ai.gearheart.TranscriptShadow/huggingface` at the binary's startup. macOS-correct cache location; survives app updates; gets cleaned by user "Manage Storage". Don't hand-roll a relocation under `~/Library/Application Support/` (HF's blob/refs/snapshots layout is a known footgun to re-implement).
+
+**Decision 4 — Bundle strategy**: **`--onedir`, not `--onefile`**. PyInstaller maintainers explicitly recommend onedir for macOS .app bundles; `--onefile` re-extracts ~1.5 GB on every cold launch (5–15 s Gatekeeper rescan on Apple Silicon). Use `--onedir` so the Resources/diarize/ tree is signed once at build time and persists.
+
+**Decision 5 — Bundle-size target**: Aim for **~700 MB compressed** as the honest baseline (not the original 500 MB target). Reference points: CUDA torch onefile = 2.6 GB; CPU-only macOS arm64 is ~40–50% smaller. Aggressive `excludes` (TensorBoard, torchvision, IPython, pytest, tqdm.notebook) reclaims 100–200 MB. Record actual size in EPIC observations; revisit if > 1 GB.
+
+**Spike work that still needs the dev machine** (produces `temp/epic-04a-spike-results.md`):
+
+- [ ] **Spike A**: Install pyannote 4.x + torch on the dev box. Record any hook surprises or wheel issues.
+- [ ] **Spike B**: Download community-1 (interactive, accepts CC-BY-4.0 terms once). Confirm community-1 model size empirically (estimated 150–250 MB; not published on model card).
+- [ ] **Spike C**: RTF benchmark on a 5-minute 3-speaker recording. Compare against RISK-001's "~31 s per hour" estimate.
+- [ ] **Spike D**: PyInstaller `--onedir` build → measure tree + zipped sizes. Verify bottom-up codesign produces a notarizable artifact (pre-EPIC-04b sandbox work).
 
 ### Phase B: Design — Lock the JSON Contract
 
 > The JSON schema is the boundary between 04a and 04b. EPIC-04b cannot
-> start until this section is filled in and committed. Schema decisions:
+> start until this section is committed.
 
-- [ ] **Speaker IDs**: string (`"SPEAKER_00"`) vs int (`0`). Default: string for forward-compat with named labels.
-- [ ] **Segment boundary precision**: float seconds with 3 decimal places (millisecond) — enough for 04b alignment work in EPIC-05.
-- [ ] **Optional confidence per segment**: include if pyannote exposes it; otherwise omit (don't fabricate).
-- [ ] **Per-word speaker attribution**: NOT in 04a scope. The community-1 pipeline doesn't produce word-level output natively; that's an EPIC-05 alignment task.
-- [ ] **Error envelope**: when the binary exits non-zero, stderr carries `ERROR:<code>:<message>`. Exit code mapping documented above.
-- [ ] **Progress format**: stdout-only, exactly one `PROGRESS:0.42` line per emit, no other stdout output during success path.
-- [ ] **Schema example** (target shape — actuals locked after the spike):
+**Pyannote 4.x natively supports `output.serialize()`** which already
+produces JSON. The Phase B work is to wrap that with our envelope so
+the contract stays stable across pyannote versions and gives 04b a
+predictable shape.
+
+- [x] **Speaker IDs**: pyannote returns strings like `"SPEAKER_00"`, `"SPEAKER_01"`. We pass them through unchanged.
+- [x] **Segment boundary precision**: float seconds with 3 decimal places (millisecond). Round at serialization to avoid IEEE float drift across runs.
+- [x] **Confidence per segment**: pyannote 4.x community-1 does **not** expose per-segment confidence. Omit the field rather than fabricate. (`speaker-diarization-precision-2` does — that's an upgrade path.)
+- [x] **Two diarization views**: pyannote outputs both `speaker_diarization` (allowing overlapping speech) and `exclusive_speaker_diarization` (no overlaps, better for transcription alignment). We emit the **exclusive view as primary `segments`** and keep the overlapping view under `overlapping_segments` for downstream alignment in EPIC-05.
+- [x] **Per-word speaker attribution**: NOT in 04a scope. Word-level alignment is EPIC-05 (combining transcription word timestamps with our segment boundaries).
+- [x] **Error envelope**: stderr carries `ERROR:<code>:<message>` lines on non-zero exit. Stdout is reserved for `PROGRESS:0.42` lines (exactly one per emit, ≥5 emits per pipeline run).
+- [x] **Output is written to a file path passed via `--output`**, NOT to stdout. This avoids intermixing JSON with progress lines.
+
+**Frozen schema** (1.0):
 
 ```json
 {
@@ -148,19 +168,46 @@ The full carry-forward block lives in `epics/EPIC-04-speaker-diarization.md`
   },
   "model": {
     "name": "speaker-diarization-community-1",
-    "revision": "..."
+    "revision": "<commit-or-version>"
   },
   "speakers": [
     {"id": "SPEAKER_00", "total_seconds": 145.2},
     {"id": "SPEAKER_01", "total_seconds": 98.6}
   ],
   "segments": [
-    {"speaker": "SPEAKER_00", "start": 0.000, "end": 4.235, "confidence": 0.91},
-    {"speaker": "SPEAKER_01", "start": 4.235, "end": 7.180, "confidence": 0.87}
+    {"speaker": "SPEAKER_00", "start": 0.000, "end": 4.235},
+    {"speaker": "SPEAKER_01", "start": 4.235, "end": 7.180}
   ],
-  "elapsed_seconds": 31.2
+  "overlapping_segments": [
+    {"speaker": "SPEAKER_00", "start": 4.000, "end": 4.500},
+    {"speaker": "SPEAKER_01", "start": 4.235, "end": 4.500}
+  ],
+  "elapsed_seconds": 31.2,
+  "warnings": []
 }
 ```
+
+The `warnings` array is reserved for non-fatal issues (e.g., "fewer than `min_speakers` detected, returning best-effort"). Optional and may be empty.
+
+### Implementation Notes (apply during Phase C)
+
+- Use `pyannote.audio.pipelines.utils.hook.ProgressHook` for the natural
+  pipeline checkpoints; map its callbacks to `PROGRESS:` stdout lines.
+- Set `multiprocessing.set_start_method('spawn')` and call
+  `multiprocessing.freeze_support()` in `__main__` (PyInstaller
+  re-execs for child processes).
+- Set `NUMBA_CACHE_DIR=~/Library/Caches/ai.gearheart.TranscriptShadow/numba`
+  early in startup; otherwise librosa's first-run JIT compilation is a
+  ~30 s blocker.
+- Hidden imports for the .spec: `pyannote`, `pytorch_lightning`,
+  `lightning_fabric` (sub-dep often missed), `torchaudio`, `sklearn`,
+  `librosa`, `numba`, `onnxruntime` (community-1 uses native WeSpeaker
+  ONNX; pyannote 4.x dropped speechbrain).
+- Datas: `collect_data_files('pyannote')`,
+  `collect_data_files('pytorch_lightning')`, `librosa` filter
+  coefficients, sklearn data files.
+- Excludes (size budget): `tensorboard`, `torchvision`, `IPython`,
+  `pytest`, `tqdm.notebook`, `matplotlib` (if not actually used).
 
 ### Phase C: Build
 
@@ -200,7 +247,11 @@ The full carry-forward block lives in `epics/EPIC-04-speaker-diarization.md`
 
 | # | Observation | Proposed Action | Triage |
 |---|-------------|-----------------|--------|
-| 1 | | | Pending |
+| 1 | Research surfaced that pyannote 3.x **cannot** load community-1 (pipeline introduced in 4.0). Our `sidecar/requirements.txt` from EPIC-01 has the wrong pin; correcting it is a Phase C task. | Update requirements.txt to `pyannote.audio>=4.0,<5`. | Pending (lands in Phase C) |
+| 2 | `pyannote 4.x` natively serializes JSON via `output.serialize()`. Our schema wraps that with envelope fields (version, model, audio, elapsed) so the boundary stays stable if pyannote later changes its native shape. | Use `output.serialize()` for the segments array, hand-roll the envelope. | Resolved (design choice) |
+| 3 | `--onefile` adds 5–15 s cold-start on Apple Silicon (Gatekeeper rescan of the extracted ~1.5 GB tree). `--onedir` is the recommended path for `.app` bundles. | Phase C uses `--onedir`. | Resolved (design choice) |
+| 4 | community-1 is a **gated** model (CC-BY-4.0). User must accept terms once on the HF model page before the token works. First-launch UX: this is an EPIC-04b/EPIC-07 concern (clear error path, link to HF page). | Document in EPIC-04b's HF token plumbing section. | Carry-forward to EPIC-04b |
+| 5 | Numba's JIT cache directory is per-process and uncacheable across launches without explicit `NUMBA_CACHE_DIR`. Without it, every run pays a ~30 s librosa cold start. | Set `NUMBA_CACHE_DIR` to a per-app cache dir at binary startup. | Pending (lands in Phase C) |
 
 ---
 
