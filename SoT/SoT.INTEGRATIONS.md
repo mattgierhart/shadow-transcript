@@ -22,6 +22,7 @@ authority: This is a SoT file - IDs here are referenced by SoT.API_CONTRACTS.md,
 **ML Model Integrations** (INT-101 to INT-199):
 
 - [INT-101](#int-101-whisperkit-model-loading) - WhisperKit Model Loading
+- [INT-102](#int-102-pyannote-diarization) - pyannote.audio Diarization (subprocess sidecar)
 
 **System Integrations** (INT-201 to INT-299):
 
@@ -119,6 +120,106 @@ Load and run Whisper models for local speech-to-text transcription via WhisperKi
 - [FEA-002 in PRD](../PRD.md) - Transcription feature
 - [BR-101](SoT.BUSINESS_RULES.md#br-101-local-only-processing) - Must run locally
 - [TEST-104](SoT.TESTING.md#test-104-model-download-and-cache) - Cache invariant
+
+---
+
+## INT-102: pyannote Diarization
+
+**ID**: INT-102
+**Category**: ML Model (subprocess sidecar)
+**Status**: Implemented (full — Python sidecar in EPIC-04a + Swift `DiarizationService` bridge in EPIC-04b).
+**Provider**: `pyannote.audio` 4.x + the gated `pyannote/speaker-diarization-community-1` pipeline (CC-BY-4.0).
+**Created**: 2026-05-09
+**Last Updated**: 2026-05-09
+
+### Description
+
+Identify speaker segments in a recorded audio file. Implemented as a
+PyInstaller `--onedir` Python sidecar (`sidecar/diarize.py`) that the
+macOS app spawns as a subprocess. The model is gated — first download
+requires accepting CC-BY-4.0 terms once on the HF model card and a
+read-scoped HF token. Subsequent runs are offline from
+`~/Library/Caches/ai.gearheart.TranscriptShadow/huggingface/`.
+
+The cross-language contract is a frozen JSON envelope (schema version
+1.0) — `sidecar/test_fixtures/golden-3spk.json` is the conformance
+fixture both the Python emitter and EPIC-04b's Swift `DiarizationResult`
+Codable type must agree on. See API-102 for the full schema.
+
+### Configuration
+
+**HF token resolution** (first-download only):
+- `--hf-token <str>` CLI flag wins
+- Falls back to `HF_TOKEN` env
+- Exits with code `3` and `ERROR:3:HF auth required …` if neither and the
+  model is not cached
+
+**Cache locations** (set before any pyannote / numba import — order
+matters; numba's JIT cache is uncacheable across launches without
+explicit `NUMBA_CACHE_DIR`, costing a ~30 s librosa cold start otherwise):
+- `HF_HOME` → `~/Library/Caches/ai.gearheart.TranscriptShadow/huggingface/`
+- `NUMBA_CACHE_DIR` → `~/Library/Caches/ai.gearheart.TranscriptShadow/numba/`
+
+**Audio path passing** (EPIC-04a Phase A Decision 3): the parent passes
+`--audio` with a resolved absolute path. The
+`TRANSCRIPT_SHADOW_AUDIO_BOOKMARK` env var is reserved for a future
+security-scoped-bookmark hand-off; currently the binary errors with a
+deferred-implementation message if it sees the env without `--audio`.
+EPIC-04b's parent resolves bookmarks and copies/passes `--audio` through
+sandbox inheritance.
+
+### Constraints
+
+- **Memory**: pyannote loads the entire pipeline into memory; concurrent
+  runs would 2× the footprint. EPIC-04b serializes calls through
+  `AsyncTaskQueue` (the same queue we ship for `WhisperKitEngine`).
+- **Disk**: First download lands ~150–250 MB of model weights into
+  `HF_HOME` (community-1 size is empirically measured during EPIC-04a
+  Phase A Spike B; not published on the model card). Bundle target
+  ~700 MB compressed (RISK-003).
+- **Performance**: RTF is the open RISK-001 unknown. EPIC-04a Phase A
+  Spike C measures actual on a 5-min 3-speaker recording. Estimate
+  was "~31 s per hour" of audio; revisit RISK-001 with measured values.
+- **Concurrency**: Python child is single-process. Swift parent
+  serializes via `AsyncTaskQueue`.
+
+### Sandbox + entitlement implications (EPIC-04b)
+
+The PyInstaller bootloader loads `*.dylib` / `*.so` files under the
+bundled tree that are NOT signed by the app's Team ID. Under hardened
+runtime, dyld refuses to load them without:
+
+- `com.apple.security.cs.disable-library-validation` (parent)
+- `com.apple.security.cs.allow-unsigned-executable-memory` (parent — CPython bytecode + ctypes)
+- `com.apple.security.cs.allow-jit` (parent — torch MPS path JIT, defensive)
+
+The child binary's entitlements file contains ONLY `app-sandbox` +
+`inherit`. Anything else (notably the auto-injected `get-task-allow`
+in debug builds) causes `_libsecinit_appsandbox` to crash the child.
+The codesign sequence is bottom-up via a Run Script Build Phase — every
+`.dylib` / `.so` first, then the inner `diarize` binary, then the `.app`.
+Never `--deep` (deprecated since macOS 13; notarization-rejection trigger).
+
+### Related IDs
+
+- [API-102](SoT.API_CONTRACTS.md#api-102-diarization-sidecar-cli) - Subprocess CLI contract
+- [TECH-006](SoT.TECHNICAL_DECISIONS.md#tech-006-pyannote-audio-diarization) - Technology decision
+- [ARC-002](SoT.TECHNICAL_DECISIONS.md#arc-002-python-sidecar-for-diarization) - Sidecar architecture
+- [FEA-003 in PRD](../PRD.md) - Diarization feature
+- [BR-101](SoT.BUSINESS_RULES.md#br-101-local-only-processing) - Must run locally
+- TEST-201, TEST-202, TEST-203, TEST-204 — see SoT.TESTING.md
+
+### Lessons learned (EPIC-04a Codex Gate 1, 2026-05-09)
+
+- pyannote 4.0.0's setup metadata pulls torch/torchaudio/torchcodec/
+  newer soundfile transitively; hand-pinning `torch>=2.4,<2.5` fails
+  to resolve. Pin pyannote.audio only; let it own its transitive graph.
+- pyannote's `ProgressHook` writes rich progress bars to stdout —
+  collides with our `PROGRESS:` line contract for EPIC-04b's Swift
+  parser. Don't forward to the inner hook; emit our own typed lines.
+- Bookmark resolution in pure Python is impossible without Foundation
+  APIs; the env var contract surface exists, but resolution is the
+  parent's job. Swift parent passes `--audio` post-resolution.
 
 ---
 

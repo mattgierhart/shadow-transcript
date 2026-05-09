@@ -1,9 +1,25 @@
 # Python sidecar dependencies
 # @implements TECH-006, ARC-002, ENV-001
 # Python 3.11 required (TECH-006).
-# pyannote.audio 3.x is the current stable line; pinned ranges allow patch updates.
+# pyannote.audio 4.x is required for speaker-diarization-community-1
+# (the pipeline ID is gated; introduced in 4.0; 3.x cannot load it).
+#
+# Transitive runtime deps (torch, torchaudio, torchcodec, pytorch-lightning,
+# lightning-fabric, onnxruntime, numba, librosa) are pulled by pyannote.audio
+# itself. We do NOT pin them directly here — pyannote 4.0.0's setup metadata
+# requires versions that drift from a hand-pinned set (e.g. torch >2.5,
+# torchcodec, newer soundfile) and forcing a stale pin breaks `pip install`
+# before the sidecar even runs (Codex Gate 1 finding, 2026-05-09).
+#
+# The PyInstaller .spec lists the relevant modules in `hiddenimports` so the
+# bundle picks up whatever pyannote's transitive install produced.
 
-pyannote.audio>=3.3.0,<3.4
-torch>=2.4.0,<2.5
-torchaudio>=2.4.0,<2.5
-pyinstaller>=6.10.0,<7.0
+# Runtime
+pyannote.audio>=4.0,<5
+soundfile>=0.12
+
+# Build (release-only; not in CI build job — multi-GB, ~5 min)
+pyinstaller>=6.10.0,<7
+
+# Test
+pytest>=8.0.0,<9

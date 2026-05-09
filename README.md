@@ -6,7 +6,7 @@ template_version: "3.0.0"
 
 > **Status**: Active
 > **Current PRD Version**: v0.7 (See `PRD.md`)
-> **Active EPIC**: EPIC-04 — Speaker Diarization Sidecar (next up; EPIC-01, 02, 02b, 03 complete) (See `epics/`)
+> **Active EPIC**: EPIC-05 — Transcript Formatting & Alignment (EPIC-04b closed 2026-05-09 with the Swift `DiarizationService` bridge + entitlements + codesign Run Script; 74 XCTests + 30 pytest cases all green) (See `epics/`)
 
 ---
 
@@ -63,8 +63,10 @@ template_version: "3.0.0"
 | EPIC-02 | Audio Capture Engine | ✅ Complete | EPIC-01 |
 | EPIC-02b | Audio Artifact Contract Hardening (Codex synthesis review fixes) | ✅ Complete | EPIC-02 |
 | EPIC-03 | Transcription Pipeline | ✅ Complete | EPIC-01, EPIC-02b |
-| EPIC-04 | Speaker Diarization Sidecar | Active | EPIC-01 |
-| EPIC-05 | Transcript Formatting & Alignment | Planned | EPIC-03, EPIC-04 |
+| EPIC-04 | Speaker Diarization Sidecar | Split → EPIC-04a + EPIC-04b | EPIC-01 |
+| EPIC-04a | Diarization CLI & Packaging (Python) | ✅ Complete | EPIC-01 |
+| EPIC-04b | Swift `DiarizationService` Bridge | ✅ Complete | EPIC-04a |
+| EPIC-05 | Transcript Formatting & Alignment | Active | EPIC-03, EPIC-04b |
 | EPIC-06 | Storage & Obsidian Export | Planned | EPIC-01, EPIC-05 |
 | EPIC-07 | SwiftUI Interface | Planned | EPIC-02, EPIC-05, EPIC-06 |
 | EPIC-08 | Pipeline Integration & Audio Lifecycle | Planned | EPIC-02→07 |
