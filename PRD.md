@@ -48,6 +48,7 @@ template_version: "3.0.0"
 | v0.7 EPIC-02b Complete | 2026-05-07 | Claude Agent | Audio artifact contract hardening: recordingFinalized milestone, atomic writer, unique filenames, broadcast buses, channelCount removal, docstring tightening — all 6 issues from Codex synthesis review fixed before EPIC-03 started | EPIC-02b, API-001, API-002 |
 | v0.7 EPIC-03 Complete  | 2026-05-08 | Claude Agent | Transcription pipeline (TranscriptionService + WhisperKit engine) implemented + Codex review caught 3 follow-on bugs (downloadBase init, AsyncTaskQueue serialization, CancellationError surfacing) all fixed in same session | EPIC-03, API-101, INT-101, TEST-101→104 |
 | v0.7 EPIC-04 Split     | 2026-05-08 | Claude Agent | Original EPIC-04 split into EPIC-04a (Python CLI + PyInstaller) and EPIC-04b (Swift Process bridge). Reason: BROAD-scope hook firing (12 SoT items) + Codex's recommendation that the two risk profiles are categorically different. EPIC-04 file converted to an index pointing at the children. | EPIC-04, EPIC-04a, EPIC-04b |
+| v0.7 EPIC-04a Complete | 2026-05-09 | Claude Agent | Real pyannote.audio 4.x pipeline + frozen JSON envelope (schema 1.0) + PyInstaller `--onedir` spec + 30 pytest cases (TEST-201..204) + golden-3spk.json cross-language fixture. Codex Gate 1 caught 3 bugs (P0 incompatible torch pin, P1 ProgressHook stdout pollution, P1 vacuous progress test) — all resolved before commit. Empirical RTF / bundle-size measurements deferred to Phase A spike on dev machine. | EPIC-04a, API-102, INT-102, TEST-201→204, RISK-001/003 |
 
 ---
 
@@ -238,9 +239,9 @@ Privacy-conscious macOS users who use Obsidian as their knowledge base need a lo
 
 | ID | Scoring | Risk | Impact | Likelihood | Raw | Status | Eff. Score | Mitigation | Linked IDs |
 |----|---------|------|--------|------------|-----|--------|------------|------------|------------|
-| RISK-001 | Technical | pyannote diarization runs on CPU only on macOS (MPS unreliable), causing slow processing for long meetings | H (3) | H (3) | 9 | mitigating | 4.5 | Bundle pyannote via PyInstaller; process in background; show progress. Evaluate WeSpeaker ONNX as faster alternative. | TECH-006, ARC-002 |
+| RISK-001 | Technical | pyannote diarization runs on CPU only on macOS (MPS unreliable), causing slow processing for long meetings | H (3) | H (3) | 9 | mitigating | 4.5 | EPIC-04a delivered the pyannote 4.x sidecar with progress reporting + AsyncTaskQueue serialization in EPIC-04b. RTF measurement is open until the dev-machine Spike C runs against a 5-min 3-speaker fixture; estimate "~31 s / hour" remains the planning anchor. WeSpeaker ONNX is now the embedding backend in pyannote 4 community-1, so this evolution is already absorbed. | TECH-006, ARC-002, INT-102 |
 | RISK-002 | Technical | ScreenCaptureKit microphone capture requires macOS 15+, limiting user base | M (2) | H (3) | 6 | accepted | 6.0 | Accept macOS 15+ requirement; fallback to AVAudioEngine for mic on macOS 14 if needed. | TECH-004, BR-201 |
-| RISK-003 | Technical | PyInstaller-bundled diarization sidecar produces large app size (~400-600MB) | M (2) | H (3) | 6 | mitigating | 3.0 | Download diarization model on first launch. Compress sidecar binary. | ARC-002, TECH-006 |
+| RISK-003 | Technical | PyInstaller-bundled diarization sidecar produces large app size (~700 MB compressed baseline; revisit if > 1 GB) | M (2) | H (3) | 6 | mitigating | 3.0 | EPIC-04a: `--onedir` form (NOT `--onefile`), aggressive `excludes` list (tensorboard/torchvision/IPython/pytest/matplotlib reclaim ~100–200 MB), model downloaded on first launch (not bundled). Empirical bundle size is open until Spike D runs `pyinstaller diarize.spec` on the dev machine. | ARC-002, TECH-006, INT-102 |
 | RISK-004 | User | Users may not grant Screen Recording permission (required for system audio capture) | H (3) | M (2) | 6 | mitigating | 3.0 | Clear onboarding explaining why permission is needed. Allow mic-only mode as fallback. | INT-202, UJ-003 |
 | RISK-005 | Technical | Transcript-diarization alignment may produce misattributed speaker segments | M (2) | M (2) | 4 | open | 4.0 | Implement word-level timestamp alignment between WhisperKit output and pyannote segments. Allow manual correction in SCR-004. | API-201, FEA-003 |
 | RISK-006 | User | App crashes during recording could lose audio before processing | H (3) | L (1) | 3 | mitigating | 1.5 | Write audio to temp file continuously during recording (not buffered). Implement crash recovery that detects orphaned temp audio on next launch. | ARC-003, BR-103 |
@@ -391,8 +392,8 @@ Full details: `SoT/SoT.INTEGRATIONS.md`
 | EPIC-02b | Audio Artifact Contract Hardening | ✅ Complete (2026-05-07) | EPIC-02 | API-001, API-002 | P0 (Codex synthesis review fixes) |
 | EPIC-03 | Transcription Pipeline | ✅ Complete (2026-05-08) | EPIC-01, EPIC-02b | API-101, FEA-002, INT-101, TECH-002 | P0 |
 | EPIC-04 | Speaker Diarization Sidecar | Split → 04a + 04b (2026-05-08) | EPIC-01 | API-102, FEA-003, ARC-002, TECH-006 | P0 (highest risk) |
-| EPIC-04a | Diarization CLI & Packaging (Python) | Active | EPIC-01 | API-102 (CLI half), ARC-002, TECH-006, BR-101, FEA-003, TEST-201..204, RISK-001/003 | P0 |
-| EPIC-04b | Swift `DiarizationService` Bridge | Blocked on 04a | EPIC-04a | API-102 (Swift half) | P0 |
+| EPIC-04a | Diarization CLI & Packaging (Python) | ✅ Complete (2026-05-09) | EPIC-01 | API-102 (CLI half), INT-102, ARC-002, TECH-006, BR-101, FEA-003, TEST-201..204, RISK-001/003 | P0 |
+| EPIC-04b | Swift `DiarizationService` Bridge | Active | EPIC-04a | API-102 (Swift half), INT-102 | P0 |
 | EPIC-05 | Transcript Formatting & Alignment | Planned | EPIC-03, EPIC-04b | API-201, FEA-004, BR-301, RISK-005 | P0 |
 | EPIC-06 | Storage & Obsidian Export | Planned | EPIC-01, EPIC-05 | API-202, DBT-001→101, FEA-005, FEA-006, INT-001 | P0 |
 | EPIC-07 | SwiftUI Interface | Planned | EPIC-02, EPIC-05, EPIC-06 | SCR-001→006, DES-XXX, UJ-001→003 | P1 |

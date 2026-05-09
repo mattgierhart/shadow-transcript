@@ -226,46 +226,126 @@ The v0.6 sketch named the return type `TranscriptionResult` and made `words` opt
 
 **ID**: API-102
 **Category**: Internal (subprocess)
-**Status**: Planned
+**Status**: Implemented (Python half — EPIC-04a). Swift consumer pending in EPIC-04b.
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-09
 
 ### Specification
 
-**Type**: CLI executable (PyInstaller-bundled Python)
-**Binary**: `TranscriptShadow.app/Contents/Resources/diarize`
+**Type**: CLI executable (PyInstaller `--onedir` bundle of Python 3.11)
+**Binary**: `TranscriptShadow.app/Contents/Resources/diarize/diarize`
+**Source**: `sidecar/diarize.py` + `sidecar/diarize.spec`
+**Cross-language conformance fixture**: `sidecar/test_fixtures/golden-3spk.json`
 
 ### Purpose
 
-Identify speaker segments in audio using pyannote-audio. Called as a subprocess by the Swift app.
+Identify speaker segments in audio using `pyannote.audio` 4.x and the
+gated `pyannote/speaker-diarization-community-1` model. Called as a
+subprocess by the Swift app (EPIC-04b).
 
 ### Interface
 
 **Invocation**:
 ```bash
-./diarize --audio /path/to/audio.wav --output /path/to/speakers.json [--num-speakers N]
+./diarize --audio <PATH> --output <PATH>
+          [--model pyannote/speaker-diarization-community-1]
+          [--num-speakers <int>]
+          [--hf-token <str>]
 ```
 
-**Output** (`speakers.json`):
+The `TRANSCRIPT_SHADOW_AUDIO_BOOKMARK` env var is reserved for an
+EPIC-04b security-scoped-bookmark hand-off. The current binary errors
+with a deferred-implementation message if it sees the env without
+`--audio`; the EPIC-04b parent resolves the bookmark and passes
+`--audio` with the resolved path.
+
+The `--hf-token` flag wins over the `HF_TOKEN` env var. Required only
+on first download of the gated community-1 model; subsequent runs read
+from `~/Library/Caches/ai.gearheart.TranscriptShadow/huggingface/`.
+
+### Output (frozen schema, version 1.0)
+
+Written to the file at `--output`, NOT to stdout. Stdout is reserved
+for `PROGRESS:` lines so the JSON payload never intermixes.
+
 ```json
 {
+  "version": "1.0",
+  "audio": {
+    "path": "/abs/path/to/meeting.wav",
+    "duration_seconds": 312.4
+  },
+  "model": {
+    "name": "pyannote/speaker-diarization-community-1",
+    "revision": "<commit-or-version>"
+  },
   "speakers": [
-    {"speaker": "SPEAKER_00", "start": 0.5, "end": 12.3},
-    {"speaker": "SPEAKER_01", "start": 12.5, "end": 25.1}
+    {"id": "SPEAKER_00", "total_seconds": 145.2},
+    {"id": "SPEAKER_01", "total_seconds": 98.6}
   ],
-  "num_speakers": 2
+  "segments": [
+    {"speaker": "SPEAKER_00", "start": 0.0, "end": 4.235},
+    {"speaker": "SPEAKER_01", "start": 4.235, "end": 7.18}
+  ],
+  "overlapping_segments": [
+    {"speaker": "SPEAKER_00", "start": 4.0, "end": 4.5},
+    {"speaker": "SPEAKER_01", "start": 4.235, "end": 4.5}
+  ],
+  "elapsed_seconds": 31.2,
+  "warnings": []
 }
 ```
 
-**Exit Codes**: 0 = success, 1 = error (stderr contains message)
+`segments` is the exclusive_speaker_diarization view (no overlaps,
+preferred for transcription alignment in EPIC-05). `overlapping_segments`
+is the speaker_diarization view (allowing simultaneous speakers).
+Floats round to 3 decimal places. `speakers` is sorted by id for
+deterministic output. `warnings` is reserved for non-fatal issues
+(e.g., "fewer than min_speakers detected"); may be empty.
 
-**Progress**: Writes progress percentage to stdout (e.g., `PROGRESS:45`)
+### Exit codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success — JSON written to `--output`. |
+| `1` | Audio file unreadable / missing / bookmark env unsupported. |
+| `2` | Model load failed (non-auth). |
+| `3` | HF auth required (gated model, no token, not cached). |
+| `4` | Out of memory. |
+
+### Progress
+
+`PROGRESS:0.42` lines on stdout. Format regex `^PROGRESS:(\d+(?:\.\d+)?)$`.
+Two decimals. Clamped to `[0.0, 1.0]`. Emitted at pyannote pipeline
+checkpoints; `main()` adds `PROGRESS:0.00` and `PROGRESS:1.00` book-ends
+so the consumer sees ≥2 lines on every successful run.
+
+### Errors
+
+`ERROR:<code>:<message>` lines on stderr (regex `^ERROR:(\d+):(.+)$`).
+Newlines and carriage returns in messages are stripped so the line
+parser always sees one error per line.
 
 ### Related IDs
 
-- [TECH-006](SoT.TECHNICAL_DECISIONS.md#tech-006-pyannote-audio-diarization) - pyannote
+- [TECH-006](SoT.TECHNICAL_DECISIONS.md#tech-006-pyannote-audio-diarization) - pyannote.audio
 - [ARC-002](SoT.TECHNICAL_DECISIONS.md#arc-002-python-sidecar-for-diarization) - Sidecar architecture
+- [INT-201](SoT.INTEGRATIONS.md#int-201-pyannote-diarization) - pyannote integration
 - [FEA-003 in PRD](../PRD.md) - Diarization feature
+- TEST-201, TEST-202, TEST-203, TEST-204 (all Implemented; see SoT.TESTING.md)
+
+### Lessons learned (EPIC-04a Codex Gate 1)
+
+- pyannote 4.0.0 doesn't accept hand-pinned `torch>=2.4,<2.5` — let the
+  pipeline package's own metadata pull transitive deps. Hand-pinning
+  caused a P0 install failure in initial requirements.txt.
+- pyannote's bundled `ProgressHook` writes rich progress bars to
+  stdout — would have collided with our `PROGRESS:` line contract if
+  forwarded. Our adapter emits PROGRESS lines directly without
+  delegating.
+- Bookmark resolution in pure Python is impossible without Foundation
+  APIs. EPIC-04b's parent resolves and passes `--audio`; the env var
+  contract surface exists only as a deferred-implementation error.
 
 ---
 

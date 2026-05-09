@@ -6,7 +6,7 @@ template_version: "3.0.0"
 
 > **Status**: Active
 > **Current PRD Version**: v0.7 (See `PRD.md`)
-> **Active EPIC**: EPIC-04a — Diarization CLI & Packaging (split from EPIC-04 on 2026-05-08; 04b blocked on 04a's JSON contract being frozen) (See `epics/`)
+> **Active EPIC**: EPIC-04b — Swift `DiarizationService` Bridge (EPIC-04a closed 2026-05-09 with the JSON envelope frozen at schema 1.0 + 30 pytest cases passing) (See `epics/`)
 
 ---
 
@@ -64,8 +64,8 @@ template_version: "3.0.0"
 | EPIC-02b | Audio Artifact Contract Hardening (Codex synthesis review fixes) | ✅ Complete | EPIC-02 |
 | EPIC-03 | Transcription Pipeline | ✅ Complete | EPIC-01, EPIC-02b |
 | EPIC-04 | Speaker Diarization Sidecar | Split → EPIC-04a + EPIC-04b | EPIC-01 |
-| EPIC-04a | Diarization CLI & Packaging (Python) | Active | EPIC-01 |
-| EPIC-04b | Swift `DiarizationService` Bridge | Blocked on EPIC-04a | EPIC-04a |
+| EPIC-04a | Diarization CLI & Packaging (Python) | ✅ Complete | EPIC-01 |
+| EPIC-04b | Swift `DiarizationService` Bridge | Active | EPIC-04a |
 | EPIC-05 | Transcript Formatting & Alignment | Planned | EPIC-03, EPIC-04b |
 | EPIC-06 | Storage & Obsidian Export | Planned | EPIC-01, EPIC-05 |
 | EPIC-07 | SwiftUI Interface | Planned | EPIC-02, EPIC-05, EPIC-06 |

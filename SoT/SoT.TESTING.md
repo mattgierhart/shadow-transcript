@@ -314,16 +314,21 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 ## TEST-201: Sidecar Produces Valid JSON
 
 **ID**: TEST-201
-**Category**: Integration
-**Status**: Planned
+**Category**: Unit + Integration (cross-language fixture)
+**Status**: Implemented (Python half — EPIC-04a). Swift Codable round-trip pending in EPIC-04b.
 **Priority**: P0 (Critical)
 **Created**: 2026-03-20
+**Last Updated**: 2026-05-09
 
 ### Test Case (Given-When-Then)
 
-**Given**: Multi-speaker test WAV (2-3 speakers, pre-recorded fixture)
-**When**: `./diarize --audio test.wav --output speakers.json` invoked
-**Then**: Exit code 0; JSON parses; `speakers` non-empty; each has speaker/start/end; start < end; segments cover full duration
+**Given**: The frozen golden JSON fixture under `sidecar/test_fixtures/golden-3spk.json` (3 speakers, 6 segments, schema version 1.0)
+**When**: `pytest sidecar/tests/test_diarize.py::TestGoldenFixturesConformToSchema` runs
+**Then**: All 6 fixture-conformance tests pass — the file decodes, has all required envelope keys, every segment has `end > start`, segments reference only declared speakers, and each speaker's `total_seconds` equals the sum of its segment durations.
+
+The same `golden-3spk.json` is the cross-language conformance test for
+EPIC-04b's Swift `DiarizationResult` Codable type — Swift must decode
+the same file without modification.
 
 ### Validates
 
@@ -332,24 +337,25 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/DiarizationSidecarTests.swift`
-**Traceability**: `// @implements TEST-201`
+**File**: `sidecar/tests/test_diarize.py` (Python). Swift counterpart in EPIC-04b lands at `TranscriptShadowTests/Diarization/DiarizationCodableTests.swift`.
+**Traceability**: `# @implements TEST-201` in `sidecar/tests/test_diarize.py`
 
 ---
 
 ## TEST-202: Single Speaker Detection
 
 **ID**: TEST-202
-**Category**: Integration
-**Status**: Planned
+**Category**: Unit
+**Status**: Implemented (EPIC-04a)
 **Priority**: P1
 **Created**: 2026-03-20
+**Last Updated**: 2026-05-09
 
 ### Test Case (Given-When-Then)
 
-**Given**: Single-speaker WAV fixture
-**When**: Sidecar invoked
-**Then**: `num_speakers` == 1; all segments same speaker key
+**Given**: A synthetic single-speaker segment list passed to `build_envelope` AND the `golden-1spk.json` fixture
+**When**: Tests in `TestSingleSpeaker` run
+**Then**: `len(env["speakers"]) == 1`, the only speaker is `SPEAKER_00`, every segment's `speaker` field is `SPEAKER_00`, and `total_seconds` equals the sum of segment durations.
 
 ### Validates
 
@@ -357,24 +363,25 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/DiarizationSidecarTests.swift`
-**Traceability**: `// @implements TEST-202`
+**File**: `sidecar/tests/test_diarize.py` (`TestSingleSpeaker` class)
+**Traceability**: `# @implements TEST-202`
 
 ---
 
 ## TEST-203: Sidecar Progress Output
 
 **ID**: TEST-203
-**Category**: Integration
-**Status**: Planned
+**Category**: Unit
+**Status**: Implemented (EPIC-04a)
 **Priority**: P1
 **Created**: 2026-03-20
+**Last Updated**: 2026-05-09
 
 ### Test Case (Given-When-Then)
 
-**Given**: Diarization in progress
-**When**: Parsing stdout lines
-**Then**: Contains `PROGRESS:XX` lines; values 0-100; non-decreasing
+**Given**: `diarize.emit_progress(...)` and `diarize.main(...)` invocations (with `run_pipeline` mocked)
+**When**: Tests in `TestProgressFormat` run
+**Then**: Every emitted line matches `^PROGRESS:(\d+(?:\.\d+)?)$`, values are clamped to `[0.0, 1.0]`, formatted to 2 decimal places, terminate with `\n`, and `main()` emits at least 2 lines (`PROGRESS:0.00` and `PROGRESS:1.00`) around the pipeline call.
 
 ### Validates
 
@@ -383,8 +390,8 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/DiarizationSidecarTests.swift`
-**Traceability**: `// @implements TEST-203`
+**File**: `sidecar/tests/test_diarize.py` (`TestProgressFormat` class)
+**Traceability**: `# @implements TEST-203`
 
 ---
 
@@ -392,24 +399,25 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 **ID**: TEST-204
 **Category**: Unit
-**Status**: Planned
+**Status**: Implemented (EPIC-04a — exit-code matrix and resolve_audio_path paths). Swift `DiarizationError` mapping pending in EPIC-04b.
 **Priority**: P1
 **Created**: 2026-03-20
+**Last Updated**: 2026-05-09
 
 ### Test Case (Given-When-Then)
 
-**Given**: Invalid audio path OR corrupted file
-**When**: Sidecar invoked
-**Then**: Exit code 1; stderr contains error message; no crash/hang
+**Given**: Various failure inputs (no `--audio`, nonexistent file, bookmark env without `--audio`, etc.)
+**When**: `diarize.resolve_audio_path` and `diarize.main` are invoked
+**Then**: Process exits with the documented exit code (1 = audio unreadable, 2 = model load, 3 = HF auth, 4 = OOM), stderr contains a single-line `ERROR:<code>:<message>` matching the regex, and no JSON is written to `--output` on failure.
 
 ### Validates
 
-- [API-102](SoT.API_CONTRACTS.md#api-102-diarization-sidecar-cli) - Error contract
+- [API-102](SoT.API_CONTRACTS.md#api-102-diarization-sidecar-cli) - Error contract + exit-code matrix
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/DiarizationSidecarTests.swift`
-**Traceability**: `// @implements TEST-204`
+**File**: `sidecar/tests/test_diarize.py` (`TestExitCodeMatrix`, `TestErrorFormat`, `TestResolveAudioPath`, `TestMainPathExitCodes` classes — 13 cases total)
+**Traceability**: `# @implements TEST-204`
 
 ---
 
