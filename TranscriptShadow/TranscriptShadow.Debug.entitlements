@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Debug-only entitlements for TranscriptShadow.
+
+        Production (Release) entitlements live in TranscriptShadow.entitlements
+        and lock the app down with app-sandbox + the +5 EPIC-04b additions
+        (cs.disable-library-validation, cs.allow-unsigned-executable-memory,
+        cs.allow-jit, files.user-selected.read-only, files.bookmarks.app-scope).
+
+        Debug deliberately drops the sandbox so test code can exec the fake
+        diarize shell scripts the integration suite generates. The Release
+        codesign Run Script Build Phase (EPIC-04b CW3) signs the production
+        bundle with TranscriptShadow.entitlements; this Debug file is only
+        ever applied to Debug builds, and Debug is what xcodebuild test uses.
+
+        Without this override, app-sandbox blocks `Process.run()` from
+        launching scripts the test target writes to its temp dir, which
+        prevents PyannoteSidecarDiarizationServiceTests from running.
+    -->
+</dict>
+</plist>

@@ -55,6 +55,11 @@ public struct DiarizationResult: Codable, Sendable, Equatable {
 }
 
 public extension DiarizationResult {
+    /// The schema version this Codable type was written for. The
+    /// `PyannoteSidecarDiarizationService` rejects payloads whose
+    /// `version` field doesn't match (Codex Gate 2 P2, 2026-05-09).
+    static let supportedSchemaVersion = "1.0"
+
     /// The total speech time across all speakers (sum of `speakers[].totalSeconds`).
     /// Useful as a sanity check against `audio.durationSeconds`.
     var totalSpeechSeconds: TimeInterval {
