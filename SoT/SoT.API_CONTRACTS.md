@@ -226,9 +226,9 @@ The v0.6 sketch named the return type `TranscriptionResult` and made `words` opt
 
 **ID**: API-102
 **Category**: Internal (subprocess)
-**Status**: Implemented (Python half — EPIC-04a). Swift consumer pending in EPIC-04b.
+**Status**: Implemented (full — Python sidecar + Swift `DiarizationService` bridge).
 **Created**: 2026-03-11
-**Last Updated**: 2026-05-09
+**Last Updated**: 2026-05-09 (EPIC-04b)
 
 ### Specification
 
@@ -334,7 +334,33 @@ parser always sees one error per line.
 - [FEA-003 in PRD](../PRD.md) - Diarization feature
 - TEST-201, TEST-202, TEST-203, TEST-204 (all Implemented; see SoT.TESTING.md)
 
-### Lessons learned (EPIC-04a Codex Gate 1)
+### Swift consumer (EPIC-04b)
+
+The Swift side parses the JSON envelope into `DiarizationResult` (Codable)
+and exposes the contract through `DiarizationService`:
+
+```swift
+public protocol DiarizationService: Sendable {
+    func diarize(
+        audioURL: URL,
+        progress: @escaping @Sendable (Double) -> Void
+    ) async throws -> DiarizationResult
+}
+```
+
+Production implementation: `PyannoteSidecarDiarizationService` (final
+class, `@unchecked Sendable`, parallel to `WhisperKitEngine`'s pattern).
+Spawns the bundled binary via Foundation `Process`, streams stdout via
+`FileHandle.bytes.lines` to forward `PROGRESS:` lines to the caller's
+closure, parses stderr for typed `DiarizationError` mapping. All calls
+go through `AsyncTaskQueue` so concurrent diarizations cannot share the
+pipeline's memory footprint. Cancellation propagates as SIGTERM (with a
+5 s grace period before SIGKILL on genuine timeout).
+
+The cross-language contract is golden-3spk.json — the Swift Codable
+type must decode that file unchanged.
+
+### Lessons learned (EPIC-04a Codex Gate 1 + EPIC-04b Codex Gate 2)
 
 - pyannote 4.0.0 doesn't accept hand-pinned `torch>=2.4,<2.5` — let the
   pipeline package's own metadata pull transitive deps. Hand-pinning
@@ -346,6 +372,30 @@ parser always sees one error per line.
 - Bookmark resolution in pure Python is impossible without Foundation
   APIs. EPIC-04b's parent resolves and passes `--audio`; the env var
   contract surface exists only as a deferred-implementation error.
+- `AsyncTaskQueue` had a P0 race between reading `tail` and writing the
+  new tail under separate locks. Two concurrent enqueues could capture
+  the same predecessor and run concurrently — defeating the queue.
+  Fixed in EPIC-04b with a single critical section.
+- `Foundation.Process` cancellation does not propagate through an
+  unstructured `Task`'s `await ... .value`. The queue now wraps that
+  await in `withTaskCancellationHandler` and explicitly cancels the
+  outcome task on the cancel handler.
+- `Process.environment` — passing the full parent env wholesale leaks
+  test runner / Xcode env vars into the child. Codex Gate 2 P1 fix:
+  whitelist (PATH/HOME/TMPDIR/locale/HF_*/NUMBA_CACHE_DIR/
+  TRANSCRIPT_SHADOW_AUDIO_BOOKMARK).
+- `parseProgress` cannot rely on `Double()` alone — it accepts `inf`,
+  `nan`, exponents, and whitespace-padded forms. The contract regex
+  `^PROGRESS:(\d+(?:\.\d+)?)$` must be enforced manually.
+- `Task.sleep` throws on cancellation; `try? await Task.sleep` in a
+  polling loop without throttle creates a busy-spin in cancelled tasks.
+  Wrap such loops in `Task.detached` to escape the parent's
+  cancellation context when the wait MUST complete.
+- macOS hardened-runtime + sandbox + a PyInstaller bundle requires
+  `cs.disable-library-validation` + `cs.allow-unsigned-executable-memory`
+  + `cs.allow-jit` on the parent. Child binary is `inherit=true` only.
+  `get-task-allow` (auto-injected in Debug) crashes the child via
+  `_libsecinit_appsandbox` and must be stripped at codesign time.
 
 ---
 

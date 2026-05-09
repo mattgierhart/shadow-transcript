@@ -4,10 +4,11 @@ template_version: "3.0.0"
 
 # EPIC-04b Diarization Sidecar — Swift `DiarizationService` Bridge
 
-> **State**: `Planned` (blocked on EPIC-04a)
+> **State**: ✅ Complete (2026-05-09)
 > **Lifecycle**: v0.7 Build Execution
-> **Epic Lead**: TBD
+> **Epic Lead**: Claude Agent (Opus 4.7)
 > **Depends On**: EPIC-01 (Xcode scaffold), EPIC-04a (frozen JSON contract + working binary)
+> **Unblocks**: EPIC-05 (Transcript Formatting & Alignment) now active
 
 ---
 
@@ -36,14 +37,32 @@ committed**. Otherwise we'd be building a parser against a moving target.
 
 ## Session State (The "Brain Dump")
 
-- **Last Action**: 2026-05-08 — split from EPIC-04. Planning underway.
-- **Stopping Point**: N/A — not yet started; blocked on EPIC-04a.
-- **Next Steps**: Once EPIC-04a's JSON contract is committed, write the
-  `DiarizationService` protocol matching the parsed shape, then implement
-  the `Process` bridge against the bundled binary path.
-- **Context**: Lower technical risk than 04a (Process is well-trodden
-  ground), but the sandbox + bundling story has macOS-specific quirks
-  worth careful design before any code.
+- **Last Action**: 2026-05-09 — Phase C (CW1+CW2+CW3) + Phase D + Phase E
+  complete. Swift `DiarizationResult` Codable types decode the EPIC-04a
+  golden fixture cleanly. `PyannoteSidecarDiarizationService` spawns the
+  bundled binary via Foundation `Process` (not swift-subprocess; deviation
+  documented), streams `PROGRESS:` lines via `FileHandle.bytes.lines`,
+  serializes via `AsyncTaskQueue`, surfaces cancellation as `.cancelled`
+  (not `.binaryFailed`). Production entitlements gained the +5 EPIC-04b
+  additions; child binary entitlements are `inherit`-only. `project.yml`
+  has a postBuildScripts Run Script that copies and bottom-up codesigns
+  the embedded tree. Codex Gate 2 caught 10 bugs (2 P0, 6 P1, 2 P2),
+  including a pre-existing AsyncTaskQueue race from EPIC-03 — all
+  resolved before commit. SoT (API-102, INT-102, TEST-201/204, DEP-002),
+  PRD (RISK-007 mitigated, change log), and README updated. Branch
+  `feat/epic-04-split` is at `<sha>` with 2 EPIC-04b commits + 1 Phase E.
+- **Stopping Point**: EPIC-04b is closed for execution. No further work
+  needed in this EPIC.
+- **Next Steps**: EPIC-05 (Transcript Formatting & Alignment) is now
+  Active. The Codable types + golden fixtures from EPIC-04a/04b are the
+  inputs to the alignment algorithm. The Active EPIC pointer in README
+  has been flipped.
+- **Context**: The bridge worked first try at the contract level (the
+  Codable types decoded the EPIC-04a fixture without modification). The
+  hard work was in the concurrency model — Foundation `Process` +
+  `AsyncTaskQueue` cancellation propagation + the cancel-vs-timeout split.
+  Codex Gate 2 was high signal — caught a pre-existing AsyncTaskQueue
+  race that's been present since EPIC-03.
 
 ---
 
@@ -80,15 +99,15 @@ committed**. Otherwise we'd be building a parser against a moving target.
 > from `AudioCaptureService.stopCapture()`, get speaker segments back.
 
 - **Deliverables**:
-  - [ ] `DiarizationService` protocol + `DiarizationResult` / `SpeakerSegment` Swift types matching EPIC-04a's JSON schema
-  - [ ] `PyannoteSidecarDiarizationService` final-class implementation that locates the bundled binary, spawns it via `Process`, parses stdout for progress + stderr for errors, parses the JSON output file
-  - [ ] Sandbox + entitlement adjustments: minimum `com.apple.security.cs.disable-library-validation` for the bundled binary, with rationale documented in this EPIC and the entitlements file
-  - [ ] Binary embedding via XcodeGen: `Resources/diarize` (or equivalent path inside `.app/Contents/Resources/`)
-  - [ ] HF token plumbing: read from a configurable source (`UserDefaults`? Keychain? — design decision in Phase B), inject via `Process.environment["HF_TOKEN"]`
-  - [ ] Cancellation: `Task.checkCancellation()` + SIGTERM to the subprocess on cancel; surfaces `DiarizationError.cancelled`
-  - [ ] Timeout handling for hung processes
-  - [ ] `FakeDiarizationEngine` test double + tests using golden JSON from EPIC-04a
-  - [ ] Tests: `TEST-201` (Swift parses the golden JSON correctly) + Swift-side TEST-204-equivalent (each exit code maps to the expected `DiarizationError`)
+  - [x] `DiarizationService` protocol + `DiarizationResult` / `SpeakerSegment` Swift types matching EPIC-04a's JSON schema 1.0
+  - [x] `PyannoteSidecarDiarizationService` final-class implementation that locates the bundled binary, spawns it via Foundation `Process` (Foundation, not swift-subprocess — see Decision 1 deviation in observations), parses stdout for progress + stderr for errors, parses the JSON output file
+  - [x] Sandbox + entitlement adjustments: +5 production entitlements per Phase B matrix; child `inherit`-only entitlements file; Debug-only override for unsandboxed test target
+  - [x] Binary embedding via XcodeGen: postBuildScripts Run Script copies `sidecar/dist/diarize/` → `Resources/diarize/`
+  - [x] HF token plumbing: env var passthrough sourced from a `hfTokenProvider` closure (defaults to `ProcessInfo.processInfo.environment["HF_TOKEN"]`)
+  - [x] Cancellation: `withTaskCancellationHandler` + SIGTERM via Foundation `Process.terminate`; surfaces `DiarizationError.cancelled` (verified by `testCancellationSurfacesCancelledNotBinaryFailed`, hardened in Codex Gate 2 P2)
+  - [x] Timeout handling: 600 s default; SIGTERM + 5 s grace + SIGKILL fallback
+  - [x] `FakeDiarizationService` test double + tests using golden JSON from EPIC-04a
+  - [x] Tests: `TEST-201` (Codable round-trip on golden fixture) + `TEST-204` (exit-code → `DiarizationError` mapping) + 12 integration tests against shell-script fakes — 22 new XCTests, 74 total in the suite
 - **Out of Scope**: pyannote pipeline implementation (EPIC-04a),
   word-level speaker attribution (EPIC-05), end-to-end pipeline
   integration with the UI (EPIC-07).
@@ -215,11 +234,20 @@ Swift-side contract that consumes EPIC-04a's binary.)
 
 | # | Observation | Proposed Action | Triage |
 |---|-------------|-----------------|--------|
-| 1 | swift-subprocess is **0.4.x / pre-1.0**. Acceptable for a v0.7 internal milestone but flag for revisit before public ship. Alternative is to fall back to Foundation `Process` with the actor-wrap workaround documented in the Swift Forums thread on `Process+NSPipe` under strict concurrency. | Adopt swift-subprocess for now; create a follow-up issue to re-evaluate before EPIC-08 / public ship. | Pending |
-| 2 | `com.apple.security.cs.allow-jit` may not be strictly required if pyannote / torch MPS doesn't actually JIT user code. Empirical test in EPIC-04a's spike — add only if "MAP_JIT" failures appear in Console. | Default to including it; cheap to add. | Pending (verify in 04a spike) |
+| 1 | swift-subprocess is **0.4.x / pre-1.0**. Implementation switched to **Foundation `Process` with FileHandle.bytes.lines + AsyncTaskQueue** instead of swift-subprocess. The readabilityHandler footgun is avoided by using `bytes.lines` (no closure captures, no fire-after-EOF). Cancellation is wired via `withTaskCancellationHandler` + `runHandle.terminate()` which sends SIGTERM, with a 5 s grace + SIGKILL fallback for genuine timeouts. | Revisit before public ship if swift-subprocess hits 1.0 with a stable API. Foundation Process is well-trodden ground; the trade-off was worth it. | Resolved (deviation documented; commit `c20051e`) |
+| 2 | `com.apple.security.cs.allow-jit` is included defensively. Empirical test in EPIC-04a's spike work hasn't run yet; the entitlement is cheap to keep. | Document; remove if Spike A surfaces no MAP_JIT failures. | Open (verify in 04a spike — non-blocking) |
 | 3 | First launch on Sequoia+ shows a "downloaded from internet" Gatekeeper prompt for the inner binary unless the `.app` is launched once via Finder (LaunchServices then trusts the spawn). | Document in QA plan; mention in EPIC-07 onboarding flow. | Carry-forward to EPIC-07 |
-| 4 | Reference template for the codesign sequence is Buzz (`chidiwilliams/buzz`) — closest OSS precedent for a PyInstaller-bundled torch app shipped notarized. **No public OSS macOS app shipping `pyannote.audio` + torch via PyInstaller specifically** — pyannote inheritance is ours to debug. | Mirror Buzz's Makefile; budget extra debugging time when notarization first runs. | Pending |
-| 5 | Audio file passed to the child via security-scoped bookmark in `Process.environment["TRANSCRIPT_SHADOW_AUDIO_BOOKMARK"]` (base64-encoded). The child's CLI contract from EPIC-04a needs to support reading this env var as an alternative to `--audio <path>` when the path is sandboxed. | Coordinate with EPIC-04a Phase C to add bookmark-resolution to the binary. | Carry-forward to EPIC-04a |
+| 4 | Reference template for the codesign sequence is Buzz (`chidiwilliams/buzz`) — closest OSS precedent for a PyInstaller-bundled torch app shipped notarized. The Run Script Build Phase mirrors the Buzz pattern bottom-up. Notarization dry-run deferred to a release-prep EPIC. | Notarize against the `.app` in a release-prep EPIC; expect a few iterations on entitlement edge cases. | Carry-forward to release-prep EPIC |
+| 5 | Audio file passing: the EPIC-04a binary supports `--audio <PATH>` directly. The `TRANSCRIPT_SHADOW_AUDIO_BOOKMARK` env var contract surface exists but errors with a deferred-implementation message — bookmark resolution in pure Python isn't feasible. EPIC-04b's Swift parent must resolve the bookmark itself and pass `--audio` with a resolved path (sandbox inheritance allows the child to read it). | When the UI flow lands in EPIC-07, the parent will resolve via `URL(resolvingBookmarkData:options:.withSecurityScope...)` and call `--audio` with the resolved path. | Carry-forward to EPIC-07 |
+| 6 | **Codex Gate 2 P0 (2026-05-09)**: Pre-existing `AsyncTaskQueue` race from EPIC-03 — separate locks for read of `tail` and write of `voidTail` allow two concurrent enqueues to share the same predecessor and run concurrently. Single critical section in the fix. | Single `lock.withLock { … }` covering predecessor capture + tail install. Verified by passing test suite (queue serialization test in `PyannoteSidecarDiarizationServiceTests`). | Resolved (commit `c20051e`) |
+| 7 | **Codex Gate 2 P0 (2026-05-09)**: Run Script used bash `done < <(find ...)` process substitution; Xcode build phases run `/bin/sh`. Switched to `find … -print0 \| xargs -0`. | Use `xargs -0` for the bottom-up codesign loop. | Resolved (commit `c20051e`) |
+| 8 | **Codex Gate 2 P1 (2026-05-09)**: Foundation `Process` + unstructured `Task.value` does NOT propagate cancellation. Awaiting `outcomeTask.value` waits for the task to complete; the inner work runs unaware that the caller cancelled. | `AsyncTaskQueue.enqueue` now wraps the await in `withTaskCancellationHandler { try await outcomeTask.value } onCancel: { outcomeTask.cancel() }`. | Resolved (commit `c20051e`) |
+| 9 | **Codex Gate 2 P1 (2026-05-09)**: Cancellation is treated identically to a genuine timeout in `runOnce`. The 5 s grace sleep `try? await Task.sleep(...)` is itself a cancellation point — in a cancelled task it returns immediately, so SIGKILL fires almost on top of SIGTERM, defeating the documented grace period. | Check `Task.isCancelled` before the timeout fallback path; only do SIGTERM-grace-SIGKILL on a non-cancelled timeout. | Resolved (commit `c20051e`) |
+| 10 | **Codex Gate 2 P1 (2026-05-09)**: `waitForExitForever` busy-spins in cancelled tasks because `Task.sleep` throws immediately and `try?` swallows it without throttle. | Wrap the polling loop in `Task.detached` so cancellation does NOT propagate from the parent task to the polling sleeps. | Resolved (commit `c20051e`) |
+| 11 | **Codex Gate 2 P1 (2026-05-09)**: `process.environment = ProcessInfo.processInfo.environment` leaks every parent / test runner env var into the child. | Curated whitelist (PATH/HOME/TMPDIR/locale/HF_*/NUMBA_CACHE_DIR/TRANSCRIPT_SHADOW_AUDIO_BOOKMARK). | Resolved (commit `c20051e`) |
+| 12 | **Codex Gate 2 P1 (2026-05-09)**: `parseProgress` accepted `inf`, `nan`, exponents, negatives, and whitespace-padded forms because `Double(...)` is permissive. | Hand-rolled ASCII walk that enforces the EPIC-04a contract regex `^PROGRESS:(\d+(?:\.\d+)?)$` exactly. New test `testParseProgressRejectsLooseDoubleFormats`. | Resolved (commit `c20051e`) |
+| 13 | **Codex Gate 2 P2 (2026-05-09)**: Schema version was decoded but never enforced. A `version: "2.0"` envelope with the same shape would silently parse. | Added `DiarizationResult.supportedSchemaVersion = "1.0"` constant; `runOnce` validates and throws `.decodeFailed` on mismatch. | Resolved (commit `c20051e`) |
+| 14 | **Codex Gate 2 P2 (2026-05-09)**: `testCancellationSurfacesCancelledNotBinaryFailed` could pass for the wrong reason — if the cancel-vs-timeout split was buggy and the test reached the `.timedOut` branch, the post-conversion `Task.isCancelled` check would still re-emit `.cancelled` and the test would pass. | Bumped service `timeoutSeconds=600` and asserted total elapsed `< 10 s`, so a slow .cancelled outcome via the timeout branch fails loudly. | Resolved (commit `c20051e`) |
 
 ---
 
@@ -228,3 +256,7 @@ Swift-side contract that consumes EPIC-04a's binary.)
 | Date       | Agent        | Action       |
 | ---------- | ------------ | ------------ |
 | 2026-05-08 | Claude Agent | EPIC created via split from EPIC-04 to isolate the Swift bridge from the Python pipeline + packaging risk profile. |
+| 2026-05-08 | Claude Agent | Phase A planning round: locked decisions on swift-subprocess pick, binary location, security-scoped bookmarks, HF token storage, AsyncTaskQueue concurrency. Phase B entitlements matrix + codesign sequence designed. Codex review of planning docs caught 3 internal inconsistencies (binary location syntax, Process→swift-subprocess phrasing) — all fixed. |
+| 2026-05-09 | Claude Agent | Phase C — three context windows: CW1 Codable types + service protocol + FakeDiarizationService (commit `57b1e03`); CW2 + CW3 combined as one PR-ready commit (Foundation Process bridge + production entitlements + child entitlements + codesign Run Script Build Phase, commit `c20051e`). Implementation deviated from planning's swift-subprocess pick — used Foundation Process with FileHandle.bytes.lines instead, documented in observations. |
+| 2026-05-09 | Claude Agent | Codex Gate 2 — single-ask review of EPIC-04b code surfaced 10 bugs (2 P0, 6 P1, 2 P2), including a pre-existing `AsyncTaskQueue` race from EPIC-03. All resolved before close. 74 XCTests + 30 pytest = 104 total green. |
+| 2026-05-09 | Claude Agent | Phase E harvest — SoT updates (API-102 → Implemented full, INT-102 → Implemented full, TEST-201/204 → Implemented full, DEP-002 entitlements + codesign procedure), PRD (RISK-007 mitigated, EPIC-04b complete row, backlog flip), README (EPIC-05 active). EPIC closed. |

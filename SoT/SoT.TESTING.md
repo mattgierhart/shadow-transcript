@@ -315,10 +315,10 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 **ID**: TEST-201
 **Category**: Unit + Integration (cross-language fixture)
-**Status**: Implemented (Python half — EPIC-04a). Swift Codable round-trip pending in EPIC-04b.
+**Status**: Implemented (full — pytest fixture conformance + Swift Codable round-trip in EPIC-04b).
 **Priority**: P0 (Critical)
 **Created**: 2026-03-20
-**Last Updated**: 2026-05-09
+**Last Updated**: 2026-05-09 (EPIC-04b Codable contract test added)
 
 ### Test Case (Given-When-Then)
 
@@ -399,10 +399,10 @@ the same file without modification.
 
 **ID**: TEST-204
 **Category**: Unit
-**Status**: Implemented (EPIC-04a — exit-code matrix and resolve_audio_path paths). Swift `DiarizationError` mapping pending in EPIC-04b.
+**Status**: Implemented (full — Python exit-code paths + Swift `DiarizationError` mapping + EPIC-04b cancellation/timeout/concurrency coverage).
 **Priority**: P1
 **Created**: 2026-03-20
-**Last Updated**: 2026-05-09
+**Last Updated**: 2026-05-09 (EPIC-04b)
 
 ### Test Case (Given-When-Then)
 
@@ -416,8 +416,8 @@ the same file without modification.
 
 ### Implementation
 
-**File**: `sidecar/tests/test_diarize.py` (`TestExitCodeMatrix`, `TestErrorFormat`, `TestResolveAudioPath`, `TestMainPathExitCodes` classes — 13 cases total)
-**Traceability**: `# @implements TEST-204`
+**File**: `sidecar/tests/test_diarize.py` (`TestExitCodeMatrix`, `TestErrorFormat`, `TestResolveAudioPath`, `TestMainPathExitCodes` classes — 13 cases total). Swift counterpart: `TranscriptShadowTests/Diarization/DiarizationErrorMappingTests.swift` (10 cases) + `PyannoteSidecarDiarizationServiceTests.swift` (12 integration cases against fake binaries).
+**Traceability**: `# @implements TEST-204` (Python); `// @implements TEST-204` (Swift)
 
 ---
 

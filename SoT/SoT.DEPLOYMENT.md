@@ -27,6 +27,7 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, EPICs, and op
 
 **Deployment Procedures** (DEP-001 to DEP-099):
 - [DEP-001](#dep-001-procedure-name) - {Procedure name}
+- [DEP-002](#dep-002-diarize-sidecar-bundle--codesign) - Diarize Sidecar Bundle + Codesign (EPIC-04b)
 
 **Operational Runbooks** (RUN-001 to RUN-099):
 - [RUN-001](#run-001-runbook-name) - {Runbook name}
@@ -208,6 +209,117 @@ Use this checklist when initializing deployment for a new product.
 - [TEST-XXX](SoT.TESTING.md#test-xxx) - {Deployment validation test}
 - [MON-XXX](#mon-xxx-metric-name) - {Metrics to watch}
 - [SEC-XXX](#sec-xxx-secret-name) - {Secrets required}
+
+---
+
+## DEP-002: Diarize Sidecar Bundle + Codesign
+
+**ID**: DEP-002
+**Category**: Application
+**Status**: Active (EPIC-04b, 2026-05-09)
+**Created**: 2026-05-09
+
+### Purpose
+
+Embed the EPIC-04a `--onedir` PyInstaller bundle inside `TranscriptShadow.app`
+at `Contents/Resources/diarize/` and codesign every binary in the tree
+bottom-up so the sandboxed parent can spawn the child without dyld
+refusing to load unsigned `.dylib` / `.so` files.
+
+This is the contract the eventual notarization step (deferred to a
+release-prep EPIC) will read.
+
+### Entitlements matrix
+
+**Parent app** — `TranscriptShadow/TranscriptShadow.entitlements`:
+
+| Entitlement | Reason | Source |
+|---|---|---|
+| `com.apple.security.app-sandbox` | App sandbox | EPIC-01 |
+| `com.apple.security.device.audio-input` | Mic capture | EPIC-01 |
+| `com.apple.security.network.client` | WhisperKit model download | EPIC-01 |
+| `com.apple.security.cs.disable-library-validation` | PyInstaller bootloader loads `.dylib` / `.so` not signed by our Team ID | EPIC-04b |
+| `com.apple.security.cs.allow-unsigned-executable-memory` | CPython bytecode + ctypes paths | EPIC-04b |
+| `com.apple.security.cs.allow-jit` | torch MPS Metal compilers (defensive) | EPIC-04b |
+| `com.apple.security.files.user-selected.read-only` | NSOpenPanel audio file picker | EPIC-04b |
+| `com.apple.security.files.bookmarks.app-scope` | Persist security-scoped bookmarks | EPIC-04b |
+
+**Child binary** — `TranscriptShadow/Diarization/diarize.entitlements`:
+
+| Entitlement | Value | Reason |
+|---|---|---|
+| `com.apple.security.app-sandbox` | true | Inherit sandbox |
+| `com.apple.security.inherit` | true | Pull sandbox from parent |
+
+**Critical**: NO other entitlement may be set on the child. Anything else
+(notably the auto-injected `get-task-allow` in Debug builds) crashes
+`_libsecinit_appsandbox` on launch.
+
+**Debug-only override** — `TranscriptShadow/TranscriptShadow.Debug.entitlements`:
+
+Empty `dict`. Disables sandbox for the test host so the integration
+test suite can exec fake `diarize` shell scripts. Release uses the
+production entitlements above.
+
+### Codesign sequence (Run Script Build Phase)
+
+`project.yml` declares a `postBuildScripts` Run Script that fires after
+the build target produces the `.app` bundle:
+
+1. **Skip if no bundle**: If `sidecar/dist/diarize/` does not exist:
+   - Debug → log a note and exit 0
+   - Release → fail loudly so the bundle is always present before archive
+2. **Copy**: `rsync -a --delete sidecar/dist/diarize/ → Resources/diarize/`
+3. **Bottom-up sign**: every `.dylib` / `.so` under
+   `Resources/diarize/_internal/` gets `codesign --force --options=runtime
+   <timestamp> -s "$IDENTITY"`. Order matters: signers depend on signed
+   children. NEVER `--deep` at sign time (deprecated since macOS 13;
+   notarization-rejection trigger).
+4. **Sign the inner binary**: `Resources/diarize/diarize` gets the same
+   flags PLUS `--entitlements diarize.entitlements`. This overwrites
+   any auto-injected entitlements (notably `get-task-allow` in Debug).
+5. **Verify**: `codesign --verify --deep --strict --verbose=2`. `--deep`
+   is OK on `verify`; only sign-time `--deep` is deprecated.
+
+`$EXPANDED_CODE_SIGN_IDENTITY` resolves to `-` for ad-hoc Debug signing
+and to the developer cert SHA-1 for Release. `--timestamp` is omitted in
+Debug (no internet round-trip needed).
+
+### Procedure (release-prep)
+
+```bash
+# 1. Build the PyInstaller bundle (multi-GB, ~5 min, release-only)
+cd sidecar
+python3.11 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+pyinstaller diarize.spec   # produces sidecar/dist/diarize/
+
+# 2. Archive the .app — the postBuildScripts Run Script copies the
+#    bundle into Resources/diarize/ and signs everything.
+xcodebuild archive -scheme TranscriptShadow -archivePath build/TS.xcarchive
+
+# 3. Verify the embedded child has ONLY app-sandbox + inherit
+codesign -dvvv --extract-certificates --requirements - \
+    build/TS.xcarchive/Products/Applications/TranscriptShadow.app/Contents/Resources/diarize/diarize
+```
+
+### Rollback
+
+If a release archive fails the codesign verify step, the build fails
+loudly. Don't ship a partially-signed bundle. Common causes:
+
+- `--deep` accidentally introduced at sign time — search the Run Script
+  and remove.
+- A non-inherit entitlement on the child — re-inspect the entitlements
+  file and the post-sign output.
+- Bash-only syntax in the Run Script — phases run `/bin/sh`, not bash.
+
+### Related IDs
+
+- [API-102](SoT.API_CONTRACTS.md#api-102-diarization-sidecar-cli) - Subprocess CLI contract
+- [INT-102](SoT.INTEGRATIONS.md#int-102-pyannote-diarization) - pyannote integration
+- [ARC-002](SoT.TECHNICAL_DECISIONS.md#arc-002-python-sidecar-for-diarization) - Sidecar architecture
+- [BR-101](SoT.BUSINESS_RULES.md#br-101-local-only-processing) - Sandbox preserves local-only invariant
 
 ---
 

@@ -127,7 +127,7 @@ Load and run Whisper models for local speech-to-text transcription via WhisperKi
 
 **ID**: INT-102
 **Category**: ML Model (subprocess sidecar)
-**Status**: Implemented (Python half — EPIC-04a, 2026-05-09). Swift consumer pending in EPIC-04b.
+**Status**: Implemented (full — Python sidecar in EPIC-04a + Swift `DiarizationService` bridge in EPIC-04b).
 **Provider**: `pyannote.audio` 4.x + the gated `pyannote/speaker-diarization-community-1` pipeline (CC-BY-4.0).
 **Created**: 2026-05-09
 **Last Updated**: 2026-05-09
