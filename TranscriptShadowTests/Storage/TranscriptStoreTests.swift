@@ -131,10 +131,14 @@ final class TranscriptStoreTests: XCTestCase {
         let fetched = try await store.fetch(id: stored.id)
         XCTAssertNil(fetched)
         // CASCADE verification: counts should be 0 in the DB
-        try database.queue.read { conn in
-            XCTAssertEqual(try SpeakerRecord.fetchCount(conn), 0)
-            XCTAssertEqual(try SegmentRecord.fetchCount(conn), 0)
+        let counts: (speakers: Int, segments: Int) = try await database.queue.read { conn in
+            (
+                try SpeakerRecord.fetchCount(conn),
+                try SegmentRecord.fetchCount(conn)
+            )
         }
+        XCTAssertEqual(counts.speakers, 0)
+        XCTAssertEqual(counts.segments, 0)
     }
 
     // MARK: - Determinism
