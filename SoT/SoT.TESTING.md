@@ -425,15 +425,15 @@ the same file without modification.
 
 **ID**: TEST-301
 **Category**: Unit
-**Status**: Planned
+**Status**: Implemented (EPIC-05, 2026-05-12)
 **Priority**: P0 (Critical)
 **Created**: 2026-03-20
 
 ### Test Case (Given-When-Then)
 
-**Given**: TranscriptionResult + DiarizationResult fixtures
-**When**: `TranscriptFormatter.format()` called
-**Then**: Markdown contains speaker labels (**Speaker 1**:), timestamps [HH:MM:SS], blank-line-separated turns, valid markdown
+**Given**: `Transcript` + `DiarizationResult` fixtures (via `TranscriptFixtures.make3SpeakerFixture`)
+**When**: `DefaultTranscriptFormatter.format()` called
+**Then**: Markdown contains `**Speaker N**` labels, `[HH:MM:SS]` timestamps, blank-line-separated turns, exact-string match against an expected literal
 
 ### Validates
 
@@ -442,7 +442,7 @@ the same file without modification.
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/TranscriptFormatterTests.swift`
+**File**: `TranscriptShadowTests/Transcription/TranscriptFormatterTests.swift`
 **Traceability**: `// @implements TEST-301`
 
 ---
@@ -451,15 +451,15 @@ the same file without modification.
 
 **ID**: TEST-302
 **Category**: Unit
-**Status**: Planned
+**Status**: Implemented (EPIC-05, 2026-05-12)
 **Priority**: P1
 **Created**: 2026-03-20
 
 ### Test Case (Given-When-Then)
 
-**Given**: Formatted transcript with SPEAKER_00
-**When**: speakerNames map `["SPEAKER_00": "Alice"]` applied
-**Then**: All SPEAKER_00 references replaced with "Alice"; speakerMap reflects rename
+**Given**: Formatted transcript with `SPEAKER_00` / `SPEAKER_01` / `SPEAKER_02`
+**When**: `speakerNames: ["SPEAKER_00": "Alice", "SPEAKER_01": "Bob"]` applied
+**Then**: Markdown contains `**Alice**` and `**Bob**`; un-renamed `SPEAKER_02` falls back to the default `"Speaker 3"`; `speakerMap` reflects all three mappings; canonical IDs do not appear in the markdown body
 
 ### Validates
 
@@ -468,7 +468,7 @@ the same file without modification.
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/TranscriptFormatterTests.swift`
+**File**: `TranscriptShadowTests/Transcription/TranscriptFormatterTests.swift`
 **Traceability**: `// @implements TEST-302`
 
 ---
@@ -477,15 +477,22 @@ the same file without modification.
 
 **ID**: TEST-303
 **Category**: Integration
-**Status**: Planned
+**Status**: Implemented (EPIC-05, 2026-05-12)
 **Priority**: P0 (Critical)
 **Created**: 2026-03-20
 
 ### Test Case (Given-When-Then)
 
-**Given**: Transcription word timestamps + diarization speaker segments
-**When**: Merge operation aligns words to speakers
-**Then**: No word attributed outside its speaker's segment (±1.0s tolerance); overlapping speech and silence handled without crash
+**Given**: Transcription word timestamps + diarization speaker segments (exclusive view) across the suite of EPIC-05 fixtures (`make3SpeakerFixture`, `makeStraddlingWordFixture`, silence-gap inline fixture, `makeZeroSegmentFixture`, invalid-segment inline fixture)
+**When**: `WordSpeakerAligner.align(...)` runs
+**Then**:
+  - Every word's midpoint falls inside its attributed segment on the happy path (within ±1.0s tolerance per RISK-005)
+  - Boundary-straddling words are attributed by midpoint and emit a straddle warning
+  - Silence words (midpoint outside all segments) attribute to `SPEAKER_UNKNOWN` and emit a warning
+  - Empty `words` arrays fall back to segment-level midpoint attribution
+  - Zero diarization segments synthesize a single-speaker turn + emit a fallback warning
+  - Invalid segments (`end <= start`) throw `FormatterError.invalidSpeakerSegment`
+  - First-appearance ordering: a speaker who enters first gets `Speaker 1` even if their canonical ID is later (e.g. `SPEAKER_01` first → `Speaker 1`)
 
 ### Validates
 
@@ -494,7 +501,7 @@ the same file without modification.
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/TimestampAlignmentTests.swift`
+**File**: `TranscriptShadowTests/Transcription/WordSpeakerAlignerTests.swift`
 **Traceability**: `// @implements TEST-303`
 
 ---

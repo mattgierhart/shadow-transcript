@@ -403,40 +403,68 @@ type must decode that file unchanged.
 
 **ID**: API-201
 **Category**: Internal
-**Status**: Planned
+**Status**: Implemented (EPIC-05, 2026-05-12)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-12
 
 ### Specification
 
 **Type**: Swift service
-**Interface**: `TranscriptFormatter`
+**Interface**: `TranscriptFormatter` (protocol) + `DefaultTranscriptFormatter` (struct)
 
 ### Purpose
 
-Merge transcription results with diarization speaker segments. Produce formatted markdown with speaker labels and timestamps.
+Merge transcription word timestamps with diarization speaker segments. Produce body markdown with speaker labels and timestamps plus metadata for downstream storage. YAML frontmatter and Obsidian-vault file write are out of scope — that's API-202.
 
 ### Interface
 
 ```swift
-protocol TranscriptFormatter {
-    func format(transcription: TranscriptionResult,
-                diarization: DiarizationResult,
-                speakerNames: [String: String]?) -> FormattedTranscript
+public protocol TranscriptFormatter: Sendable {
+    func format(
+        transcription: Transcript,
+        diarization: DiarizationResult,
+        speakerNames: [String: String]
+    ) throws -> FormattedTranscript
 }
 
-struct FormattedTranscript {
-    let markdown: String
-    let metadata: TranscriptMetadata
-    let speakerMap: [String: String]  // SPEAKER_00 → "Alice"
+public struct FormattedTranscript: Codable, Sendable, Equatable {
+    public let markdown: String
+    public let metadata: TranscriptMetadata
+    public let speakerMap: [String: String]   // canonical SPEAKER_xx → display name
+    public let warnings: [String]
+}
+
+public struct TranscriptMetadata: Codable, Sendable, Equatable {
+    public let durationSeconds: Int           // matches DBT-001 column shape
+    public let speakerCount: Int              // matches DBT-001
+    public let language: String
+    public let model: WhisperModel
+    public let wordCount: Int
+    public let turnCount: Int
+}
+
+public enum FormatterError: Error, Equatable {
+    case invalidSpeakerSegment(start: TimeInterval, end: TimeInterval)
 }
 ```
+
+### Notes vs. Original Sketch
+
+The v0.6 sketch named the first parameter `transcription: TranscriptionResult` and made `speakerNames` optional (`[String: String]?`). The implementation uses `transcription: Transcript` because EPIC-03 shipped the WhisperKit-disambiguating rename (see API-101's "Notes vs. Original Sketch" — `import WhisperKit` shadows `TranscriptionResult`). `speakerNames` was made non-optional with a `[:]` default via a protocol extension; every call site converted `nil` to `[:]` anyway, and dropping optionality removes a needless branch. The sketch also omitted `FormattedTranscript.warnings` — added during EPIC-05 to surface (a) `DiarizationResult.warnings` passthrough and (b) the formatter's own diagnostics (boundary-word straddles, single-speaker fallback when diarization returned zero segments). `TranscriptMetadata` was fully specified in EPIC-05; `durationSeconds` is `Int` (rounded) to match DBT-001's `INTEGER` column shape so EPIC-06 can copy fields directly.
+
+### Algorithm Notes (RISK-005)
+
+Alignment is midpoint-greedy: for each `WordTimestamp`, `midpoint = (start + end) / 2`; find the unique segment in `diarization.segments` (exclusive view; `overlappingSegments` is deferred) where `segment.start <= midpoint < segment.end`. Boundary straddles (word.start in segment A, word.end in segment B) keep the midpoint attribution but emit one warning at the end. No-match midpoints attribute to canonical `SPEAKER_UNKNOWN` (displayed as `"Speaker ?"`). Empty `words` on a `TranscriptSegment` falls back to segment-level midpoint attribution. Zero diarization segments fall back to a synthesized single-speaker turn. Invalid segments (`end <= start`) throw `FormatterError.invalidSpeakerSegment`.
+
+Default speaker display names are 1-indexed by first appearance in `diarization.segments` (`"Speaker 1"`, `"Speaker 2"`, …). Caller-supplied `speakerNames` overrides win.
 
 ### Related IDs
 
 - [API-101](#api-101-transcription-service) - Upstream transcription
 - [API-102](#api-102-diarization-sidecar-cli) - Upstream diarization
 - [BR-301](SoT.BUSINESS_RULES.md#br-301-markdown-output-format) - Markdown format
+- [DBT-001](SoT.DATA_MODEL.md#dbt-001-transcripts-table) - downstream storage shape
+- RISK-005 (in PRD.md) - alignment accuracy
 
 ---
 
