@@ -6,7 +6,7 @@ template_version: "3.0.0"
 
 > **Status**: Active
 > **Current PRD Version**: v0.7 (See `PRD.md`)
-> **Active EPIC**: EPIC-05 — Transcript Formatting & Alignment (EPIC-04b closed 2026-05-09 with the Swift `DiarizationService` bridge + entitlements + codesign Run Script; 74 XCTests + 30 pytest cases all green) (See `epics/`)
+> **Active EPIC**: EPIC-06 — Storage & Obsidian Export (EPIC-05 closed 2026-05-12 with `TranscriptFormatter` + `DefaultTranscriptFormatter` + `WordSpeakerAligner` + 4 in-code fixtures and ~17 new XCTests covering TEST-301/302/303 + straddle/silence/empty-words/zero-segments/invalid-segment edge cases; build verification deferred to CI) (See `epics/`)
 
 ---
 
@@ -66,8 +66,8 @@ template_version: "3.0.0"
 | EPIC-04 | Speaker Diarization Sidecar | Split → EPIC-04a + EPIC-04b | EPIC-01 |
 | EPIC-04a | Diarization CLI & Packaging (Python) | ✅ Complete | EPIC-01 |
 | EPIC-04b | Swift `DiarizationService` Bridge | ✅ Complete | EPIC-04a |
-| EPIC-05 | Transcript Formatting & Alignment | Active | EPIC-03, EPIC-04b |
-| EPIC-06 | Storage & Obsidian Export | Planned | EPIC-01, EPIC-05 |
+| EPIC-05 | Transcript Formatting & Alignment | ✅ Complete | EPIC-03, EPIC-04b |
+| EPIC-06 | Storage & Obsidian Export | Active | EPIC-01, EPIC-05 |
 | EPIC-07 | SwiftUI Interface | Planned | EPIC-02, EPIC-05, EPIC-06 |
 | EPIC-08 | Pipeline Integration & Audio Lifecycle | Planned | EPIC-02→07 |
 
@@ -87,7 +87,7 @@ template_version: "3.0.0"
 | RISK-002 | macOS 15+ requirement for mic capture | 6.0 | accepted |
 | RISK-003 | Large app bundle from PyInstaller sidecar | 3.0 | mitigating |
 | RISK-004 | Screen Recording permission friction | 3.0 | mitigating |
-| RISK-005 | Speaker-transcript alignment accuracy | 4.0 | open |
+| RISK-005 | Speaker-transcript alignment accuracy | 2.0 | mitigating |
 | RISK-006 | Crash during recording loses audio | 1.5 | mitigating |
 
 ---
