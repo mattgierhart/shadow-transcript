@@ -100,31 +100,36 @@ public final class DefaultTranscriptStore: TranscriptStore, Sendable {
             seen.insert(canonical)
         }
 
-        var speakerIDByCanonical: [String: UUID] = [:]
+        // Pre-compute the canonical → speaker UUID map and the
+        // speaking-time totals as pure functions of `formatted` so the
+        // record arrays below can be built as `let` constants. Swift 6
+        // strict concurrency rejects `var` captures inside the
+        // `@Sendable` `queue.write { … }` closure.
         var speakingTimeByCanonical: [String: Double] = [:]
         for turn in formatted.turns {
             speakingTimeByCanonical[turn.canonicalSpeaker, default: 0] +=
                 max(0, turn.endSeconds - turn.startSeconds)
         }
+        let speakingTimeMap = speakingTimeByCanonical
 
-        var speakerRecords: [SpeakerRecord] = []
-        for (index, canonical) in canonicalOrder.enumerated() {
-            let speakerID = UUID()
-            speakerIDByCanonical[canonical] = speakerID
-            speakerRecords.append(SpeakerRecord(
-                id: speakerID.uuidString,
+        let speakerIDByCanonical: [String: UUID] = Dictionary(
+            uniqueKeysWithValues: canonicalOrder.map { ($0, UUID()) }
+        )
+
+        let speakerRecords: [SpeakerRecord] = canonicalOrder.enumerated().map { index, canonical in
+            SpeakerRecord(
+                id: speakerIDByCanonical[canonical]!.uuidString,
                 transcriptId: transcriptID.uuidString,
                 speakerKey: canonical,
                 displayName: formatted.speakerMap[canonical] ?? canonical,
                 colorIndex: index,
-                speakingTimeSeconds: speakingTimeByCanonical[canonical]
-            ))
+                speakingTimeSeconds: speakingTimeMap[canonical]
+            )
         }
 
-        var segmentRecords: [SegmentRecord] = []
-        for (index, turn) in formatted.turns.enumerated() {
-            guard let speakerID = speakerIDByCanonical[turn.canonicalSpeaker] else { continue }
-            segmentRecords.append(SegmentRecord(
+        let segmentRecords: [SegmentRecord] = formatted.turns.enumerated().compactMap { index, turn in
+            guard let speakerID = speakerIDByCanonical[turn.canonicalSpeaker] else { return nil }
+            return SegmentRecord(
                 id: UUID().uuidString,
                 transcriptId: transcriptID.uuidString,
                 speakerId: speakerID.uuidString,
@@ -132,7 +137,7 @@ public final class DefaultTranscriptStore: TranscriptStore, Sendable {
                 endTime: turn.endSeconds,
                 text: turn.text,
                 sequence: index
-            ))
+            )
         }
 
         try await database.queue.write { db in
@@ -210,7 +215,10 @@ public final class DefaultTranscriptStore: TranscriptStore, Sendable {
     public func markExported(id: UUID, to path: URL) async throws {
         let updatedAt = ISO8601.string(from: clock())
         try await database.queue.write { db in
-            let affected = try db.execute(
+            // `db.execute` returns `Void` in GRDB v6; the row count for
+            // the just-executed statement is available via
+            // `db.changesCount`.
+            try db.execute(
                 sql: """
                     UPDATE transcripts
                     SET exported_path = ?, updated_at = ?
@@ -218,7 +226,7 @@ public final class DefaultTranscriptStore: TranscriptStore, Sendable {
                 """,
                 arguments: [path.path, updatedAt, id.uuidString]
             )
-            if affected == 0 {
+            if db.changesCount == 0 {
                 throw TranscriptStoreError.notFound(id)
             }
         }
