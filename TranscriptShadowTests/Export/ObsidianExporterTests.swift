@@ -5,7 +5,7 @@ import XCTest
 final class ObsidianExporterTests: XCTestCase {
     private var vaultRoot: URL!
     private let fixedDate = Date(timeIntervalSince1970: 1_700_006_400)
-    // 2023-11-14 16:00:00 UTC — date string `2023-11-14`.
+    // 2023-11-15 00:00:00 UTC — date string `2023-11-15`.
 
     override func setUpWithError() throws {
         let tmp = FileManager.default.temporaryDirectory
@@ -30,7 +30,7 @@ final class ObsidianExporterTests: XCTestCase {
             subfolder: "Meetings"
         )
 
-        XCTAssertEqual(url.lastPathComponent, "2023-11-14 Weekly Standup.md")
+        XCTAssertEqual(url.lastPathComponent, "2023-11-15 Weekly Standup.md")
         XCTAssertEqual(url.deletingLastPathComponent().lastPathComponent, "Meetings")
         XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
 
@@ -147,7 +147,7 @@ final class ObsidianExporterTests: XCTestCase {
         let body = try String(contentsOf: url, encoding: .utf8)
         let frontmatter = try Self.extractFrontmatter(body)
 
-        XCTAssertTrue(frontmatter.contains("date: 2023-11-14"), "date key missing: \(frontmatter)")
+        XCTAssertTrue(frontmatter.contains("date: 2023-11-15"), "date key missing: \(frontmatter)")
         XCTAssertTrue(frontmatter.contains("type: meeting-transcript"))
         XCTAssertTrue(frontmatter.contains("source: transcript-shadow"))
         XCTAssertTrue(frontmatter.contains("tags: [meeting, transcript]"))
