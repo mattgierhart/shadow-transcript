@@ -15,8 +15,11 @@ import GRDB
 ///   silently no-ops.
 /// - Use `openInMemory()` in tests to avoid touching the user's
 ///   Application Support directory.
+/// - `queue` is `internal` so the in-module stores can use it but
+///   external callers must go through `TranscriptStore` / `SettingsStore`.
+///   Tests reach it via `@testable import`.
 public final class AppDatabase: Sendable {
-    public let queue: DatabaseQueue
+    let queue: DatabaseQueue
 
     public init(queue: DatabaseQueue) {
         self.queue = queue

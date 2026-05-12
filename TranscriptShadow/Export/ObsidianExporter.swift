@@ -145,13 +145,17 @@ public final class DefaultObsidianExporter: ObsidianExporter, Sendable {
         """
     }
 
-    /// YAML-safe quoting. Wraps in double quotes; escapes embedded `"`
-    /// and `\`. Sufficient for the well-defined values the formatter
-    /// produces (no newlines, no NULs).
+    /// YAML-safe quoting. Wraps in double quotes; escapes embedded `"`,
+    /// `\`, `\n`, `\r`, and `\t` so user-typed titles or speaker names
+    /// containing newlines or tabs can't break the frontmatter block.
+    /// Sufficient for the well-defined values the formatter produces.
     private func quoted(_ raw: String) -> String {
         let escaped = raw
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "\t", with: "\\t")
         return "\"\(escaped)\""
     }
 

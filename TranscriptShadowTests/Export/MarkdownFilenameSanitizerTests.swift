@@ -55,6 +55,17 @@ final class MarkdownFilenameSanitizerTests: XCTestCase {
         )
     }
 
+    func test_sanitize_whitespaceOnlyInputBecomesUntitled() {
+        XCTAssertEqual(MarkdownFilenameSanitizer.sanitize("   "), "Untitled")
+        XCTAssertEqual(MarkdownFilenameSanitizer.sanitize("\t\t"), "Untitled")
+    }
+
+    func test_sanitize_trimsTrailingSpacePreservesInner() {
+        XCTAssertEqual(MarkdownFilenameSanitizer.sanitize("hello "), "hello")
+        XCTAssertEqual(MarkdownFilenameSanitizer.sanitize("  hello  "), "hello")
+        XCTAssertEqual(MarkdownFilenameSanitizer.sanitize("hello world"), "hello world")
+    }
+
     func test_makeFilename_formatsAsDateTitleMd() {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!

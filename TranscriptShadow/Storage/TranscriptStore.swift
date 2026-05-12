@@ -85,9 +85,9 @@ public final class DefaultTranscriptStore: TranscriptStore, Sendable {
         )
 
         // canonical → SpeakerRecord (palette index by first appearance
-        // in `speakerMap` keys ordered the way EPIC-05 produced them,
-        // i.e. via the turns list — `speakerMap` itself is a dictionary
-        // so we can't rely on its iteration order).
+        // in `turns` first, then any keys only present in `speakerMap`
+        // appended in **sorted** order for determinism — dictionary
+        // iteration is not order-stable across runs even in Swift 5.3+).
         var canonicalOrder: [String] = []
         var seen = Set<String>()
         for turn in formatted.turns {
@@ -95,7 +95,7 @@ public final class DefaultTranscriptStore: TranscriptStore, Sendable {
                 canonicalOrder.append(turn.canonicalSpeaker)
             }
         }
-        for canonical in formatted.speakerMap.keys where !seen.contains(canonical) {
+        for canonical in formatted.speakerMap.keys.sorted() where !seen.contains(canonical) {
             canonicalOrder.append(canonical)
             seen.insert(canonical)
         }
@@ -292,12 +292,24 @@ public final class DefaultTranscriptStore: TranscriptStore, Sendable {
 
 // MARK: - ISO8601 helper
 
+/// Thread-safe ISO8601 conversion. `ISO8601DateFormatter` instances are
+/// not safe to share across threads/queues — Foundation documents this
+/// for `DateFormatter` and the ISO variant inherits the same constraint
+/// in practice. Each call constructs a fresh formatter (cheap; the
+/// instance has no resources beyond a few stored option bits) so GRDB's
+/// concurrent `queue.read` callers cannot race on a shared state.
 enum ISO8601 {
-    static let formatter: ISO8601DateFormatter = {
+    private static func makeFormatter() -> ISO8601DateFormatter {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return f
-    }()
-    static func string(from date: Date) -> String { formatter.string(from: date) }
-    static func date(from string: String) -> Date? { formatter.date(from: string) }
+    }
+
+    static func string(from date: Date) -> String {
+        makeFormatter().string(from: date)
+    }
+
+    static func date(from string: String) -> Date? {
+        makeFormatter().date(from: string)
+    }
 }

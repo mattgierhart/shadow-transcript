@@ -137,6 +137,28 @@ final class TranscriptStoreTests: XCTestCase {
         }
     }
 
+    // MARK: - Determinism
+
+    func test_save_colorIndices_stableAcrossTwoIdenticalSaves() async throws {
+        let (transcript, diarization) = TranscriptFixtures.make3SpeakerFixture()
+        let formatted = try DefaultTranscriptFormatter().format(
+            transcription: transcript,
+            diarization: diarization
+        )
+        let first = try await store.save(formatted: formatted, title: "A", date: fixedDate)
+        let second = try await store.save(formatted: formatted, title: "B", date: fixedDate)
+
+        // Both saves should assign the same canonical → colorIndex
+        // mapping regardless of dictionary iteration order.
+        let firstMap = Dictionary(uniqueKeysWithValues:
+            first.speakers.map { ($0.speakerKey, $0.colorIndex) }
+        )
+        let secondMap = Dictionary(uniqueKeysWithValues:
+            second.speakers.map { ($0.speakerKey, $0.colorIndex) }
+        )
+        XCTAssertEqual(firstMap, secondMap)
+    }
+
     // MARK: - Helpers
 
     private func saveFixtureTranscript(
