@@ -115,6 +115,36 @@ final class TranscriptFormatterTests: XCTestCase {
         XCTAssertEqual(result.speakerMap["SPEAKER_02"], "Speaker 3")
     }
 
+    // MARK: - Public `turns` shape (EPIC-06 storage prerequisite)
+
+    func test_format_turns_exposesPerTurnStructure() throws {
+        let (transcript, diarization) = TranscriptFixtures.make3SpeakerFixture()
+        let result = try formatter.format(transcription: transcript, diarization: diarization)
+
+        XCTAssertEqual(result.turns.count, 4)
+        XCTAssertEqual(result.turns.map { $0.canonicalSpeaker },
+                       ["SPEAKER_00", "SPEAKER_01", "SPEAKER_00", "SPEAKER_02"])
+        XCTAssertEqual(result.turns.map { $0.displayName },
+                       ["Speaker 1", "Speaker 2", "Speaker 1", "Speaker 3"])
+        // First turn covers "hello there how are you today" — first word
+        // starts at 0.2; last word "today" ends at 3.2.
+        XCTAssertEqual(result.turns[0].startSeconds, 0.2, accuracy: 1e-6)
+        XCTAssertEqual(result.turns[0].endSeconds, 3.2, accuracy: 1e-6)
+        XCTAssertEqual(result.turns[0].text, "hello there how are you today")
+    }
+
+    func test_format_turns_renameOverridesPropagateToDisplayName() throws {
+        let (transcript, diarization) = TranscriptFixtures.make3SpeakerFixture()
+        let result = try formatter.format(
+            transcription: transcript,
+            diarization: diarization,
+            speakerNames: ["SPEAKER_00": "Alice"]
+        )
+        let aliceTurns = result.turns.filter { $0.canonicalSpeaker == "SPEAKER_00" }
+        XCTAssertEqual(aliceTurns.count, 2)
+        XCTAssertTrue(aliceTurns.allSatisfy { $0.displayName == "Alice" })
+    }
+
     // MARK: - Warnings passthrough + single-speaker
 
     func test_format_singleSpeakerFixture_producesOneTurn_noWarnings() throws {

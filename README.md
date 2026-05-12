@@ -6,7 +6,7 @@ template_version: "3.0.0"
 
 > **Status**: Active
 > **Current PRD Version**: v0.7 (See `PRD.md`)
-> **Active EPIC**: EPIC-06 — Storage & Obsidian Export (EPIC-05 closed 2026-05-12 with `TranscriptFormatter` + `DefaultTranscriptFormatter` + `WordSpeakerAligner` + 4 in-code fixtures and ~17 new XCTests covering TEST-301/302/303 + straddle/silence/empty-words/zero-segments/invalid-segment edge cases; build verification deferred to CI) (See `epics/`)
+> **Active EPIC**: EPIC-07 — SwiftUI Interface (EPIC-06 closed 2026-05-12 with `AppDatabase` + v1 migration + 4 GRDB record types + `TranscriptStore` with FTS5 + `SettingsStore` with typed keys + `ObsidianExporter` with INT-001 frontmatter and `MarkdownFilenameSanitizer`; EPIC-05's `Turn` promoted to public `TranscriptTurn` to back DBT-002/003 cleanly; ~37 new XCTests covering TEST-401..405 + cascade-delete + FTS trigger sync + settings round-trip; build verification deferred to CI) (See `epics/`)
 
 ---
 
@@ -67,8 +67,8 @@ template_version: "3.0.0"
 | EPIC-04a | Diarization CLI & Packaging (Python) | ✅ Complete | EPIC-01 |
 | EPIC-04b | Swift `DiarizationService` Bridge | ✅ Complete | EPIC-04a |
 | EPIC-05 | Transcript Formatting & Alignment | ✅ Complete | EPIC-03, EPIC-04b |
-| EPIC-06 | Storage & Obsidian Export | Active | EPIC-01, EPIC-05 |
-| EPIC-07 | SwiftUI Interface | Planned | EPIC-02, EPIC-05, EPIC-06 |
+| EPIC-06 | Storage & Obsidian Export | ✅ Complete | EPIC-01, EPIC-05 |
+| EPIC-07 | SwiftUI Interface | Active | EPIC-02, EPIC-05, EPIC-06 |
 | EPIC-08 | Pipeline Integration & Audio Lifecycle | Planned | EPIC-02→07 |
 
 ### KPI Metrics

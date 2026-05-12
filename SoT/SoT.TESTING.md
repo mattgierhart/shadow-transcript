@@ -510,15 +510,15 @@ the same file without modification.
 
 **ID**: TEST-401
 **Category**: Integration
-**Status**: Planned
+**Status**: Implemented (EPIC-06, 2026-05-12)
 **Priority**: P0 (Critical)
 **Created**: 2026-03-20
 
 ### Test Case (Given-When-Then)
 
-**Given**: FormattedTranscript + valid vault path
-**When**: `ObsidianExporter.export()` called
-**Then**: File at `vaultPath/subfolder/YYYY-MM-DD Title.md`; starts with YAML frontmatter; transcript body follows; UTF-8 encoded
+**Given**: `FormattedTranscript` from `make3SpeakerFixture()` + a writable temp vault directory
+**When**: `DefaultObsidianExporter.export()` is called with a `title`, `date`, `vaultPath`, and `subfolder`
+**Then**: File created at `vaultPath/subfolder/YYYY-MM-DD <sanitized title>.md`; body starts with `---\n` (YAML); body contains the formatted markdown; trailing newline present. Subfolder is auto-created if missing; nil/empty subfolder writes to vault root; an occupied destination throws `ObsidianExportError.fileExists`; a file (not directory) at `vaultPath` throws `vaultPathNotADirectory`.
 
 ### Validates
 
@@ -527,7 +527,7 @@ the same file without modification.
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/ObsidianExporterTests.swift`
+**File**: `TranscriptShadowTests/Export/ObsidianExporterTests.swift`
 **Traceability**: `// @implements TEST-401`
 
 ---
@@ -536,15 +536,15 @@ the same file without modification.
 
 **ID**: TEST-402
 **Category**: Unit
-**Status**: Planned
+**Status**: Implemented (EPIC-06, 2026-05-12)
 **Priority**: P1
 **Created**: 2026-03-20
 
 ### Test Case (Given-When-Then)
 
 **Given**: Exported markdown file
-**When**: Parsing frontmatter between `---` markers
-**Then**: Valid YAML; contains date, type, duration, speakers, source, tags; type == "meeting-transcript"; source == "transcript-shadow"
+**When**: Parsing the frontmatter between leading and matching `---` markers
+**Then**: Frontmatter contains all six required keys (`date`, `title`, `type`, `duration`, `speakers`, `source`, `tags`); `type == "meeting-transcript"`, `source == "transcript-shadow"`, `tags == [meeting, transcript]`; duration is rendered as `MM:SS` (or `H:MM:SS` for ≥1h) matching INT-001's `"45:30"` example; speaker names with embedded quotes are YAML-escaped.
 
 ### Validates
 
@@ -553,7 +553,7 @@ the same file without modification.
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/ObsidianExporterTests.swift`
+**File**: `TranscriptShadowTests/Export/ObsidianExporterTests.swift`
 **Traceability**: `// @implements TEST-402`
 
 ---
@@ -562,15 +562,15 @@ the same file without modification.
 
 **ID**: TEST-403
 **Category**: Integration
-**Status**: Planned
+**Status**: Implemented (EPIC-06, 2026-05-12)
 **Priority**: P0 (Critical)
 **Created**: 2026-03-20
 
 ### Test Case (Given-When-Then)
 
-**Given**: Completed pipeline output
-**When**: Transcript saved to database
-**Then**: Row in `transcripts` with UUID; rows in `speakers` matching count; rows in `segments` in sequence order; FK relationships valid
+**Given**: `FormattedTranscript` from `make3SpeakerFixture()` + an in-memory `AppDatabase` with v1 migration applied
+**When**: `DefaultTranscriptStore.save()` is called
+**Then**: One `transcripts` row with the supplied UUID + title + ISO8601 date; one `speakers` row per canonical ID with `color_index` assigned by first-appearance order and `speaking_time_seconds` derived from per-turn durations; one `segments` row per turn with `sequence` 0..N-1 and `text` matching the turn; FK references resolve; cascade delete removes children when the parent transcript is deleted; `markExported` updates `exported_path` and throws `notFound` for unknown IDs.
 
 ### Validates
 
@@ -580,7 +580,7 @@ the same file without modification.
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/DatabaseTests.swift`
+**File**: `TranscriptShadowTests/Storage/TranscriptStoreTests.swift`
 **Traceability**: `// @implements TEST-403`
 
 ---
@@ -589,15 +589,15 @@ the same file without modification.
 
 **ID**: TEST-404
 **Category**: Unit
-**Status**: Planned
+**Status**: Implemented (EPIC-06, 2026-05-12)
 **Priority**: P1
 **Created**: 2026-03-20
 
 ### Test Case (Given-When-Then)
 
-**Given**: Multiple transcripts in database
-**When**: FTS query for a known phrase
-**Then**: Matching transcript returned; partial word matches work; empty query returns empty
+**Given**: One or more saved transcripts in an in-memory `AppDatabase`
+**When**: `DefaultTranscriptStore.search(query:limit:)` is called
+**Then**: Matches return ordered by `date DESC`; search is case-insensitive; Porter stemmer matches morphological variants (`shipped` against `shipping`); unknown phrases return empty; blank/whitespace queries return empty without hitting FTS; FTS triggers stay in sync — deleting a transcript removes it from search results.
 
 ### Validates
 
@@ -606,7 +606,7 @@ the same file without modification.
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/DatabaseTests.swift`
+**File**: `TranscriptShadowTests/Storage/TranscriptSearchTests.swift`
 **Traceability**: `// @implements TEST-404`
 
 ---
@@ -615,15 +615,15 @@ the same file without modification.
 
 **ID**: TEST-405
 **Category**: Unit
-**Status**: Planned
+**Status**: Implemented (EPIC-06, 2026-05-12)
 **Priority**: P1
 **Created**: 2026-03-20
 
 ### Test Case (Given-When-Then)
 
-**Given**: Settings store initialized
-**When**: Write value → reinitialize store → read value
-**Then**: Written value retrievable; unset keys return defaults; invalid JSON handled gracefully
+**Given**: A `DefaultSettingsStore` over an in-memory `AppDatabase`
+**When**: Reads/writes against the built-in `SettingKey` constants (`obsidianVaultPath`, `obsidianSubfolder`, `audioInputDevice`, `captureSystemAudio`, `autoExport`, `whisperModel`)
+**Then**: Missing keys return their `defaultValue`; round-trip preserves String/Bool/Optional<String>/Codable enums; double-write upserts in place (second value wins); `reset` removes the row and restores the default; manually-injected invalid JSON falls back to the default rather than throwing.
 
 ### Validates
 
@@ -631,7 +631,7 @@ the same file without modification.
 
 ### Implementation
 
-**File**: `TranscriptShadowTests/SettingsTests.swift`
+**File**: `TranscriptShadowTests/Storage/SettingsStoreTests.swift`
 **Traceability**: `// @implements TEST-405`
 
 ---

@@ -432,6 +432,15 @@ public struct FormattedTranscript: Codable, Sendable, Equatable {
     public let metadata: TranscriptMetadata
     public let speakerMap: [String: String]   // canonical SPEAKER_xx → display name
     public let warnings: [String]
+    public let turns: [TranscriptTurn]
+}
+
+public struct TranscriptTurn: Codable, Sendable, Equatable {
+    public let canonicalSpeaker: String       // matches DBT-002 speaker_key
+    public let displayName: String
+    public let startSeconds: TimeInterval
+    public let endSeconds: TimeInterval
+    public let text: String
 }
 
 public struct TranscriptMetadata: Codable, Sendable, Equatable {
@@ -451,6 +460,8 @@ public enum FormatterError: Error, Equatable {
 ### Notes vs. Original Sketch
 
 The v0.6 sketch named the first parameter `transcription: TranscriptionResult` and made `speakerNames` optional (`[String: String]?`). The implementation uses `transcription: Transcript` because EPIC-03 shipped the WhisperKit-disambiguating rename (see API-101's "Notes vs. Original Sketch" — `import WhisperKit` shadows `TranscriptionResult`). `speakerNames` was made non-optional with a `[:]` default via a protocol extension; every call site converted `nil` to `[:]` anyway, and dropping optionality removes a needless branch. The sketch also omitted `FormattedTranscript.warnings` — added during EPIC-05 to surface (a) `DiarizationResult.warnings` passthrough and (b) the formatter's own diagnostics (boundary-word straddles, single-speaker fallback when diarization returned zero segments). `TranscriptMetadata` was fully specified in EPIC-05; `durationSeconds` is `Int` (rounded) to match DBT-001's `INTEGER` column shape so EPIC-06 can copy fields directly.
+
+**EPIC-06 extension (2026-05-12)**: `FormattedTranscript.turns: [TranscriptTurn]` was added to expose the per-turn structure used to render `markdown`. EPIC-06's `TranscriptStore.save` populates DBT-002 (speakers) and DBT-003 (segments) from this without re-deriving from the raw `Transcript`/`DiarizationResult`. `TranscriptTurn.canonicalSpeaker` matches DBT-002 `speaker_key` for the FK join.
 
 ### Algorithm Notes (RISK-005)
 
@@ -472,33 +483,49 @@ Default speaker display names are 1-indexed by first appearance in `diarization.
 
 **ID**: API-202
 **Category**: Internal
-**Status**: Planned
+**Status**: Implemented (EPIC-06, 2026-05-12)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-12
 
 ### Specification
 
 **Type**: Swift service
-**Interface**: `ObsidianExporter`
+**Interface**: `ObsidianExporter` (protocol) + `DefaultObsidianExporter` (final class)
 
 ### Purpose
 
-Write formatted transcript to Obsidian vault directory with proper frontmatter and file naming.
+Write a `FormattedTranscript` body (BR-301) to an Obsidian vault directory as a `.md` file with YAML frontmatter (INT-001) and an Obsidian-safe filename (BR-302). Pure I/O — no DB writes; `TranscriptStore.markExported` records the returned `URL`.
 
 ### Interface
 
 ```swift
-protocol ObsidianExporter {
-    func export(transcript: FormattedTranscript,
-                vaultPath: URL,
-                subfolder: String?) throws -> URL  // Returns written file path
+public protocol ObsidianExporter: Sendable {
+    func export(
+        transcript: FormattedTranscript,
+        title: String,
+        date: Date,
+        vaultPath: URL,
+        subfolder: String?
+    ) throws -> URL
+}
+
+public enum ObsidianExportError: Error, Equatable {
+    case vaultPathNotADirectory(URL)
+    case fileExists(URL)
+    case writeFailed(path: String, underlying: String)
 }
 ```
+
+### Notes vs. Original Sketch
+
+The sketch elided `title` and `date` — they're separate parameters in the impl because the user-facing title is editable after recording and the recording date is not a property of `FormattedTranscript` (which carries `metadata.durationSeconds` but not a wall-clock anchor). The `ObsidianExportError` enum + `overwriteExisting` flag on `DefaultObsidianExporter`'s init were added for the EPIC-08 orchestrator's failure semantics. Filename sanitization is delegated to `MarkdownFilenameSanitizer` (per BR-302); duration is rendered as `MM:SS` (or `H:MM:SS`) matching INT-001's example. Subfolder is created on demand.
 
 ### Related IDs
 
 - [INT-001](SoT.INTEGRATIONS.md#int-001-obsidian-vault-export) - Obsidian integration
 - [BR-302](SoT.BUSINESS_RULES.md#br-302-obsidian-vault-compatibility) - Compatibility rules
+- [API-201](#api-201-transcript-formatter) - Source `FormattedTranscript`
+- [DBT-001](SoT.DATA_MODEL.md#dbt-001-transcripts-table) - `exported_path` column updated post-export
 - [UJ-002](SoT.USER_JOURNEYS.md#uj-002-review-and-export-transcript) - Export journey
 
 ---
