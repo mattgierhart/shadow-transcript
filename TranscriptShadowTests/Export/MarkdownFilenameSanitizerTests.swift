@@ -55,17 +55,28 @@ final class MarkdownFilenameSanitizerTests: XCTestCase {
         )
     }
 
+    func test_sanitize_whitespaceOnlyInputBecomesUntitled() {
+        XCTAssertEqual(MarkdownFilenameSanitizer.sanitize("   "), "Untitled")
+        XCTAssertEqual(MarkdownFilenameSanitizer.sanitize("\t\t"), "Untitled")
+    }
+
+    func test_sanitize_trimsTrailingSpacePreservesInner() {
+        XCTAssertEqual(MarkdownFilenameSanitizer.sanitize("hello "), "hello")
+        XCTAssertEqual(MarkdownFilenameSanitizer.sanitize("  hello  "), "hello")
+        XCTAssertEqual(MarkdownFilenameSanitizer.sanitize("hello world"), "hello world")
+    }
+
     func test_makeFilename_formatsAsDateTitleMd() {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
-        let date = Date(timeIntervalSince1970: 1_700_006_400)  // 2023-11-14 16:00 UTC
+        let date = Date(timeIntervalSince1970: 1_700_006_400)  // 2023-11-15 00:00 UTC
         XCTAssertEqual(
             MarkdownFilenameSanitizer.makeFilename(
                 date: date,
                 title: "Weekly: Standup",
                 calendar: calendar
             ),
-            "2023-11-14 Weekly Standup.md"
+            "2023-11-15 Weekly Standup.md"
         )
     }
 }

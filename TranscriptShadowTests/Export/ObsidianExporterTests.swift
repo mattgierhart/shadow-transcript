@@ -5,7 +5,7 @@ import XCTest
 final class ObsidianExporterTests: XCTestCase {
     private var vaultRoot: URL!
     private let fixedDate = Date(timeIntervalSince1970: 1_700_006_400)
-    // 2023-11-14 16:00:00 UTC — date string `2023-11-14`.
+    // 2023-11-15 00:00:00 UTC — date string `2023-11-15`.
 
     override func setUpWithError() throws {
         let tmp = FileManager.default.temporaryDirectory
@@ -30,7 +30,7 @@ final class ObsidianExporterTests: XCTestCase {
             subfolder: "Meetings"
         )
 
-        XCTAssertEqual(url.lastPathComponent, "2023-11-14 Weekly Standup.md")
+        XCTAssertEqual(url.lastPathComponent, "2023-11-15 Weekly Standup.md")
         XCTAssertEqual(url.deletingLastPathComponent().lastPathComponent, "Meetings")
         XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
 
@@ -147,7 +147,7 @@ final class ObsidianExporterTests: XCTestCase {
         let body = try String(contentsOf: url, encoding: .utf8)
         let frontmatter = try Self.extractFrontmatter(body)
 
-        XCTAssertTrue(frontmatter.contains("date: 2023-11-14"), "date key missing: \(frontmatter)")
+        XCTAssertTrue(frontmatter.contains("date: 2023-11-15"), "date key missing: \(frontmatter)")
         XCTAssertTrue(frontmatter.contains("type: meeting-transcript"))
         XCTAssertTrue(frontmatter.contains("source: transcript-shadow"))
         XCTAssertTrue(frontmatter.contains("tags: [meeting, transcript]"))
@@ -169,6 +169,61 @@ final class ObsidianExporterTests: XCTestCase {
         )
         let body = try String(contentsOf: url, encoding: .utf8)
         XCTAssertTrue(body.contains("duration: \"0:25\""), "got: \(body)")
+    }
+
+    func test_export_titleWithNewlineIsEscaped() throws {
+        let exporter = DefaultObsidianExporter()
+        let formatted = try makeFormatted()
+        let url = try exporter.export(
+            transcript: formatted,
+            title: "Sync\nQ&A",
+            date: fixedDate,
+            vaultPath: vaultRoot,
+            subfolder: nil
+        )
+        let body = try String(contentsOf: url, encoding: .utf8)
+        let frontmatter = try Self.extractFrontmatter(body)
+        // Title must appear on a single line — the raw `\n` must be escaped.
+        XCTAssertTrue(
+            frontmatter.contains(#"title: "Sync\nQ&A""#),
+            "Title newline must be escaped to keep YAML parsable: \(frontmatter)"
+        )
+        // Frontmatter must end on the same logical block (no spurious
+        // closing `---` mid-document).
+        XCTAssertEqual(
+            body.components(separatedBy: "\n---\n").count,
+            2,
+            "Expected exactly one frontmatter close marker"
+        )
+    }
+
+    func test_export_emptyMarkdownBody_writesFrontmatterOnly() throws {
+        let exporter = DefaultObsidianExporter()
+        let empty = FormattedTranscript(
+            markdown: "",
+            metadata: TranscriptMetadata(
+                durationSeconds: 0,
+                speakerCount: 0,
+                language: "en",
+                model: .baseEN,
+                wordCount: 0,
+                turnCount: 0
+            ),
+            speakerMap: [:],
+            warnings: [],
+            turns: []
+        )
+        let url = try exporter.export(
+            transcript: empty,
+            title: "Empty",
+            date: fixedDate,
+            vaultPath: vaultRoot,
+            subfolder: nil
+        )
+        XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
+        let body = try String(contentsOf: url, encoding: .utf8)
+        XCTAssertTrue(body.hasPrefix("---\n"))
+        XCTAssertTrue(body.contains("type: meeting-transcript"))
     }
 
     func test_export_speakers_areYAMLEscapedQuoted() throws {

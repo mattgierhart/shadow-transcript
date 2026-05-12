@@ -124,8 +124,14 @@ public final class DefaultSettingsStore: SettingsStore, Sendable {
     }
 
     public func reset<T: Codable & Sendable>(_ key: SettingKey<T>) async throws {
-        _ = try await database.queue.write { db in
-            try AppSettingRecord.deleteOne(db, key: key.rawKey)
+        try await database.queue.write { db in
+            // Explicit SQL avoids relying on GRDB's auto-derived
+            // primary-key inference for `AppSettingRecord`, whose PK
+            // column is `key` (not `id`).
+            try db.execute(
+                sql: "DELETE FROM app_settings WHERE key = ?",
+                arguments: [key.rawKey]
+            )
         }
     }
 }

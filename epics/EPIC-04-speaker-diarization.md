@@ -34,8 +34,8 @@ lets each EPIC complete on its own timeline.
 
 | EPIC | Scope | SoT footprint | Status | Blocks |
 |------|-------|---------------|--------|--------|
-| **[EPIC-04a — Diarization CLI & Packaging](EPIC-04a-diarization-cli.md)** | `diarize.py` real impl + JSON schema lock + PyInstaller bundle. Python-only. | 8 IDs (API-102 CLI half, ARC-002, TECH-006, BR-101, FEA-003, TEST-201..204, RISK-001/003) | Active | EPIC-04b |
-| **[EPIC-04b — Swift `DiarizationService` Bridge](EPIC-04b-diarization-swift-bridge.md)** | Swift Process consumer + sandbox/entitlement work + `DiarizationResult` types + tests via golden JSON. | 7 IDs | Blocked on 04a's JSON contract being frozen | — |
+| **[EPIC-04a — Diarization CLI & Packaging](EPIC-04a-diarization-cli.md)** | `diarize.py` real impl + JSON schema lock + PyInstaller bundle. Python-only. | 8 IDs (API-102 CLI half, ARC-002, TECH-006, BR-101, FEA-003, TEST-201..204, RISK-001/003) | ✅ Complete (2026-05-09) | EPIC-04b |
+| **[EPIC-04b — Swift `DiarizationService` Bridge](EPIC-04b-diarization-swift-bridge.md)** | Swift Process consumer + sandbox/entitlement work + `DiarizationResult` types + tests via golden JSON. | 7 IDs | ✅ Complete (2026-05-09) | — |
 
 Each child EPIC carries a "Cumulative Carry-Forward" pointer back here.
 The full carry-forward block is below — read once at the start of either

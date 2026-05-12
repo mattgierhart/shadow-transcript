@@ -85,9 +85,9 @@ public final class DefaultTranscriptStore: TranscriptStore, Sendable {
         )
 
         // canonical → SpeakerRecord (palette index by first appearance
-        // in `speakerMap` keys ordered the way EPIC-05 produced them,
-        // i.e. via the turns list — `speakerMap` itself is a dictionary
-        // so we can't rely on its iteration order).
+        // in `turns` first, then any keys only present in `speakerMap`
+        // appended in **sorted** order for determinism — dictionary
+        // iteration is not order-stable across runs even in Swift 5.3+).
         var canonicalOrder: [String] = []
         var seen = Set<String>()
         for turn in formatted.turns {
@@ -95,36 +95,41 @@ public final class DefaultTranscriptStore: TranscriptStore, Sendable {
                 canonicalOrder.append(turn.canonicalSpeaker)
             }
         }
-        for canonical in formatted.speakerMap.keys where !seen.contains(canonical) {
+        for canonical in formatted.speakerMap.keys.sorted() where !seen.contains(canonical) {
             canonicalOrder.append(canonical)
             seen.insert(canonical)
         }
 
-        var speakerIDByCanonical: [String: UUID] = [:]
+        // Pre-compute the canonical → speaker UUID map and the
+        // speaking-time totals as pure functions of `formatted` so the
+        // record arrays below can be built as `let` constants. Swift 6
+        // strict concurrency rejects `var` captures inside the
+        // `@Sendable` `queue.write { … }` closure.
         var speakingTimeByCanonical: [String: Double] = [:]
         for turn in formatted.turns {
             speakingTimeByCanonical[turn.canonicalSpeaker, default: 0] +=
                 max(0, turn.endSeconds - turn.startSeconds)
         }
+        let speakingTimeMap = speakingTimeByCanonical
 
-        var speakerRecords: [SpeakerRecord] = []
-        for (index, canonical) in canonicalOrder.enumerated() {
-            let speakerID = UUID()
-            speakerIDByCanonical[canonical] = speakerID
-            speakerRecords.append(SpeakerRecord(
-                id: speakerID.uuidString,
+        let speakerIDByCanonical: [String: UUID] = Dictionary(
+            uniqueKeysWithValues: canonicalOrder.map { ($0, UUID()) }
+        )
+
+        let speakerRecords: [SpeakerRecord] = canonicalOrder.enumerated().map { index, canonical in
+            SpeakerRecord(
+                id: speakerIDByCanonical[canonical]!.uuidString,
                 transcriptId: transcriptID.uuidString,
                 speakerKey: canonical,
                 displayName: formatted.speakerMap[canonical] ?? canonical,
                 colorIndex: index,
-                speakingTimeSeconds: speakingTimeByCanonical[canonical]
-            ))
+                speakingTimeSeconds: speakingTimeMap[canonical]
+            )
         }
 
-        var segmentRecords: [SegmentRecord] = []
-        for (index, turn) in formatted.turns.enumerated() {
-            guard let speakerID = speakerIDByCanonical[turn.canonicalSpeaker] else { continue }
-            segmentRecords.append(SegmentRecord(
+        let segmentRecords: [SegmentRecord] = formatted.turns.enumerated().compactMap { index, turn in
+            guard let speakerID = speakerIDByCanonical[turn.canonicalSpeaker] else { return nil }
+            return SegmentRecord(
                 id: UUID().uuidString,
                 transcriptId: transcriptID.uuidString,
                 speakerId: speakerID.uuidString,
@@ -132,7 +137,7 @@ public final class DefaultTranscriptStore: TranscriptStore, Sendable {
                 endTime: turn.endSeconds,
                 text: turn.text,
                 sequence: index
-            ))
+            )
         }
 
         try await database.queue.write { db in
@@ -210,7 +215,10 @@ public final class DefaultTranscriptStore: TranscriptStore, Sendable {
     public func markExported(id: UUID, to path: URL) async throws {
         let updatedAt = ISO8601.string(from: clock())
         try await database.queue.write { db in
-            let affected = try db.execute(
+            // `db.execute` returns `Void` in GRDB v6; the row count for
+            // the just-executed statement is available via
+            // `db.changesCount`.
+            try db.execute(
                 sql: """
                     UPDATE transcripts
                     SET exported_path = ?, updated_at = ?
@@ -218,7 +226,7 @@ public final class DefaultTranscriptStore: TranscriptStore, Sendable {
                 """,
                 arguments: [path.path, updatedAt, id.uuidString]
             )
-            if affected == 0 {
+            if db.changesCount == 0 {
                 throw TranscriptStoreError.notFound(id)
             }
         }
@@ -292,12 +300,24 @@ public final class DefaultTranscriptStore: TranscriptStore, Sendable {
 
 // MARK: - ISO8601 helper
 
+/// Thread-safe ISO8601 conversion. `ISO8601DateFormatter` instances are
+/// not safe to share across threads/queues — Foundation documents this
+/// for `DateFormatter` and the ISO variant inherits the same constraint
+/// in practice. Each call constructs a fresh formatter (cheap; the
+/// instance has no resources beyond a few stored option bits) so GRDB's
+/// concurrent `queue.read` callers cannot race on a shared state.
 enum ISO8601 {
-    static let formatter: ISO8601DateFormatter = {
+    private static func makeFormatter() -> ISO8601DateFormatter {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return f
-    }()
-    static func string(from date: Date) -> String { formatter.string(from: date) }
-    static func date(from string: String) -> Date? { formatter.date(from: string) }
+    }
+
+    static func string(from date: Date) -> String {
+        makeFormatter().string(from: date)
+    }
+
+    static func date(from string: String) -> Date? {
+        makeFormatter().date(from: string)
+    }
 }

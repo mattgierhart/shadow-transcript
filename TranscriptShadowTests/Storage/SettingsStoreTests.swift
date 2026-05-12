@@ -76,7 +76,7 @@ final class SettingsStoreTests: XCTestCase {
 
     func test_read_returnsDefault_whenStoredValueIsCorrupt() async throws {
         // Manually insert garbage so the decode path fails.
-        try database.queue.write { conn in
+        try await database.queue.write { conn in
             try conn.execute(
                 sql: "INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, ?)",
                 arguments: [

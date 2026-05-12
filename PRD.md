@@ -398,10 +398,10 @@ Full details: `SoT/SoT.INTEGRATIONS.md`
 | EPIC-04 | Speaker Diarization Sidecar | Split → 04a + 04b (2026-05-08) | EPIC-01 | API-102, FEA-003, ARC-002, TECH-006 | P0 (highest risk) |
 | EPIC-04a | Diarization CLI & Packaging (Python) | ✅ Complete (2026-05-09) | EPIC-01 | API-102 (CLI half), INT-102, ARC-002, TECH-006, BR-101, FEA-003, TEST-201..204, RISK-001/003 | P0 |
 | EPIC-04b | Swift `DiarizationService` Bridge | ✅ Complete (2026-05-09) | EPIC-04a | API-102 (Swift half), INT-102, DEP-002, RISK-007 | P0 |
-| EPIC-05 | Transcript Formatting & Alignment | Active (next up) | EPIC-03, EPIC-04b | API-201, FEA-004, BR-301, RISK-005 | P0 |
-| EPIC-06 | Storage & Obsidian Export | Planned | EPIC-01, EPIC-05 | API-202, DBT-001→101, FEA-005, FEA-006, INT-001 | P0 |
-| EPIC-07 | SwiftUI Interface | Planned | EPIC-02, EPIC-05, EPIC-06 | SCR-001→006, DES-XXX, UJ-001→003 | P1 |
-| EPIC-08 | Pipeline Integration & Audio Lifecycle | Planned | EPIC-02→07 | API-301, ARC-001, ARC-003, BR-101→103 | P0 (E2E validation) |
+| EPIC-05 | Transcript Formatting & Alignment | ✅ Complete (2026-05-12) | EPIC-03, EPIC-04b | API-201, FEA-004, BR-301, RISK-005 | P0 |
+| EPIC-06 | Storage & Obsidian Export | ✅ Complete (2026-05-12) | EPIC-01, EPIC-05 | API-202, DBT-001→101, FEA-005, FEA-006, INT-001 | P0 |
+| EPIC-07 | SwiftUI Interface | Active (next up — Mac required) | EPIC-02, EPIC-05, EPIC-06 | SCR-001→006, DES-XXX, UJ-001→003 | P1 |
+| EPIC-08 | Pipeline Integration & Audio Lifecycle | Planned (Mac required) | EPIC-02→07 | API-301, ARC-001, ARC-003, BR-101→103 | P0 (E2E validation) |
 
 **Execution Order (Parallelism)**
 

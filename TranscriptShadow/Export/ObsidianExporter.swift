@@ -24,7 +24,14 @@ public enum ObsidianExportError: Error, Equatable {
     case writeFailed(path: String, underlying: String)
 }
 
-public final class DefaultObsidianExporter: ObsidianExporter, Sendable {
+/// `@unchecked Sendable` is intentional: `FileManager` isn't formally
+/// `Sendable` but Apple documents `FileManager.default` as thread-safe,
+/// and both stored properties (`fileManager`, `overwriteExisting`) are
+/// `let`-bound so the class has no mutable state. The protocol requires
+/// `Sendable` so EPIC-07's `@MainActor` view models can dispatch
+/// `export(...)` to a background task without crossing isolation
+/// warnings. Same pattern as `PyannoteSidecarDiarizationService`.
+public final class DefaultObsidianExporter: ObsidianExporter, @unchecked Sendable {
     private let fileManager: FileManager
     private let overwriteExisting: Bool
 
@@ -145,13 +152,17 @@ public final class DefaultObsidianExporter: ObsidianExporter, Sendable {
         """
     }
 
-    /// YAML-safe quoting. Wraps in double quotes; escapes embedded `"`
-    /// and `\`. Sufficient for the well-defined values the formatter
-    /// produces (no newlines, no NULs).
+    /// YAML-safe quoting. Wraps in double quotes; escapes embedded `"`,
+    /// `\`, `\n`, `\r`, and `\t` so user-typed titles or speaker names
+    /// containing newlines or tabs can't break the frontmatter block.
+    /// Sufficient for the well-defined values the formatter produces.
     private func quoted(_ raw: String) -> String {
         let escaped = raw
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "\t", with: "\\t")
         return "\"\(escaped)\""
     }
 
