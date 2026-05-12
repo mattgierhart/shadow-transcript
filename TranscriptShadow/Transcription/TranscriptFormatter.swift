@@ -47,23 +47,60 @@ public extension TranscriptFormatter {
 /// (`ObsidianExporter`). `speakerMap` keys are canonical pyannote IDs
 /// (`SPEAKER_00`, plus `SPEAKER_UNKNOWN` if any words couldn't be
 /// attributed); values are the resolved display names emitted in
-/// markdown.
+/// markdown. `turns` exposes the per-turn structure used to render
+/// `markdown` so downstream consumers (EPIC-06's persistence layer
+/// populating DBT-002/DBT-003, EPIC-07's editable transcript view) can
+/// reuse the alignment without re-deriving from `Transcript` +
+/// `DiarizationResult`.
 public struct FormattedTranscript: Codable, Sendable, Equatable {
     public let markdown: String
     public let metadata: TranscriptMetadata
     public let speakerMap: [String: String]
     public let warnings: [String]
+    public let turns: [TranscriptTurn]
 
     public init(
         markdown: String,
         metadata: TranscriptMetadata,
         speakerMap: [String: String],
-        warnings: [String]
+        warnings: [String],
+        turns: [TranscriptTurn]
     ) {
         self.markdown = markdown
         self.metadata = metadata
         self.speakerMap = speakerMap
         self.warnings = warnings
+        self.turns = turns
+    }
+}
+
+/// One contiguous span of speech attributed to a single speaker.
+/// `canonicalSpeaker` is the pyannote ID (`SPEAKER_00`,
+/// `SPEAKER_UNKNOWN`, …) — the stable key suitable for DBT-002
+/// `speakers.speaker_key`. `displayName` is the resolved label that
+/// appears in the rendered markdown. `startSeconds` is the first
+/// aligned token's start; `endSeconds` is the last aligned token's
+/// end. `text` is the concatenated word text for the turn (single-space
+/// joined, no leading/trailing whitespace).
+public struct TranscriptTurn: Codable, Sendable, Equatable {
+    public let canonicalSpeaker: String
+    public let displayName: String
+    public let startSeconds: TimeInterval
+    public let endSeconds: TimeInterval
+    public let text: String
+
+    public init(
+        canonicalSpeaker: String,
+        displayName: String,
+        startSeconds: TimeInterval,
+        endSeconds: TimeInterval,
+        text: String
+    ) {
+        self.canonicalSpeaker = canonicalSpeaker
+        self.displayName = displayName
+        self.startSeconds = startSeconds
+        self.endSeconds = endSeconds
+        self.text = text
     }
 }
 

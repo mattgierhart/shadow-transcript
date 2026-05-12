@@ -35,10 +35,10 @@ authority: This is a SoT file - IDs here are referenced by SoT.API_CONTRACTS.md,
 
 **ID**: INT-001
 **Category**: File System
-**Status**: Planned
+**Status**: Implemented (EPIC-06, 2026-05-12)
 **Provider**: Obsidian (file-based, no API)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-12
 
 ### Description
 

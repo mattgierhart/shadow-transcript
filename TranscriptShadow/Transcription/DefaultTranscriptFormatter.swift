@@ -36,8 +36,8 @@ public struct DefaultTranscriptFormatter: TranscriptFormatter, Sendable {
             overrides: speakerNames
         )
 
-        let turns = groupIntoTurns(tokens: alignment.tokens)
-        let markdown = renderMarkdown(turns: turns, speakerMap: speakerMap)
+        let turns = groupIntoTurns(tokens: alignment.tokens, speakerMap: speakerMap)
+        let markdown = renderMarkdown(turns: turns)
 
         let metadata = TranscriptMetadata(
             durationSeconds: Int(transcription.duration.rounded()),
@@ -54,7 +54,8 @@ public struct DefaultTranscriptFormatter: TranscriptFormatter, Sendable {
             markdown: markdown,
             metadata: metadata,
             speakerMap: speakerMap,
-            warnings: combinedWarnings
+            warnings: combinedWarnings,
+            turns: turns
         )
     }
 
@@ -79,39 +80,59 @@ public struct DefaultTranscriptFormatter: TranscriptFormatter, Sendable {
 
     // MARK: - Turn grouping
 
-    fileprivate struct Turn {
-        let canonicalSpeaker: String
-        let startSeconds: TimeInterval
-        let text: String
-    }
-
-    private func groupIntoTurns(tokens: [AlignedToken]) -> [Turn] {
+    private func groupIntoTurns(
+        tokens: [AlignedToken],
+        speakerMap: [String: String]
+    ) -> [TranscriptTurn] {
         guard !tokens.isEmpty else { return [] }
-        var turns: [Turn] = []
+        var turns: [TranscriptTurn] = []
         var currentSpeaker = tokens[0].canonicalSpeaker
         var currentStart = tokens[0].start
+        var currentEnd = tokens[0].end
         var currentWords: [String] = [tokens[0].text]
 
         for token in tokens.dropFirst() {
             if token.canonicalSpeaker == currentSpeaker {
                 currentWords.append(token.text)
+                currentEnd = token.end
             } else {
-                turns.append(Turn(
+                turns.append(makeTurn(
                     canonicalSpeaker: currentSpeaker,
                     startSeconds: currentStart,
-                    text: joined(currentWords)
+                    endSeconds: currentEnd,
+                    words: currentWords,
+                    speakerMap: speakerMap
                 ))
                 currentSpeaker = token.canonicalSpeaker
                 currentStart = token.start
+                currentEnd = token.end
                 currentWords = [token.text]
             }
         }
-        turns.append(Turn(
+        turns.append(makeTurn(
             canonicalSpeaker: currentSpeaker,
             startSeconds: currentStart,
-            text: joined(currentWords)
+            endSeconds: currentEnd,
+            words: currentWords,
+            speakerMap: speakerMap
         ))
         return turns
+    }
+
+    private func makeTurn(
+        canonicalSpeaker: String,
+        startSeconds: TimeInterval,
+        endSeconds: TimeInterval,
+        words: [String],
+        speakerMap: [String: String]
+    ) -> TranscriptTurn {
+        TranscriptTurn(
+            canonicalSpeaker: canonicalSpeaker,
+            displayName: speakerMap[canonicalSpeaker] ?? canonicalSpeaker,
+            startSeconds: startSeconds,
+            endSeconds: endSeconds,
+            text: joined(words)
+        )
     }
 
     private func joined(_ words: [String]) -> String {
@@ -123,14 +144,10 @@ public struct DefaultTranscriptFormatter: TranscriptFormatter, Sendable {
 
     // MARK: - Markdown rendering
 
-    private func renderMarkdown(
-        turns: [Turn],
-        speakerMap: [String: String]
-    ) -> String {
+    private func renderMarkdown(turns: [TranscriptTurn]) -> String {
         turns.map { turn in
-            let displayName = speakerMap[turn.canonicalSpeaker] ?? turn.canonicalSpeaker
             let timestamp = formatTimestamp(turn.startSeconds)
-            return "**\(displayName)** [\(timestamp)]:\n\(turn.text)"
+            return "**\(turn.displayName)** [\(timestamp)]:\n\(turn.text)"
         }
         .joined(separator: "\n\n")
     }

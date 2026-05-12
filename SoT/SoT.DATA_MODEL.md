@@ -31,9 +31,9 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 
 **ID**: DBT-001
 **Category**: Core
-**Status**: Planned
+**Status**: Implemented (EPIC-06, 2026-05-12)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-12
 
 ### Purpose
 
@@ -75,9 +75,9 @@ Store transcript metadata and the full markdown content. One row per completed t
 
 **ID**: DBT-002
 **Category**: Core
-**Status**: Planned
+**Status**: Implemented (EPIC-06, 2026-05-12)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-12
 
 ### Purpose
 
@@ -116,9 +116,9 @@ Store speaker identities for each transcript. Maps auto-generated speaker IDs to
 
 **ID**: DBT-003
 **Category**: Core
-**Status**: Planned
+**Status**: Implemented (EPIC-06, 2026-05-12)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-12
 
 ### Purpose
 
@@ -160,9 +160,9 @@ Store individual transcript segments (speaker turns) with timestamps. Enables st
 
 **ID**: DBT-101
 **Category**: Settings
-**Status**: Planned
+**Status**: Implemented (EPIC-06, 2026-05-12)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-11
+**Last Updated**: 2026-05-12
 
 ### Purpose
 

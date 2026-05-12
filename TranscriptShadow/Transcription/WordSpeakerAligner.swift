@@ -12,6 +12,8 @@ struct AlignedToken: Equatable {
     let text: String
     /// Token start time (seconds from audio start).
     let start: TimeInterval
+    /// Token end time (seconds from audio start).
+    let end: TimeInterval
 }
 
 /// Output of one alignment pass.
@@ -81,7 +83,8 @@ struct WordSpeakerAligner {
                     tokens.append(AlignedToken(
                         canonicalSpeaker: attribution.canonicalSpeaker,
                         text: trimmed,
-                        start: segment.start
+                        start: segment.start,
+                        end: segment.end
                     ))
                 }
                 continue
@@ -106,7 +109,8 @@ struct WordSpeakerAligner {
                     tokens.append(AlignedToken(
                         canonicalSpeaker: attribution.canonicalSpeaker,
                         text: trimmed,
-                        start: word.start
+                        start: word.start,
+                        end: word.end
                     ))
                 }
             }
@@ -195,7 +199,8 @@ struct WordSpeakerAligner {
                     tokens.append(AlignedToken(
                         canonicalSpeaker: canonical,
                         text: trimmed,
-                        start: segment.start
+                        start: segment.start,
+                        end: segment.end
                     ))
                 }
             } else {
@@ -205,7 +210,8 @@ struct WordSpeakerAligner {
                         tokens.append(AlignedToken(
                             canonicalSpeaker: canonical,
                             text: trimmed,
-                            start: word.start
+                            start: word.start,
+                            end: word.end
                         ))
                     }
                 }
