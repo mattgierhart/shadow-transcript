@@ -44,6 +44,15 @@ struct AlignmentResult: Equatable {
 struct WordSpeakerAligner {
     static let unknownSpeakerID = "SPEAKER_UNKNOWN"
 
+    /// Half-window applied to every speaker-segment containment check.
+    /// Pyannote serializes segment boundaries to 3 decimal places (1ms),
+    /// and word timings from WhisperKit can drift by similar amounts when
+    /// re-serialized. A strict `start <= t < end` check therefore lets a
+    /// word whose midpoint lands a few microseconds past a boundary flip
+    /// to the next speaker (or to SPEAKER_UNKNOWN) instead of being
+    /// treated as the intended boundary case (Codex Gate, 2026-05-15).
+    static let boundaryEpsilon: TimeInterval = 0.001
+
     func align(
         transcription: Transcript,
         diarization: DiarizationResult
@@ -63,11 +72,16 @@ struct WordSpeakerAligner {
 
         for segment in transcription.segments {
             if segment.words.isEmpty {
-                // Segment-level fallback: attribute the whole segment's
-                // text by its midpoint.
-                let mid = (segment.start + segment.end) / 2
-                let attribution = attribute(
-                    midpoint: mid,
+                // Segment-level fallback: a WhisperKit segment that
+                // didn't emit per-word timings can span multiple
+                // diarization speakers. Midpoint-only attribution would
+                // silently assign the whole segment to one of them.
+                // Use largest-temporal-overlap instead so a no-words
+                // segment that straddles two speakers lands with the
+                // speaker who actually spoke most of it (Codex Gate
+                // P1 #2, 2026-05-15). Straddle still gets surfaced via
+                // the warning.
+                let attribution = attributeByOverlap(
                     wordStart: segment.start,
                     wordEnd: segment.end,
                     segments: diarization.segments
@@ -149,14 +163,12 @@ struct WordSpeakerAligner {
         wordEnd: TimeInterval,
         segments: [SpeakerSegment]
     ) -> Attribution {
-        guard let containing = segments.first(where: { segment in
-            segment.start <= midpoint && midpoint < segment.end
-        }) else {
+        guard let containing = segments.first(where: { contains($0, time: midpoint) }) else {
             return Attribution(canonicalSpeaker: Self.unknownSpeakerID, straddled: false)
         }
 
-        let startSegment = segments.first { $0.start <= wordStart && wordStart < $0.end }
-        let endSegment = segments.first { $0.start <= wordEnd && wordEnd < $0.end }
+        let startSegment = segments.first { contains($0, time: wordStart) }
+        let endSegment = segments.first { contains($0, time: wordEnd) }
         let straddled: Bool
         if let s = startSegment, let e = endSegment {
             straddled = s.speaker != e.speaker
@@ -167,6 +179,41 @@ struct WordSpeakerAligner {
         }
 
         return Attribution(canonicalSpeaker: containing.speaker, straddled: straddled)
+    }
+
+    /// Largest-total-overlap attribution. Used for `segment.words.isEmpty`
+    /// fallback where a single token covers the whole `TranscriptSegment`
+    /// and may span multiple diarization speakers — possibly via several
+    /// non-contiguous segments per speaker. Aggregates overlap *per
+    /// speaker* before picking the winner, so a speaker spread across
+    /// two short segments outranks a speaker with one merely-larger
+    /// single segment. Reports `straddled = true` whenever any other
+    /// speaker also had non-zero overlap with the span.
+    private func attributeByOverlap(
+        wordStart: TimeInterval,
+        wordEnd: TimeInterval,
+        segments: [SpeakerSegment]
+    ) -> Attribution {
+        var totals: [String: TimeInterval] = [:]
+        for segment in segments {
+            let overlap = max(0, min(wordEnd, segment.end) - max(wordStart, segment.start))
+            guard overlap > 0 else { continue }
+            totals[segment.speaker, default: 0] += overlap
+        }
+        guard let winner = totals.max(by: { $0.value < $1.value }) else {
+            return Attribution(canonicalSpeaker: Self.unknownSpeakerID, straddled: false)
+        }
+        let straddled = totals.count > 1
+        return Attribution(canonicalSpeaker: winner.key, straddled: straddled)
+    }
+
+    /// Half-open containment with a ±`boundaryEpsilon` window on both
+    /// sides — `segment.start - ε <= time < segment.end + ε`. Used at
+    /// every word-vs-segment boundary check.
+    private func contains(_ segment: SpeakerSegment, time: TimeInterval) -> Bool {
+        let lower = segment.start - Self.boundaryEpsilon
+        let upper = segment.end + Self.boundaryEpsilon
+        return time >= lower && time < upper
     }
 
     private func firstAppearanceOrder(of segments: [SpeakerSegment]) -> [String] {

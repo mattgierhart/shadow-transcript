@@ -195,4 +195,85 @@ final class TranscriptFormatterTests: XCTestCase {
         let decoded = try JSONDecoder().decode(FormattedTranscript.self, from: data)
         XCTAssertEqual(decoded, original)
     }
+
+    // MARK: - Codex Gate P1 #4: long pause splits same-speaker turn
+
+    /// Same-speaker tokens separated by silence longer than
+    /// `turnSplitGapSeconds` (default 2.0s) must produce two distinct
+    /// turns, not one. Before this fix, `groupIntoTurns` collapsed both
+    /// tokens into one `TranscriptTurn` whose `endSeconds - startSeconds`
+    /// covered non-speech time — downstream DBT-003 rows would report a
+    /// segment longer than its actual speech content.
+    func test_format_sameSpeakerLongPause_splitsIntoSeparateTurns() throws {
+        let transcript = Transcript(
+            segments: [
+                TranscriptSegment(
+                    text: "hello pause world",
+                    start: 0.0, end: 6.0,
+                    words: [
+                        WordTimestamp(word: "hello", start: 0.0, end: 0.5),
+                        // 5s of silence — well above the 2s default.
+                        WordTimestamp(word: "world", start: 5.5, end: 6.0),
+                    ]
+                )
+            ],
+            language: "en",
+            duration: 6.0,
+            model: .baseEN
+        )
+        let diarization = DiarizationResult(
+            version: DiarizationResult.supportedSchemaVersion,
+            audio: AudioInfo(path: "/tmp/pause.wav", durationSeconds: 6.0),
+            model: ModelInfo(name: "pyannote/speaker-diarization-community-1", revision: "test"),
+            speakers: [Speaker(id: "SPEAKER_00", totalSeconds: 1.0)],
+            segments: [SpeakerSegment(speaker: "SPEAKER_00", start: 0.0, end: 6.0)],
+            overlappingSegments: [],
+            elapsedSeconds: 0.01,
+            warnings: []
+        )
+
+        let result = try formatter.format(transcription: transcript, diarization: diarization)
+
+        XCTAssertEqual(result.turns.count, 2, "long pause must split same-speaker into two turns")
+        XCTAssertEqual(result.turns[0].text, "hello")
+        XCTAssertEqual(result.turns[1].text, "world")
+        XCTAssertLessThanOrEqual(
+            result.turns[0].endSeconds - result.turns[0].startSeconds, 1.0,
+            "first turn must not absorb the silence before the second word"
+        )
+    }
+
+    func test_format_sameSpeakerSmallGap_staysInOneTurn() throws {
+        let transcript = Transcript(
+            segments: [
+                TranscriptSegment(
+                    text: "hello world",
+                    start: 0.0, end: 2.0,
+                    words: [
+                        WordTimestamp(word: "hello", start: 0.0, end: 0.5),
+                        // 1s gap — below the 2s default.
+                        WordTimestamp(word: "world", start: 1.5, end: 2.0),
+                    ]
+                )
+            ],
+            language: "en",
+            duration: 2.0,
+            model: .baseEN
+        )
+        let diarization = DiarizationResult(
+            version: DiarizationResult.supportedSchemaVersion,
+            audio: AudioInfo(path: "/tmp/short.wav", durationSeconds: 2.0),
+            model: ModelInfo(name: "pyannote/speaker-diarization-community-1", revision: "test"),
+            speakers: [Speaker(id: "SPEAKER_00", totalSeconds: 1.0)],
+            segments: [SpeakerSegment(speaker: "SPEAKER_00", start: 0.0, end: 2.0)],
+            overlappingSegments: [],
+            elapsedSeconds: 0.01,
+            warnings: []
+        )
+
+        let result = try formatter.format(transcription: transcript, diarization: diarization)
+
+        XCTAssertEqual(result.turns.count, 1, "short same-speaker gap should not split")
+        XCTAssertEqual(result.turns[0].text, "hello world")
+    }
 }

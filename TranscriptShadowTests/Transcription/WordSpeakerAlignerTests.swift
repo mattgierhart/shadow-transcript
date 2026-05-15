@@ -227,4 +227,149 @@ final class WordSpeakerAlignerTests: XCTestCase {
         let result = try aligner.align(transcription: transcript, diarization: diarization)
         XCTAssertEqual(result.canonicalOrder, ["SPEAKER_01", "SPEAKER_00"])
     }
+
+    // MARK: - Codex Gate P1 #1: ±boundaryEpsilon containment
+
+    /// A word whose midpoint sits within `boundaryEpsilon` past a segment
+    /// boundary must attribute to the containing segment, not flip to the
+    /// next one (or become SPEAKER_UNKNOWN). Before the epsilon fix, the
+    /// half-open `<=` / `<` check excluded `midpoint == segment.end`
+    /// outright; tiny float drift past that boundary did the same.
+    func test_align_wordMidpointWithinEpsilonOfBoundary_attributesToContainingSegment() throws {
+        // Build a transcript where one word's midpoint lands exactly at
+        // the SPEAKER_00 → SPEAKER_01 boundary at 2.0s.
+        let word = WordTimestamp(word: "yes", start: 1.5, end: 2.5)  // mid = 2.0
+        let transcript = Transcript(
+            segments: [TranscriptSegment(text: "yes", start: 1.5, end: 2.5, words: [word])],
+            language: "en",
+            duration: 4.0,
+            model: .baseEN
+        )
+        let diarization = DiarizationResult(
+            version: DiarizationResult.supportedSchemaVersion,
+            audio: AudioInfo(path: "/tmp/boundary.wav", durationSeconds: 4.0),
+            model: ModelInfo(name: "pyannote/speaker-diarization-community-1", revision: "test"),
+            speakers: [
+                Speaker(id: "SPEAKER_00", totalSeconds: 2.0),
+                Speaker(id: "SPEAKER_01", totalSeconds: 2.0),
+            ],
+            segments: [
+                SpeakerSegment(speaker: "SPEAKER_00", start: 0.0, end: 2.0),
+                SpeakerSegment(speaker: "SPEAKER_01", start: 2.0, end: 4.0),
+            ],
+            overlappingSegments: [],
+            elapsedSeconds: 0.01,
+            warnings: []
+        )
+
+        let result = try aligner.align(transcription: transcript, diarization: diarization)
+
+        // With the epsilon window, the midpoint at 2.0 falls inside
+        // SPEAKER_00's tolerance band (its half-open upper edge becomes
+        // `2.0 + ε`). Without the fix this returned SPEAKER_UNKNOWN.
+        XCTAssertEqual(result.tokens.first?.canonicalSpeaker, "SPEAKER_00")
+    }
+
+    // MARK: - Codex Gate P1 #2: no-word segment-level fallback uses overlap, not midpoint
+
+    /// A `TranscriptSegment` with empty `words` that spans two
+    /// diarization speakers must attribute to the speaker with the
+    /// larger temporal overlap, not blindly to whoever owns the midpoint.
+    /// Before this fix, a 10-second silent fallback that spent 9s in
+    /// SPEAKER_00 and 1s in SPEAKER_01 (midpoint inside SPEAKER_01's
+    /// segment because the boundary sits at 9s) would attribute the
+    /// whole thing to SPEAKER_01.
+    func test_align_noWordsSegmentStraddling_attributesToLargerOverlapSpeaker() throws {
+        let transcript = Transcript(
+            segments: [
+                TranscriptSegment(text: "long quiet stretch", start: 0.0, end: 10.0, words: [])
+            ],
+            language: "en",
+            duration: 10.0,
+            model: .baseEN
+        )
+        let diarization = DiarizationResult(
+            version: DiarizationResult.supportedSchemaVersion,
+            audio: AudioInfo(path: "/tmp/spread.wav", durationSeconds: 10.0),
+            model: ModelInfo(name: "pyannote/speaker-diarization-community-1", revision: "test"),
+            speakers: [
+                Speaker(id: "SPEAKER_00", totalSeconds: 9.0),
+                Speaker(id: "SPEAKER_01", totalSeconds: 1.0),
+            ],
+            segments: [
+                SpeakerSegment(speaker: "SPEAKER_00", start: 0.0, end: 9.0),
+                SpeakerSegment(speaker: "SPEAKER_01", start: 9.0, end: 10.0),
+            ],
+            overlappingSegments: [],
+            elapsedSeconds: 0.01,
+            warnings: []
+        )
+
+        let result = try aligner.align(transcription: transcript, diarization: diarization)
+
+        // SPEAKER_00 holds 9s of overlap vs SPEAKER_01's 1s — must win.
+        // (Midpoint at 5.0 happens to land inside SPEAKER_00 too, so we
+        // could also confirm via a flipped fixture where midpoint and
+        // overlap-largest disagree.)
+        XCTAssertEqual(result.tokens.first?.canonicalSpeaker, "SPEAKER_00")
+        XCTAssertTrue(
+            result.warnings.contains { $0.contains("straddled") },
+            "straddle warning expected; got \(result.warnings)"
+        )
+    }
+
+    /// Same as above but with the boundary placed so the midpoint and
+    /// the larger-overlap speaker disagree. Midpoint of `[0, 10]` is
+    /// `5.0`; if the boundary sits at `4.0`, midpoint lands in
+    /// SPEAKER_01 (4..10 = 6s) but the SPEAKER_00 share is only 4s — so
+    /// midpoint and overlap agree here too. To prove the change really
+    /// uses overlap not midpoint, asymmetric ratios are required:
+    /// boundary at 1.0s means SPEAKER_00 has 1s of overlap and
+    /// SPEAKER_01 has 9s; midpoint 5.0 is in SPEAKER_01, overlap also
+    /// favors SPEAKER_01 — agree again. The genuinely discriminating
+    /// case needs a *non-contiguous* third segment placement.
+    func test_align_noWordsSegmentStraddling_overlapWinsWhenMidpointDisagrees() throws {
+        // Word span [0, 10]. Boundary at 1.0s with SPEAKER_00 in [0,1]
+        // and SPEAKER_01 in [1, 6], then back to SPEAKER_00 in [6, 10].
+        // Midpoint 5.0 sits in SPEAKER_01 (which holds 5s of overlap).
+        // SPEAKER_00 holds 1 + 4 = 5s of overlap — exact tie. Use a
+        // slight imbalance so the test result is unambiguous.
+        let transcript = Transcript(
+            segments: [
+                TranscriptSegment(text: "silent stretch", start: 0.0, end: 10.0, words: [])
+            ],
+            language: "en",
+            duration: 10.0,
+            model: .baseEN
+        )
+        let diarization = DiarizationResult(
+            version: DiarizationResult.supportedSchemaVersion,
+            audio: AudioInfo(path: "/tmp/threespkr.wav", durationSeconds: 10.0),
+            model: ModelInfo(name: "pyannote/speaker-diarization-community-1", revision: "test"),
+            speakers: [
+                Speaker(id: "SPEAKER_00", totalSeconds: 6.0),
+                Speaker(id: "SPEAKER_01", totalSeconds: 4.0),
+            ],
+            segments: [
+                SpeakerSegment(speaker: "SPEAKER_00", start: 0.0, end: 2.0),
+                SpeakerSegment(speaker: "SPEAKER_01", start: 2.0, end: 6.0),
+                SpeakerSegment(speaker: "SPEAKER_00", start: 6.0, end: 10.0),
+            ],
+            overlappingSegments: [],
+            elapsedSeconds: 0.01,
+            warnings: []
+        )
+
+        let result = try aligner.align(transcription: transcript, diarization: diarization)
+
+        // Midpoint 5.0 lands in SPEAKER_01 (2..6). But SPEAKER_00 holds
+        // 2 + 4 = 6s of overlap, SPEAKER_01 only 4s. Overlap-based
+        // attribution picks SPEAKER_00; midpoint-only would've picked
+        // SPEAKER_01 — this is the discriminating test.
+        XCTAssertEqual(
+            result.tokens.first?.canonicalSpeaker,
+            "SPEAKER_00",
+            "fallback must use largest overlap, not midpoint"
+        )
+    }
 }

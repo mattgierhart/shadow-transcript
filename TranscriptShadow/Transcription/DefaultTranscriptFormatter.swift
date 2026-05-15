@@ -18,7 +18,17 @@ public struct DefaultTranscriptFormatter: TranscriptFormatter, Sendable {
     /// to something else via `speakerNames`.
     static let unknownDisplayName = "Speaker ?"
 
-    public init() {}
+    /// Maximum silence (seconds) between two consecutive same-speaker
+    /// tokens before turn grouping treats them as separate turns. Without
+    /// this split, a 5-minute monologue interrupted by long pauses would
+    /// persist as one DBT-003 segment whose
+    /// `endSeconds - startSeconds` covers non-speech time and breaks
+    /// downstream UI scrubbing (Codex Gate P1 #4, 2026-05-15).
+    public let turnSplitGapSeconds: TimeInterval
+
+    public init(turnSplitGapSeconds: TimeInterval = 2.0) {
+        self.turnSplitGapSeconds = turnSplitGapSeconds
+    }
 
     public func format(
         transcription: Transcript,
@@ -92,7 +102,9 @@ public struct DefaultTranscriptFormatter: TranscriptFormatter, Sendable {
         var currentWords: [String] = [tokens[0].text]
 
         for token in tokens.dropFirst() {
-            if token.canonicalSpeaker == currentSpeaker {
+            let gap = token.start - currentEnd
+            let sameSpeaker = token.canonicalSpeaker == currentSpeaker
+            if sameSpeaker && gap <= turnSplitGapSeconds {
                 currentWords.append(token.text)
                 currentEnd = token.end
             } else {
