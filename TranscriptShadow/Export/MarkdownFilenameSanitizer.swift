@@ -49,12 +49,24 @@ public enum MarkdownFilenameSanitizer {
     }
 
     /// `YYYY-MM-DD Title.md` per INT-001.
-    public static func makeFilename(date: Date, title: String, calendar: Calendar = .init(identifier: .gregorian)) -> String {
+    ///
+    /// The date is rendered in UTC (default) so the filename matches the
+    /// frontmatter `date:` field that `ObsidianExporter.renderFrontmatter`
+    /// also emits in UTC. Using the calendar's local timezone here meant
+    /// a UTC-midnight `Date` rendered as the *previous* day on machines
+    /// west of UTC (e.g. Mountain Time), producing a filename/frontmatter
+    /// mismatch and a failing `test_export_writesMarkdownFile_atDateTitlePath`.
+    public static func makeFilename(
+        date: Date,
+        title: String,
+        calendar: Calendar = .init(identifier: .gregorian),
+        timeZone: TimeZone = TimeZone(secondsFromGMT: 0)!
+    ) -> String {
         let formatter = DateFormatter()
         formatter.calendar = calendar
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = calendar.timeZone
+        formatter.timeZone = timeZone
         let datePart = formatter.string(from: date)
         let titlePart = sanitize(title)
         return "\(datePart) \(titlePart).md"
