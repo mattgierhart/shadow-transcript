@@ -198,7 +198,7 @@ Default content area when no recording is active and no transcript is selected. 
 
 ---
 
-## SCR-002: Recording View
+## SCR-002: Recording HUD
 
 **ID**: SCR-002
 **Type**: Page (content area state)

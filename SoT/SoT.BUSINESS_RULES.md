@@ -37,6 +37,10 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 - [BR-401](#br-401-apple-silicon-required) - Apple Silicon required
 - [BR-402](#br-402-maximum-meeting-duration) - Maximum meeting duration
 
+**UX & Interaction** (BR-501 to BR-599):
+
+- [BR-501](#br-501-minimal-recording-ui) - Minimal recording UI
+
 ---
 
 ## BR-101: Local-Only Processing
@@ -304,6 +308,46 @@ The MVP supports meetings up to 2 hours in duration. Longer recordings MAY work 
 
 ---
 
+## BR-501: Minimal Recording UI
+
+**ID**: BR-501
+**Category**: UX & Interaction
+**Status**: Active
+**Severity**: High
+**Created**: 2026-04-24
+**Last Updated**: 2026-04-24
+
+### Rule Statement
+
+While a recording is active, the app's main window MUST be hidden. The only app-owned UI visible to the user during recording is the Recording HUD (SCR-002), realized as either the Notch HUD (DES-201) on notch-equipped MacBook Pros or the Menu Bar Extra (DES-202) on all other Macs. The Recording HUD MUST expose exactly one user-facing action: **Stop**. No timer, audio level, waveform, pause/resume, source toggles, settings, or navigation shall be shown on the recording surface itself; any such controls require the user to explicitly open the main window.
+
+### Rationale
+
+- **Business Driver**: The app's job during a meeting is to stay out of the way. The user's focus belongs on the meeting app (Zoom, Meet, Teams, etc.), not on the recorder. A single, unambiguous Stop action eliminates the risk of accidental misconfiguration mid-meeting.
+- **User Impact**: No window clutter; recording is ambient; the user can't hit the wrong button under pressure.
+
+### Enforcement
+
+**Location**: Window manager / recording state machine in the Swift app.
+**Timing**: Transition into recording state (main window → hidden; HUD → appearing); transition out (HUD → dismissing; main window → SCR-003).
+
+### Scope & Exceptions
+
+- **Permission dialogs** (macOS mic / Screen Recording): owned by the OS and may appear; these are not app UI.
+- **System notifications** (e.g., approaching BR-402 duration cap): allowed via `UNUserNotificationCenter` — they are ambient banners, not app windows.
+- **Error recovery** (permission revoked mid-session): the HUD may briefly surface an error state, then the main window is restored to handle recovery.
+- **User-initiated open**: clicking the app icon / expanding the notch is an explicit action; the main window may appear while recording continues. This is user choice, not automatic.
+
+### Related IDs
+
+- [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - enforces during
+- [SCR-002](SoT.USER_JOURNEYS.md#scr-002-recording-hud) - the single permitted recording surface
+- [DES-201](SoT.DESIGN_COMPONENTS.md#des-201-recording-hud-notch) - notch realization
+- [DES-202](SoT.DESIGN_COMPONENTS.md#des-202-recording-hud-menu-bar-extra) - menu bar realization
+- [RISK-007 in PRD](../PRD.md) - hardware fragmentation risk tied to this rule
+
+---
+
 ## Deprecated Rules
 
 _No deprecated rules._
@@ -318,11 +362,12 @@ _No deprecated rules._
 - Platform & Scope: BR-201, BR-202, BR-203
 - Output & Format: BR-301, BR-302
 - Performance & Limits: BR-401, BR-402
+- UX & Interaction: BR-501
 
 **Rules by Severity**:
 
 - Critical: BR-101, BR-102, BR-103
-- High: BR-201, BR-301, BR-302, BR-401
+- High: BR-201, BR-301, BR-302, BR-401, BR-501
 - Medium: BR-202, BR-203, BR-402
 
 ---

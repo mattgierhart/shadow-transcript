@@ -37,6 +37,11 @@ authority: This is a SoT file - IDs here are referenced by SoT.USER_JOURNEYS.md,
 - [DES-202](#des-202-navigation-pattern) - Navigation Pattern
 - [DES-203](#des-203-density-modes) - Density Modes
 
+**Ambient / HUD Surfaces** (DES-201 to DES-299):
+
+- [DES-201](#des-201-recording-hud-notch) - Recording HUD — Notch
+- [DES-202](#des-202-recording-hud-menu-bar-extra) - Recording HUD — Menu Bar Extra
+
 **Design Tokens** (DES-301 to DES-399):
 
 - [DES-301](#des-301-color-palette) - Color Palette
@@ -86,7 +91,7 @@ Primary action button for starting/stopping audio recording. The only red elemen
 
 **ID**: DES-002
 **Category**: Core
-**Status**: Planned
+**Status**: Planned (deferred to post-MVP)
 **Platform**: macOS
 **Created**: 2026-03-11
 **Last Updated**: 2026-03-20

@@ -1,5 +1,5 @@
 ---
-version: 2.0
+version: 2.1
 purpose: Progressive Product Requirements Document aligned to the PRD Led Context Engineering lifecycle.
 last_updated: 2026-05-08
 template_version: "3.0.0"
@@ -186,21 +186,21 @@ Privacy-conscious macOS users who use Obsidian as their knowledge base need a lo
 
 | ID | Persona | Trigger | Key Steps | Pain Points | Moments of Value |
 |----|---------|---------|-----------|-------------|------------------|
-| UJ-001 | PER-001, PER-002 | Meeting starting | Open → Select source → Record → Stop → Process → View | Waiting during processing; permission prompts | Seeing speaker-labeled transcript appear |
-| UJ-002 | PER-001 | Transcript ready | View → Rename speakers → Export to Obsidian | Speaker names are auto-generated | Transcript in Obsidian vault, searchable |
+| UJ-001 | PER-001, PER-002 | Meeting starting | Open → Select source → Record (main window hides, HUD appears) → meeting continues with only HUD visible → Stop (from HUD) → Process → View | Waiting during processing; permission prompts; HUD realization depends on hardware (notch vs menu bar) | App is invisible during the meeting; Stop is one click away; seeing speaker-labeled transcript appear |
+| UJ-002 | PER-001 | Transcript ready | View → Click speaker chip → inline rename (propagates across all segments) → Export to Obsidian | Auto-labels like "Speaker 1" need to be named; turn-boundary words may be misattributed (RISK-005) | Transcript in Obsidian vault with real names, searchable |
 | UJ-003 | PER-001 | First launch / change needed | Open settings → Configure audio + vault + model | Initial setup friction | "Set and forget" configuration |
 
 **Journey Narratives**
 
 - **UJ-001 – Record and Transcribe Meeting**
-  - Step Flow: SCR-001 → SCR-002 → SCR-003 → SCR-004
-  - Dependencies: BR-101, BR-102, BR-103, BR-402, TECH-002, TECH-003, TECH-004, TECH-006
-  - Opportunity Notes: Processing view (SCR-003) is critical for user confidence — must show clear progress
+  - Step Flow: SCR-001 → (main window hides) → SCR-002 Recording HUD → (Stop; main window restores) → SCR-003 → SCR-004
+  - Dependencies: BR-101, BR-102, BR-103, BR-402, BR-501, TECH-002, TECH-003, TECH-004, TECH-006, DES-201, DES-202
+  - Opportunity Notes: During the meeting the app must be invisible except for the HUD (BR-501). HUD realization is hardware-chosen (DES-201 notch vs DES-202 menu bar extra) — design both surfaces as peers, not the menu bar as a degraded version. Processing view (SCR-003) is critical for user confidence — must show clear progress.
 
 - **UJ-002 – Review and Export Transcript**
-  - Step Flow: SCR-004 → (rename speakers) → Export → Obsidian
-  - Dependencies: BR-301, BR-302, INT-001
-  - Opportunity Notes: Speaker rename must propagate through entire transcript. Obsidian export should show confirmation with file path.
+  - Step Flow: SCR-004 → (click speaker chip → inline rename; propagates across every segment) → Export → Obsidian
+  - Dependencies: BR-301, BR-302, INT-001, DES-101, DES-003, DES-301, DBT-002, API-201, API-202
+  - Opportunity Notes: This is the product's most important interaction per user priority. Speaker rename propagates through entire transcript in a single update via `API-201`'s `speakerNames` override map and `DBT-002.display_name`. Chip states (Display / Hover / Editing) are fully specified in DES-101. Export uses current display names; auto-keys never leak into the markdown. Obsidian export should show confirmation with file path + "Reveal" / "Open in Obsidian" actions.
 
 - **UJ-003 – Configure App Settings**
   - Step Flow: SCR-005 (settings panel)
@@ -211,10 +211,10 @@ Privacy-conscious macOS users who use Obsidian as their knowledge base need a lo
 
 | ID | Screen | Purpose | Key Components |
 |----|--------|---------|----------------|
-| SCR-001 | Main Window | Entry point, recording controls | DES-001 (Record Button) |
-| SCR-002 | Recording View | Active recording state | DES-001, DES-002 (Audio Level) |
-| SCR-003 | Processing View | Transcription/diarization progress | DES-102 (Progress Pipeline) |
-| SCR-004 | Transcript View | Review and export transcript | DES-003 (Transcript Block), DES-101 (Speaker Label) |
+| SCR-001 | Main Window | Entry point (pre-record) + post-record review host. Hidden during recording (BR-501). | DES-001 (Record Button) |
+| SCR-002 | Recording HUD | Single permitted recording surface. Notch HUD on notch-equipped MBPs, Menu Bar Extra elsewhere. Only action: Stop. | DES-201 (Notch HUD), DES-202 (Menu Bar Extra) |
+| SCR-003 | Processing View | Transcription/diarization progress, rendered in the restored main window after Stop. | DES-102 (Progress Pipeline) |
+| SCR-004 | Transcript View | Review, rename speakers (inline on DES-101 chip — propagates across every segment), export transcript. | DES-003 (Transcript Block), DES-101 (Speaker Label), DES-301 (speaker palette) |
 | SCR-005 | Settings View | App configuration | Standard form controls |
 | SCR-006 | Transcript History | Browse past transcripts | List view with search |
 
@@ -249,6 +249,7 @@ Privacy-conscious macOS users who use Obsidian as their knowledge base need a lo
 | RISK-004 | User | Users may not grant Screen Recording permission (required for system audio capture) | H (3) | M (2) | 6 | mitigating | 3.0 | Clear onboarding explaining why permission is needed. Allow mic-only mode as fallback. | INT-202, UJ-003 |
 | RISK-005 | Technical | Transcript-diarization alignment may produce misattributed speaker segments | M (2) | M (2) | 4 | mitigating | 2.0 | EPIC-05 ships midpoint-greedy alignment (`WordSpeakerAligner`) against `DiarizationResult.segments` (exclusive view): for each word, midpoint = `(start + end) / 2`; find the segment where `start <= mid < end`. Boundary straddles attribute by midpoint and emit a `straddled boundaries` warning. Silence-gap words attribute to `SPEAKER_UNKNOWN` and surface a warning. Empty `words` arrays fall back to segment-level midpoint; zero diarization segments synthesize a single-speaker turn with a warning. 1-indexed display names follow first-appearance order. Empirical boundary-attribution accuracy is asserted by `WordSpeakerAlignerTests` against the golden 3-speaker + straddle fixtures (cross-language paired with `sidecar/test_fixtures/golden-3spk.json`). SCR-004 manual correction (FEA-004's rename loop) remains the final backstop; ships in EPIC-07. | API-201, FEA-003 |
 | RISK-006 | User | App crashes during recording could lose audio before processing | H (3) | L (1) | 3 | mitigating | 1.5 | Write audio to temp file continuously during recording (not buffered). Implement crash recovery that detects orphaned temp audio on next launch. | ARC-003, BR-103 |
+| RISK-007 | UX/Technical | Minimal recording UI depends on notch hardware (DES-201); non-notch Macs get menu-bar fallback (DES-202). Risk: parity drift between surfaces, or the notch HUD failing on fullscreen meeting apps (e.g., Zoom fullscreen covering the notch area). | M (2) | M (2) | 4 | mitigating | 2.0 | Design both surfaces as peers, not as primary/degraded. Verify NSPanel `.statusBar + 1` window level survives common fullscreen meeting apps during implementation spike. If notch HUD can't stay above fullscreen windows, promote menu-bar extra to primary. | BR-501, SCR-002, DES-201, DES-202 |
 
 <!-- Risk Scoring Quick Reference:
   Impact: High=3, Medium=2, Low=1 | Likelihood: High=3, Medium=2, Low=1
