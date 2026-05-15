@@ -1,0 +1,174 @@
+# XcodeGen spec — Transcript Shadow
+# @implements TECH-001, TECH-002, TECH-007, ENV-001
+# Regenerate the .xcodeproj with: `xcodegen generate`
+
+name: TranscriptShadow
+
+options:
+  bundleIdPrefix: ai.gearheart
+  developmentLanguage: en
+  deploymentTarget:
+    macOS: "15.0"
+  xcodeVersion: "16.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
+    ARCHS: arm64
+    ONLY_ACTIVE_ARCH: YES
+    EXCLUDED_ARCHS[sdk=macosx*]: x86_64
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_STYLE: Automatic
+    DEAD_CODE_STRIPPING: YES
+    GCC_TREAT_WARNINGS_AS_ERRORS: NO
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+packages:
+  WhisperKit:
+    url: https://github.com/argmaxinc/WhisperKit
+    from: 0.16.0
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    from: 6.29.0
+
+targets:
+  TranscriptShadow:
+    type: application
+    platform: macOS
+    sources:
+      - path: TranscriptShadow
+        excludes:
+          - "Info.plist"
+          - "TranscriptShadow.entitlements"
+          - "TranscriptShadow.Debug.entitlements"
+          - "Diarization/diarize.entitlements"
+    info:
+      path: TranscriptShadow/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: $(DEVELOPMENT_LANGUAGE)
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundleDisplayName: Transcript Shadow
+        CFBundlePackageType: APPL
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSMinimumSystemVersion: "15.0"
+        NSHumanReadableCopyright: "Copyright © 2026 Matt Gierhart. All rights reserved."
+        NSMicrophoneUsageDescription: "Transcript Shadow records meeting audio from your microphone to produce private, on-device transcripts."
+        NSScreenCaptureUsageDescription: "Transcript Shadow uses ScreenCaptureKit to capture system audio (other meeting participants) so it can transcribe them alongside your microphone."
+        NSPrincipalClass: NSApplication
+    dependencies:
+      - package: WhisperKit
+      - package: GRDB
+        product: GRDB
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.gearheart.TranscriptShadow
+        PRODUCT_NAME: TranscriptShadow
+      configs:
+        Debug:
+          # Debug runs unsandboxed so the integration test suite can exec
+          # the fake `diarize` shell scripts it generates. Release uses
+          # the locked-down production entitlements with the +5 EPIC-04b
+          # additions (cs.disable-library-validation, cs.allow-unsigned-
+          # executable-memory, cs.allow-jit, files.user-selected.read-only,
+          # files.bookmarks.app-scope).
+          CODE_SIGN_ENTITLEMENTS: TranscriptShadow/TranscriptShadow.Debug.entitlements
+        Release:
+          CODE_SIGN_ENTITLEMENTS: TranscriptShadow/TranscriptShadow.entitlements
+    postBuildScripts:
+      - name: Embed + sign diarize sidecar
+        script: |
+          # @implements ARC-002, INT-102, EPIC-04b CW3
+          #
+          # Copies the EPIC-04a PyInstaller --onedir bundle into
+          # Resources/diarize/ and bottom-up codesigns the tree per
+          # EPIC-04b Phase B matrix.
+          #
+          # Skipped silently if sidecar/dist/diarize/ does not exist
+          # (Debug + dev builds where pyinstaller has not been run).
+          # Release builds where the bundle is missing fail loudly.
+          set -euo pipefail
+
+          DIARIZE_SOURCE="${SRCROOT}/sidecar/dist/diarize"
+          DIARIZE_DEST="${BUILT_PRODUCTS_DIR}/${WRAPPER_NAME}/Contents/Resources/diarize"
+          ENTITLEMENTS="${SRCROOT}/TranscriptShadow/Diarization/diarize.entitlements"
+
+          if [ ! -d "$DIARIZE_SOURCE" ]; then
+            if [ "$CONFIGURATION" = "Release" ]; then
+              echo "error: $DIARIZE_SOURCE missing — run 'cd sidecar && pyinstaller diarize.spec' before Release archive"
+              exit 1
+            fi
+            echo "note: $DIARIZE_SOURCE missing; skipping sidecar embed (Debug)"
+            exit 0
+          fi
+
+          mkdir -p "$DIARIZE_DEST"
+          rsync -a --delete "${DIARIZE_SOURCE}/" "${DIARIZE_DEST}/"
+
+          IDENTITY="${EXPANDED_CODE_SIGN_IDENTITY:--}"
+          # Debug ad-hoc signing is offline; Release uses a developer ID.
+          if [ "$CONFIGURATION" = "Debug" ]; then
+            TIMESTAMP_FLAG="--timestamp=none"
+          else
+            TIMESTAMP_FLAG="--timestamp"
+          fi
+
+          # 1. Bottom-up: every .dylib / .so first. Use `find -print | xargs`
+          #    instead of bash process substitution since Xcode build
+          #    phases run /bin/sh which lacks `< <(...)` (Codex Gate 2
+          #    P0, 2026-05-09).
+          find "$DIARIZE_DEST" -type f \( -name "*.dylib" -o -name "*.so" \) -print0 \
+            | xargs -0 -I {} codesign --force --options=runtime $TIMESTAMP_FLAG -s "$IDENTITY" {}
+
+          # 2. Sign the inner diarize binary with child entitlements (ONLY
+          #    app-sandbox + inherit; never get-task-allow — that crashes
+          #    _libsecinit_appsandbox).
+          codesign --force --options=runtime $TIMESTAMP_FLAG -s "$IDENTITY" \
+            --entitlements "$ENTITLEMENTS" \
+            "${DIARIZE_DEST}/diarize"
+
+          # 3. Verify the entire embedded tree, not just the entry binary.
+          #    --deep on `verify` is OK and recommended; only sign-time
+          #    --deep is deprecated since macOS 13 (Codex Gate 2 P1).
+          codesign --verify --deep --strict --verbose=2 "${DIARIZE_DEST}/diarize"
+        inputFiles:
+          - $(SRCROOT)/sidecar/dist/diarize/diarize
+          - $(SRCROOT)/TranscriptShadow/Diarization/diarize.entitlements
+        runOnlyWhenInstalling: false
+
+  TranscriptShadowTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: TranscriptShadowTests
+    dependencies:
+      - target: TranscriptShadow
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.gearheart.TranscriptShadowTests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/TranscriptShadow.app/Contents/MacOS/TranscriptShadow
+        BUNDLE_LOADER: $(TEST_HOST)
+
+schemes:
+  TranscriptShadow:
+    build:
+      targets:
+        TranscriptShadow: all
+        TranscriptShadowTests: [test]
+    test:
+      targets:
+        - TranscriptShadowTests
+      gatherCoverageData: true
+    run:
+      config: Debug
+    archive:
+      config: Release

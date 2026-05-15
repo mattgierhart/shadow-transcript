@@ -1,7 +1,7 @@
 ---
 version: 2.1
 purpose: Progressive Product Requirements Document aligned to the PRD Led Context Engineering lifecycle.
-last_updated: 2026-04-24
+last_updated: 2026-05-08
 template_version: "3.0.0"
 ---
 
@@ -21,13 +21,13 @@ template_version: "3.0.0"
 
 | Field                      | Value                              |
 | -------------------------- | ---------------------------------- |
-| **Current Lifecycle Gate** | v0.6                               |
-| **Last Updated**           | 2026-04-24                         |
+| **Current Lifecycle Gate** | v0.7                               |
+| **Last Updated**           | 2026-05-08                         |
 | **Last Editor**            | Claude Agent                       |
-| **Status**                 | Discovery                          |
-| **Next Target Gate**       | v0.7                               |
-| **Related EPIC**           | None (pre-v0.7)                    |
-| **SoT Snapshot**           | CFD-001→004, CFD-101→103, BR-101→103, BR-201→203, BR-301→302, BR-401→402, BR-501, PER-001→002, UJ-001→003, SCR-001→006, DES-001→003, DES-101→102, DES-201→202, DES-301, TECH-001→007, ARC-001→003, INT-001, INT-101, INT-201→202, API-001→002, API-101→102, API-201→202, API-301, DBT-001→003, DBT-101 |
+| **Status**                 | Build Execution                    |
+| **Next Target Gate**       | v0.8                               |
+| **Related EPIC**           | EPIC-01 through EPIC-08            |
+| **SoT Snapshot**           | CFD-001→004, CFD-101→103, BR-101→103, BR-201→203, BR-301→302, BR-401→402, PER-001→002, UJ-001→003, SCR-001→006, DES-001→005, DES-101→104, DES-201→203, DES-301→305, TECH-001→007, ARC-001→003, INT-001, INT-101, INT-201→202, API-001→002, API-101→102, API-201→202, API-301, DBT-001→003, DBT-101, TEST-001→005, TEST-101→104, TEST-201→204, TEST-301→303, TEST-401→405, TEST-501→504 |
 
 ## Lifecycle Change Log
 
@@ -37,9 +37,21 @@ template_version: "3.0.0"
 | v0.2 Market Definition | 2026-03-11 | Claude Agent | ICP + segments defined               | BR-201→203          |
 | v0.3 Commercial Model  | 2026-03-11 | Claude Agent | Features + outcomes (pricing skipped) | FEA-001→006, KPI-001→003 |
 | v0.4 User Journeys     | 2026-03-11 | Claude Agent | Personas, journeys, screens mapped   | PER-001→002, UJ-001→003, SCR-001→006, DES-001→003, DES-101→102 |
+| v0.4 Design Interview  | 2026-03-20 | Claude Agent | Visual identity, design tokens, layout principles | DES-004→005, DES-103→104, DES-201→203, DES-301→305 |
+| v0.4 Screen Flow Enrich | 2026-03-20 | Claude Agent | SCR/UJ enriched: navigation, features, actions, density, constraints | SCR-001→006 (v2), UJ-001→003 (v2), PER-001→002 (v2) |
+| v0.4 Visual Prototype  | 2026-03-20 | Claude Agent | Stitch prompts for all 6 screens, money shot identified | temp/visual-prototype-gate.md |
 | v0.5 Red Team Review   | 2026-03-11 | Claude Agent | Risks + tech stack selected          | RISK-001→006, TECH-001→007 |
 | v0.6 Architecture      | 2026-03-11 | Claude Agent | Architecture, APIs, data model       | ARC-001→003, API-001→301, DBT-001→101, INT-001→202 |
-| v0.4/0.5 refinement    | 2026-04-24 | Claude Agent | Minimal recording UI; Notch/Menu-bar HUD as SCR-002; UJ-001 & UJ-002 tightened for design | BR-501, SCR-002 (recast), DES-201, DES-202, RISK-007 |
+| v0.7 Build Execution   | 2026-03-20 | Claude Agent | EPIC backlog, test cases, deployment target resolved | EPIC-01→08, TEST-001→504 |
+| v0.7 EPIC-01 Complete  | 2026-05-06 | Claude Agent | Project scaffold via XcodeGen + WhisperKit + GRDB SPM deps + Python sidecar skeleton + macos-15 CI workflow | EPIC-01, TECH-001/002/006/007, ENV-001 |
+| v0.7 EPIC-02 Complete  | 2026-05-06 | Claude Agent | Audio capture (mic + system + mixer) implemented + Codex review caught 4 follow-on bugs (dual-source mix, actor reentrancy, level stream termination, mic tap leak) all fixed in same session | EPIC-02, API-001, API-002, TEST-001→005 |
+| v0.7 EPIC-02b Complete | 2026-05-07 | Claude Agent | Audio artifact contract hardening: recordingFinalized milestone, atomic writer, unique filenames, broadcast buses, channelCount removal, docstring tightening — all 6 issues from Codex synthesis review fixed before EPIC-03 started | EPIC-02b, API-001, API-002 |
+| v0.7 EPIC-03 Complete  | 2026-05-08 | Claude Agent | Transcription pipeline (TranscriptionService + WhisperKit engine) implemented + Codex review caught 3 follow-on bugs (downloadBase init, AsyncTaskQueue serialization, CancellationError surfacing) all fixed in same session | EPIC-03, API-101, INT-101, TEST-101→104 |
+| v0.7 EPIC-04 Split     | 2026-05-08 | Claude Agent | Original EPIC-04 split into EPIC-04a (Python CLI + PyInstaller) and EPIC-04b (Swift Process bridge). Reason: BROAD-scope hook firing (12 SoT items) + Codex's recommendation that the two risk profiles are categorically different. EPIC-04 file converted to an index pointing at the children. | EPIC-04, EPIC-04a, EPIC-04b |
+| v0.7 EPIC-04a Complete | 2026-05-09 | Claude Agent | Real pyannote.audio 4.x pipeline + frozen JSON envelope (schema 1.0) + PyInstaller `--onedir` spec + 30 pytest cases (TEST-201..204) + golden-3spk.json cross-language fixture. Codex Gate 1 caught 3 bugs (P0 incompatible torch pin, P1 ProgressHook stdout pollution, P1 vacuous progress test) — all resolved before commit. Empirical RTF / bundle-size measurements deferred to Phase A spike on dev machine. | EPIC-04a, API-102, INT-102, TEST-201→204, RISK-001/003 |
+| v0.7 EPIC-04b Complete | 2026-05-09 | Claude Agent | Swift `DiarizationService` bridge (Foundation `Process`, AsyncTaskQueue serialization, withTaskCancellationHandler-based SIGTERM, JSON envelope decode) + production entitlements (+5 EPIC-04b additions) + child diarize.entitlements (`inherit` only) + Run Script Build Phase that copies the EPIC-04a bundle into `Resources/diarize/` and bottom-up codesigns. Deviated from planning's swift-subprocess pick (still pre-1.0); used Foundation Process with FileHandle.bytes.lines instead. Codex Gate 2 caught 10 bugs (2 P0, 6 P1, 2 P2 — including an `AsyncTaskQueue` race that pre-existed since EPIC-03), all resolved before commit. 74 XCTests + 30 pytest = 104 total green. | EPIC-04b, API-102, INT-102, DEP-002, RISK-007, BR-101 |
+| v0.7 EPIC-05 Complete  | 2026-05-12 | Claude Agent | Transcript formatting & alignment (`TranscriptFormatter` + `DefaultTranscriptFormatter` + internal `WordSpeakerAligner`) + `FormattedTranscript`/`TranscriptMetadata` Codable types shaped to DBT-001 columns + 4 in-code fixtures (`make3SpeakerFixture`, `make1SpeakerFixture`, `makeZeroSegmentFixture`, `makeStraddlingWordFixture`) + ~17 new XCTests covering TEST-301/302/303 plus boundary-straddle, silence-gap, empty-words, zero-segments, and invalid-segment edge cases. SoT signature reconciliation: API-201 updated from `transcription: TranscriptionResult` to `transcription: Transcript` (matches EPIC-03's WhisperKit-disambiguation rename) + `speakerNames` optionality dropped (`[String: String] = [:]`). Build verification deferred to CI (`macos-15` runner per `.github/workflows/build.yml`). Codex Gate 3 not yet run in this session — to be invoked post-CI-green. | EPIC-05, API-201, BR-301, FEA-003, FEA-004, RISK-005, TEST-301→303 |
+| v0.7 EPIC-06 Complete  | 2026-05-12 | Claude Agent | Storage + Obsidian export shipped. `AppDatabase` (GRDB `DatabaseQueue` + on-disk/in-memory factories + foreign-keys PRAGMA on every connection) + single v1 migration creating DBT-001..003 + DBT-101 + FTS5 external-content virtual table with INSERT/UPDATE/DELETE sync triggers. Four GRDB `Record` types (`TranscriptRecord`, `SpeakerRecord`, `SegmentRecord`, `AppSettingRecord`) with explicit `CodingKeys` snake_case mapping. `TranscriptStore` (save / fetch / list / search / markExported / delete) populates all three core tables in one transaction from `FormattedTranscript.turns` (which required promoting EPIC-05's `fileprivate Turn` to a public `TranscriptTurn` on `FormattedTranscript` — additive change documented in API-201's Notes vs. Original Sketch). FTS5 search uses Porter stemmer + Unicode61 tokenizer with quoted-phrase escaping for user-typed queries. `SettingsStore` exposes typed `SettingKey<Value>` accessors with code-resident defaults + JSON envelope serialization; bad JSON in storage falls back to default rather than throwing. `ObsidianExporter` + `MarkdownFilenameSanitizer` write `.md` files with INT-001-compliant YAML frontmatter (date/title/type/duration/speakers/source/tags) using `MM:SS` duration format and YAML-escaped speaker names. ~37 new XCTests across `Storage/` (AppDatabase + TranscriptStore + TranscriptSearch + SettingsStore) and `Export/` (ObsidianExporter + MarkdownFilenameSanitizer) covering TEST-401..405 plus cascade-delete, FTS-trigger sync, settings round-trip for String/Bool/Optional/Codable enums, corrupt-JSON tolerance, and filename sanitization edge cases. Build verification deferred to CI again (same Linux-blind shape as EPIC-05). Codex Gate 4 not yet run in this session — recommend invoking post-CI-green before merge. | EPIC-06, API-201, API-202, BR-301, BR-302, DBT-001→003, DBT-101, INT-001, FEA-005, FEA-006, TEST-401→405 |
 
 ---
 
@@ -211,6 +223,13 @@ Privacy-conscious macOS users who use Obsidian as their knowledge base need a lo
 - Design Reference: [ElevenLabs UI](https://ui.elevenlabs.io/docs/) — dark, minimal, audio-centric aesthetic
 - SoT: `SoT/SoT.USER_JOURNEYS.md`, `SoT/SoT.DESIGN_COMPONENTS.md`
 
+### Visual Identity Direction
+
+**Aesthetic**: Minimal, living, listening
+**Inspiration**: ElevenLabs UI (dark, audio-centric controls), Obsidian (sidebar+content layout, markdown-native)
+**Mode**: Dark only
+**Personality**: A quiet, attentive tool that feels alive when listening but never demands attention. Spacious and ambient during recording (peripheral-friendly), dense and focused during transcript review. Native macOS feel — not a web app port.
+
 **Outstanding Work → v0.5**
 
 - ~~Identify risks and select tech stack~~ → Done in v0.5
@@ -223,11 +242,12 @@ Privacy-conscious macOS users who use Obsidian as their knowledge base need a lo
 
 | ID | Scoring | Risk | Impact | Likelihood | Raw | Status | Eff. Score | Mitigation | Linked IDs |
 |----|---------|------|--------|------------|-----|--------|------------|------------|------------|
-| RISK-001 | Technical | pyannote diarization runs on CPU only on macOS (MPS unreliable), causing slow processing for long meetings | H (3) | H (3) | 9 | mitigating | 4.5 | Bundle pyannote via PyInstaller; process in background; show progress. Evaluate WeSpeaker ONNX as faster alternative. | TECH-006, ARC-002 |
+| RISK-001 | Technical | pyannote diarization runs on CPU only on macOS (MPS unreliable), causing slow processing for long meetings | H (3) | H (3) | 9 | mitigating | 4.5 | EPIC-04a delivered the pyannote 4.x sidecar with progress reporting + AsyncTaskQueue serialization in EPIC-04b. RTF measurement is open until the dev-machine Spike C runs against a 5-min 3-speaker fixture; estimate "~31 s / hour" remains the planning anchor. WeSpeaker ONNX is now the embedding backend in pyannote 4 community-1, so this evolution is already absorbed. | TECH-006, ARC-002, INT-102 |
 | RISK-002 | Technical | ScreenCaptureKit microphone capture requires macOS 15+, limiting user base | M (2) | H (3) | 6 | accepted | 6.0 | Accept macOS 15+ requirement; fallback to AVAudioEngine for mic on macOS 14 if needed. | TECH-004, BR-201 |
-| RISK-003 | Technical | PyInstaller-bundled diarization sidecar produces large app size (~400-600MB) | M (2) | H (3) | 6 | mitigating | 3.0 | Download diarization model on first launch. Compress sidecar binary. | ARC-002, TECH-006 |
+| RISK-007 | Technical | App-sandbox + hardened-runtime + PyInstaller bundle requires careful entitlement matrix and bottom-up codesign sequence; mistakes crash the child via `_libsecinit_appsandbox` or fail notarization | H (3) | M (2) | 6 | mitigated | 1.5 | EPIC-04b ships +5 parent entitlements + `inherit`-only child entitlements + a project.yml Run Script Build Phase that bottom-up codesigns the embedded tree. Verified by Codex Gate 2 review (10 findings, all resolved). Notarization dry-run deferred to release-prep EPIC. | DEP-002, INT-102, ARC-002 |
+| RISK-003 | Technical | PyInstaller-bundled diarization sidecar produces large app size (~700 MB compressed baseline; revisit if > 1 GB) | M (2) | H (3) | 6 | mitigating | 3.0 | EPIC-04a: `--onedir` form (NOT `--onefile`), aggressive `excludes` list (tensorboard/torchvision/IPython/pytest/matplotlib reclaim ~100–200 MB), model downloaded on first launch (not bundled). Empirical bundle size is open until Spike D runs `pyinstaller diarize.spec` on the dev machine. | ARC-002, TECH-006, INT-102 |
 | RISK-004 | User | Users may not grant Screen Recording permission (required for system audio capture) | H (3) | M (2) | 6 | mitigating | 3.0 | Clear onboarding explaining why permission is needed. Allow mic-only mode as fallback. | INT-202, UJ-003 |
-| RISK-005 | Technical | Transcript-diarization alignment may produce misattributed speaker segments | M (2) | M (2) | 4 | open | 4.0 | Implement word-level timestamp alignment between WhisperKit output and pyannote segments. Allow manual correction in SCR-004. | API-201, FEA-003 |
+| RISK-005 | Technical | Transcript-diarization alignment may produce misattributed speaker segments | M (2) | M (2) | 4 | mitigating | 2.0 | EPIC-05 ships midpoint-greedy alignment (`WordSpeakerAligner`) against `DiarizationResult.segments` (exclusive view): for each word, midpoint = `(start + end) / 2`; find the segment where `start <= mid < end`. Boundary straddles attribute by midpoint and emit a `straddled boundaries` warning. Silence-gap words attribute to `SPEAKER_UNKNOWN` and surface a warning. Empty `words` arrays fall back to segment-level midpoint; zero diarization segments synthesize a single-speaker turn with a warning. 1-indexed display names follow first-appearance order. Empirical boundary-attribution accuracy is asserted by `WordSpeakerAlignerTests` against the golden 3-speaker + straddle fixtures (cross-language paired with `sidecar/test_fixtures/golden-3spk.json`). SCR-004 manual correction (FEA-004's rename loop) remains the final backstop; ships in EPIC-07. | API-201, FEA-003 |
 | RISK-006 | User | App crashes during recording could lose audio before processing | H (3) | L (1) | 3 | mitigating | 1.5 | Write audio to temp file continuously during recording (not buffered). Implement crash recovery that detects orphaned temp audio on next launch. | ARC-003, BR-103 |
 | RISK-007 | UX/Technical | Minimal recording UI depends on notch hardware (DES-201); non-notch Macs get menu-bar fallback (DES-202). Risk: parity drift between surfaces, or the notch HUD failing on fullscreen meeting apps (e.g., Zoom fullscreen covering the notch area). | M (2) | M (2) | 4 | mitigating | 2.0 | Design both surfaces as peers, not as primary/degraded. Verify NSPanel `.statusBar + 1` window level survives common fullscreen meeting apps during implementation spike. If notch HUD can't stay above fullscreen windows, promote menu-bar extra to primary. | BR-501, SCR-002, DES-201, DES-202 |
 
@@ -364,7 +384,44 @@ Full details: `SoT/SoT.INTEGRATIONS.md`
 
 ## v0.7 Build Execution — Plan for Delivery
 
-_Not yet started. Pending v0.7 gate entry._
+**Deployment Target Decision**: macOS 15+ (Sequoia). Rationale: Unified ScreenCaptureKit path for both mic and system audio capture simplifies the code significantly. AVAudioEngine mic-only fallback on macOS 14 added marginal complexity for a shrinking user base. RISK-002 status remains "accepted" — macOS 15+ is the floor.
+
+**Test Strategy**: 24 test cases defined in `SoT/SoT.TESTING.md` covering all 7 API contracts, critical business rules, and privacy guarantees. 13 are P0 (critical), 11 are P1. See TEST-001→504.
+
+**EPIC Backlog (8 EPICs at v0.7 entry; EPIC-04 split into 04a + 04b on 2026-05-08 → 9 EPIC files)**
+
+| EPIC | Name | State | Depends On | Key IDs | Priority |
+|------|------|-------|------------|---------|----------|
+| EPIC-01 | Project Scaffolding & Dev Environment | ✅ Complete (2026-05-06) | — | ENV-001, TECH-001, TECH-002, TECH-006, TECH-007 | P0 (foundation) |
+| EPIC-02 | Audio Capture Engine | ✅ Complete (2026-05-06) | EPIC-01 | API-001, API-002, FEA-001, INT-201, INT-202 | P0 |
+| EPIC-02b | Audio Artifact Contract Hardening | ✅ Complete (2026-05-07) | EPIC-02 | API-001, API-002 | P0 (Codex synthesis review fixes) |
+| EPIC-03 | Transcription Pipeline | ✅ Complete (2026-05-08) | EPIC-01, EPIC-02b | API-101, FEA-002, INT-101, TECH-002 | P0 |
+| EPIC-04 | Speaker Diarization Sidecar | Split → 04a + 04b (2026-05-08) | EPIC-01 | API-102, FEA-003, ARC-002, TECH-006 | P0 (highest risk) |
+| EPIC-04a | Diarization CLI & Packaging (Python) | ✅ Complete (2026-05-09) | EPIC-01 | API-102 (CLI half), INT-102, ARC-002, TECH-006, BR-101, FEA-003, TEST-201..204, RISK-001/003 | P0 |
+| EPIC-04b | Swift `DiarizationService` Bridge | ✅ Complete (2026-05-09) | EPIC-04a | API-102 (Swift half), INT-102, DEP-002, RISK-007 | P0 |
+| EPIC-05 | Transcript Formatting & Alignment | ✅ Complete (2026-05-12) | EPIC-03, EPIC-04b | API-201, FEA-004, BR-301, RISK-005 | P0 |
+| EPIC-06 | Storage & Obsidian Export | ✅ Complete (2026-05-12) | EPIC-01, EPIC-05 | API-202, DBT-001→101, FEA-005, FEA-006, INT-001 | P0 |
+| EPIC-07 | SwiftUI Interface | Active (next up — Mac required) | EPIC-02, EPIC-05, EPIC-06 | SCR-001→006, DES-XXX, UJ-001→003 | P1 |
+| EPIC-08 | Pipeline Integration & Audio Lifecycle | Planned (Mac required) | EPIC-02→07 | API-301, ARC-001, ARC-003, BR-101→103 | P0 (E2E validation) |
+
+**Execution Order (Parallelism)**
+
+```
+EPIC-01 (scaffolding) ✅
+   ├→ EPIC-02 (audio) ✅ → EPIC-02b (hardening) ✅ ──┐
+   ├→ EPIC-03 (transcribe) ✅ ───────────────────────┼→ EPIC-05 (format) → EPIC-06 (storage/export) ─┐
+   └→ EPIC-04a (diarize CLI) → EPIC-04b (Swift bridge) ─┘                                            ├→ EPIC-08 (integration)
+                                                                                       EPIC-07 (UI) ──┘
+```
+
+EPICs 02, 03, and the 04a/04b chain can run in parallel after EPIC-01. EPIC-04a's frozen JSON contract gates EPIC-04b. EPIC-05 merges transcription + diarization outputs (depends on EPIC-04b for the Swift `DiarizationResult` type). EPIC-07 can start with mock data early. EPIC-08 is the integration and validation capstone.
+
+**Outstanding Work → v0.8**
+
+- Package app as `.dmg` for distribution
+- Define deployment config (DEP-XXX), monitoring (MON-XXX), runbooks (RUN-XXX)
+- Code signing and notarization
+- First-launch model download UX
 
 ---
 

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Production (Release) entitlements for TranscriptShadow.
+        Debug uses TranscriptShadow.Debug.entitlements (unsandboxed for
+        the integration test suite).
+
+        EPIC-01 baseline:
+          - app-sandbox        — sandbox the .app
+          - device.audio-input — microphone capture (AVAudioEngine)
+          - network.client     — WhisperKit model download from HF
+
+        EPIC-04b additions (the +5 from Phase B matrix, 2026-05-09):
+          - cs.disable-library-validation — required to load the
+            PyInstaller bootloader's *.dylib / *.so under
+            Resources/diarize/_internal/ which are NOT signed by our
+            Team ID. Without this, dyld refuses under hardened runtime.
+          - cs.allow-unsigned-executable-memory — required for CPython
+            bytecode + ctypes paths inside the bundled diarize binary.
+            Documented in every PyInstaller-on-mac entitlements file
+            (Buzz, txoof gist).
+          - cs.allow-jit — recommended alongside the previous one.
+            torch's MPS path goes through Metal compilers; cheap to add,
+            expensive to debug if missing.
+          - files.user-selected.read-only — NSOpenPanel returns a
+            usable URL for the audio file picker.
+          - files.bookmarks.app-scope — persist security-scoped
+            bookmarks across launches (settings + recent recordings,
+            and the EPIC-04b audio-bookmark hand-off).
+    -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
+    <key>com.apple.security.network.client</key>
+    <true/>
+
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.files.user-selected.read-only</key>
+    <true/>
+    <key>com.apple.security.files.bookmarks.app-scope</key>
+    <true/>
+</dict>
+</plist>

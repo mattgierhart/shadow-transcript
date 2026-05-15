@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Child binary entitlements for the bundled `diarize` PyInstaller
+        binary at Resources/diarize/diarize.
+
+        ONLY two entitlements are allowed here. Per Apple's helper-tool
+        documentation + indie-stack post, ANY other sandbox entitlement
+        on a sandbox-inheriting child binary causes _libsecinit_appsandbox
+        to crash the child immediately on launch. The Run Script Build
+        Phase that signs this binary explicitly strips the auto-injected
+        `get-task-allow` entitlement that Xcode adds in Debug builds.
+    -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    <key>com.apple.security.inherit</key>
+    <true/>
+</dict>
+</plist>
