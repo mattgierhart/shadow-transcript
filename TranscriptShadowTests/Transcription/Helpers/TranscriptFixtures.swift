@@ -201,4 +201,63 @@ enum TranscriptFixtures {
         )
         return (transcript, diarization)
     }
+
+    /// `JSONEncoder([.sortedKeys, .prettyPrinted])` output of
+    /// `DefaultTranscriptFormatter().format(make3SpeakerFixture())`.
+    /// Mirrors `sidecar/test_fixtures/formatted-golden-3spk.json` and
+    /// locks the wire shape EPIC-06 storage / EPIC-07 UI / external
+    /// consumers depend on. Update both the constant and the file
+    /// together when an intentional contract change ships; bump the
+    /// EPIC-06 storage version at the same time.
+    static let expectedThreeSpeakerCodableJSON: String = #"""
+{
+  "markdown" : "**Speaker 1** [00:00:00]:\nhello there how are you today\n\n**Speaker 2** [00:00:05]:\ndoing well thanks for asking and you\n\n**Speaker 1** [00:00:12]:\ngreat just shipped a new feature\n\n**Speaker 3** [00:00:18]:\nnice work congratulations to the team",
+  "metadata" : {
+    "durationSeconds" : 25,
+    "language" : "en",
+    "model" : "openai_whisper-base.en",
+    "speakerCount" : 3,
+    "turnCount" : 4,
+    "wordCount" : 25
+  },
+  "speakerMap" : {
+    "SPEAKER_00" : "Speaker 1",
+    "SPEAKER_01" : "Speaker 2",
+    "SPEAKER_02" : "Speaker 3"
+  },
+  "turns" : [
+    {
+      "canonicalSpeaker" : "SPEAKER_00",
+      "displayName" : "Speaker 1",
+      "endSeconds" : 3.2,
+      "startSeconds" : 0.2,
+      "text" : "hello there how are you today"
+    },
+    {
+      "canonicalSpeaker" : "SPEAKER_01",
+      "displayName" : "Speaker 2",
+      "endSeconds" : 9.4,
+      "startSeconds" : 5.2,
+      "text" : "doing well thanks for asking and you"
+    },
+    {
+      "canonicalSpeaker" : "SPEAKER_00",
+      "displayName" : "Speaker 1",
+      "endSeconds" : 15.3,
+      "startSeconds" : 12.2,
+      "text" : "great just shipped a new feature"
+    },
+    {
+      "canonicalSpeaker" : "SPEAKER_02",
+      "displayName" : "Speaker 3",
+      "endSeconds" : 21.7,
+      "startSeconds" : 18.3,
+      "text" : "nice work congratulations to the team"
+    }
+  ],
+  "warnings" : [
+
+  ]
+}
+"""#
 }

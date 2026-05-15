@@ -196,6 +196,34 @@ final class TranscriptFormatterTests: XCTestCase {
         XCTAssertEqual(decoded, original)
     }
 
+    // MARK: - Codex Gate P2 #5: explicit wire-shape lock (EPIC-06 storage handoff)
+
+    /// Byte-for-byte assertion against
+    /// `TranscriptFixtures.expectedThreeSpeakerCodableJSON` (mirrors
+    /// `sidecar/test_fixtures/formatted-golden-3spk.json`). If this
+    /// fails, EPIC-06 storage / EPIC-07 UI / external consumers are
+    /// about to be silently surprised by a shape change — update the
+    /// constant + the sidecar file together and bump the EPIC-06
+    /// storage version. The Codable round-trip above protects round-trip
+    /// equality; this test protects the wire format itself.
+    func test_formattedTranscript_jsonShapeMatchesGolden_locksEPIC06Contract() throws {
+        let (transcript, diarization) = TranscriptFixtures.make3SpeakerFixture()
+        let result = try formatter.format(transcription: transcript, diarization: diarization)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+        let data = try encoder.encode(result)
+        guard let encoded = String(data: data, encoding: .utf8) else {
+            XCTFail("encoder produced non-UTF8 data")
+            return
+        }
+
+        XCTAssertEqual(
+            encoded,
+            TranscriptFixtures.expectedThreeSpeakerCodableJSON,
+            "wire shape drift — update constant + sidecar/test_fixtures/formatted-golden-3spk.json together"
+        )
+    }
+
     // MARK: - Codex Gate P1 #4: long pause splits same-speaker turn
 
     /// Same-speaker tokens separated by silence longer than
