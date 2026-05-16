@@ -89,7 +89,7 @@ template_version: "3.0.0"
 | RISK-004 | Screen Recording permission friction | 3.0 | mitigating |
 | RISK-005 | Speaker-transcript alignment accuracy | 2.0 | mitigating |
 | RISK-006 | Crash during recording loses audio | 1.5 | mitigating |
-| RISK-007 | Notch HUD parity vs menu-bar fallback; fullscreen occlusion | 2.0 | mitigating |
+| RISK-008 | Notch HUD parity vs menu-bar fallback; fullscreen occlusion | 2.0 | mitigating |
 
 ---
 
@@ -166,7 +166,7 @@ pyinstaller diarize.spec   # release-only; multi-GB / multi-minute
 | `SoT.customer_feedback.md` | CFD-001→004, CFD-101→103 | Pain points and value hypotheses |
 | `SoT.BUSINESS_RULES.md` | BR-101→103, BR-201→203, BR-301→302, BR-401→402, BR-501 | Privacy, platform, output, UX rules |
 | `SoT.USER_JOURNEYS.md` | PER-001→002, UJ-001→003, SCR-001→006 | Personas, journeys, screens |
-| `SoT.DESIGN_COMPONENTS.md` | DES-001→005, DES-101→104, DES-201→203, DES-301→305 | UI components, layout principles, design tokens |
+| `SoT.DESIGN_COMPONENTS.md` | DES-001→005, DES-101→106, DES-201→203, DES-301→305 | UI components, recording HUDs (DES-105/106), layout principles, design tokens |
 | `SoT.TECHNICAL_DECISIONS.md` | TECH-001→007, ARC-001→003, ENV-001 | Stack, architecture, environment |
 | `SoT.API_CONTRACTS.md` | API-001→002, API-101→102, API-201→202, API-301 | Internal service contracts |
 | `SoT.DATA_MODEL.md` | DBT-001→003, DBT-101 | SQLite schema |

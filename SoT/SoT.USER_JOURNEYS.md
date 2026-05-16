@@ -1,8 +1,8 @@
 ---
-version: 2.0
+version: 2.1
 purpose: Source of Truth for user journeys, personas, and screen flows.
 id_prefix: UJ-XXX, PER-XXX, SCR-XXX
-last_updated: 2026-03-20
+last_updated: 2026-05-16
 authority: This is a SoT file - IDs here are referenced by PRD.md, EPICs, and other SoT files
 ---
 
@@ -22,9 +22,9 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, EPICs, and ot
 
 **Screens** (SCR-001 to SCR-099):
 
-- [SCR-001](#scr-001-main-window-idle) - Main Window (Idle)
-- [SCR-002](#scr-002-recording-view) - Recording View
-- [SCR-003](#scr-003-processing-view) - Processing View
+- [SCR-001](#scr-001-main-window-idle) - Main Window (Idle / Pre-Record)
+- [SCR-002](#scr-002-recording-hud) - Recording HUD (Notch or Menu Bar Extra)
+- [SCR-003](#scr-003-processing-view) - Processing View (Main Window Restored)
 - [SCR-004](#scr-004-transcript-view) - Transcript View
 - [SCR-005](#scr-005-settings-sheet) - Settings Sheet
 - [SCR-006](#scr-006-transcript-history-sidebar) - Transcript History (Sidebar)
@@ -137,24 +137,26 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, EPICs, and ot
 **Status**: Planned
 **Confidence**: 3/5 (source: journey-mapping + design-interview)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-20
+**Last Updated**: 2026-05-16
 
 ### Purpose
 
-Default content area when no recording is active and no transcript is selected. Entry point for starting a recording. Spacious, centered layout that draws attention to the record button.
+The main window of the app. Visible **before** recording (pre-flight surface — pick sources, review history, hit Record) and **after** recording (host for SCR-003 processing and SCR-004 transcript view). Per BR-501, this window is **hidden while recording is active**; only the Recording HUD (SCR-002, realized as DES-105 or DES-106) is visible during the meeting.
 
 ### Journeys
 
-- [UJ-001](#uj-001-record-and-transcribe-meeting) — Step 1 (entry point)
+- [UJ-001](#uj-001-record-and-transcribe-meeting) — Step 1 (pre-record entry point); also restored at Step 6 (post-Stop)
+- [UJ-002](#uj-002-review-and-export-transcript) — Entry surface via sidebar
+- [UJ-003](#uj-003-configure-app-settings) — First-launch host
 
 ### Features
 
-- FEA-001 (Audio Capture) — Start recording via DES-001
+- FEA-001 (Audio Capture) — Pre-flight: source toggles + pre-record level preview; **Start recording** action
 
 ### Primary Actions
 
-- **Record**: Click record button (DES-001) → transitions content to SCR-002
-- **Open Transcript**: Click item in sidebar (DES-004) → transitions to SCR-004
+- **Record**: Click DES-001 → main window hides + Recording HUD (SCR-002) appears (per BR-501)
+- **Open Transcript**: Click item in sidebar (DES-004) → loads SCR-004 in content area
 
 ### Secondary Actions
 
@@ -163,15 +165,16 @@ Default content area when no recording is active and no transcript is selected. 
 
 ### Navigation
 
-- **From**: App launch, return from SCR-004 (close transcript), return from SCR-002 (cancel recording)
-- **To**: SCR-002 (start recording), SCR-004 (click sidebar item), SCR-005 (settings gear)
+- **From**: App launch; restored from SCR-002 on Stop → SCR-003 in content area; return from SCR-004 (close transcript)
+- **To**: SCR-002 (click Record — main window hides), SCR-004 (click sidebar item), SCR-005 (settings gear)
 
 ### Content
 
-- Record button centered in content area (DES-001) — large, prominent
-- Audio source indicator below record button (mic + system audio toggle icons)
+- Record button (DES-001) centered in content area — large, prominent, **start only**
+- Audio source indicator + toggles directly above the button: Microphone (always on) + System Audio (toggle, requires Screen Recording permission)
+- Pre-record audio level preview (DES-002) immediately beneath the source toggles — confirms inputs are live before recording starts
 - Brief status text: "Ready to record" or "Last recording: [title] [time ago]"
-- If first launch with no permissions: DES-103 permission prompt replaces record button
+- If first launch with no permissions: DES-103 permission prompt replaces record button area
 - If no transcripts exist: DES-104 empty state in both sidebar and content
 
 ### Density Mode
@@ -182,11 +185,13 @@ Default content area when no recording is active and no transcript is selected. 
 
 - [BR-101](SoT.BUSINESS_RULES.md#br-101-local-only-processing) - No network indicator needed (everything is local)
 - [BR-402](SoT.BUSINESS_RULES.md#br-402-maximum-meeting-duration) - Duration limit info available via tooltip on record button
+- [BR-501](SoT.BUSINESS_RULES.md#br-501-minimal-recording-ui) - This window hides on Record; only SCR-002 (HUD) is visible while recording
 
 ### Design Components
 
-- [DES-001](SoT.DESIGN_COMPONENTS.md#des-001-record-button) - Record button (idle state)
-- [DES-004](SoT.DESIGN_COMPONENTS.md#des-004-sidebar-transcript-list) - Sidebar (always visible)
+- [DES-001](SoT.DESIGN_COMPONENTS.md#des-001-record-button) - Record button (start only, no Stop state lives here)
+- [DES-002](SoT.DESIGN_COMPONENTS.md#des-002-audio-level-preview) - Pre-record level preview (only place this appears)
+- [DES-004](SoT.DESIGN_COMPONENTS.md#des-004-sidebar-transcript-list) - Sidebar (always visible on this window)
 - [DES-005](SoT.DESIGN_COMPONENTS.md#des-005-toolbar) - Toolbar (idle state)
 - [DES-103](SoT.DESIGN_COMPONENTS.md#des-103-permission-prompt) - First-launch only
 - [DES-104](SoT.DESIGN_COMPONENTS.md#des-104-empty-state) - No transcripts state
@@ -195,91 +200,98 @@ Default content area when no recording is active and no transcript is selected. 
 
 - PER-001 wants "set and forget" — the idle state should communicate readiness, not complexity
 - PER-002 may need explicit "All processing stays on your Mac" reassurance text (first-launch only)
+- The level preview (DES-002) is a **pre-flight check** — it disappears with the window once Record is clicked
 
 ---
 
 ## SCR-002: Recording HUD
 
 **ID**: SCR-002
-**Type**: Page (content area state)
+**Type**: HUD (not a content-area state — its own window-level surface)
 **Status**: Planned
-**Confidence**: 3/5 (source: journey-mapping + design-interview)
+**Confidence**: 3/5 (source: journey-mapping + design-interview + BR-501)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-20
+**Last Updated**: 2026-05-16
 
 ### Purpose
 
-Active recording state. Shows the app is "alive and listening" without demanding attention. The user is in a meeting — this screen is peripheral.
+The single permitted recording surface. Per BR-501, the app's main window (SCR-001) is hidden the moment recording starts; SCR-002 is the only app-owned UI visible until Stop. Realized as one of two peer surfaces based on hardware:
+
+- **DES-105 — Notch HUD** (primary on notch-equipped MacBook Pros, 2021+)
+- **DES-106 — Menu Bar Extra** (peer realization on non-notch Macs; promoted to primary if DES-105 cannot stay above fullscreen meeting apps per RISK-008)
+
+Both surfaces are designed as **peers, not primary/degraded** — feature parity is mandatory.
 
 ### Journeys
 
-- [UJ-001](#uj-001-record-and-transcribe-meeting) — Steps 3-4 (recording active)
+- [UJ-001](#uj-001-record-and-transcribe-meeting) — Steps 4-5 (recording active → Stop)
 
 ### Features
 
-- FEA-001 (Audio Capture) — Active capture, real-time audio levels
+- FEA-001 (Audio Capture) — Active capture happens beneath this surface; the HUD only exposes Stop
 
 ### Primary Actions
 
-- **Stop Recording**: Click stop button in toolbar (DES-001 recording state) → transitions to SCR-003
+- **Stop**: Click Stop on the HUD (or invoke the global hotkey) → HUD dismisses + main window restores into SCR-003 (Processing View)
 
 ### Secondary Actions
 
-- **Open Past Transcript**: Click sidebar item → opens in SCR-004 (recording continues in background, toolbar shows recording indicator)
+- *None.* Per BR-501, this is the only action available on the HUD. Source toggles, settings, history navigation, and pause/resume all require the user to explicitly re-open the main window (clicking the app icon).
 
 ### Navigation
 
-- **From**: SCR-001 (click record)
-- **To**: SCR-003 (click stop), SCR-004 (sidebar click, recording persists)
+- **From**: SCR-001 (Record clicked → main window hides → HUD appears)
+- **To**: SCR-003 (Stop clicked or hotkey → HUD dismisses → main window restores to processing view)
+- **User-initiated open of main window during recording**: explicit click on app icon shows main window with recording continuing in background; HUD remains visible. Closing the main window returns to HUD-only state.
 
 ### Content
 
-- Audio waveform (DES-002) — centered, full-width within content area, teal accent
-- Elapsed time counter — large, centered above waveform (SF Mono, DES-302)
-- Audio source status — "Microphone + System Audio" or "Microphone Only" (small, below waveform)
-- Sidebar remains visible with transcript history (DES-004)
-- Toolbar shows: stop button (replaces record), timer, recording indicator dot
+The HUD's content is hardware-conditional but exposes the **same elements** in either realization:
+
+- A small red dot (recording active indicator) with 1Hz opacity oscillation (DES-301 recording red)
+- A "Recording" label (SF Pro Medium, DES-302)
+- A **Stop** button — the only interactive element
+- Nothing else. No timer. No audio waveform. No source toggle. No pause/resume. No settings gear. No sidebar.
 
 ### Density Mode
 
-**Spacious** (DES-203) — Content max-width 600px, centered. Very generous whitespace. Minimal elements. The waveform and timer are the only focus — a glanceable "heartbeat" confirming the app works.
+Not a content-area screen — the HUD is a separate window surface at `.statusBar + 1` (DES-105) or in the system menu bar (DES-106). The density-mode taxonomy from DES-203 does not apply.
 
 ### Constraints
 
-- [BR-402](SoT.BUSINESS_RULES.md#br-402-maximum-meeting-duration) - Show warning at 1h50m (amber text below timer)
+- [BR-501](SoT.BUSINESS_RULES.md#br-501-minimal-recording-ui) - **Single-action constraint** — no other UI may live on this surface
+- [BR-402](SoT.BUSINESS_RULES.md#br-402-maximum-meeting-duration) - Approaching-limit warning is delivered as a macOS notification (`UNUserNotificationCenter`), NOT as HUD content
 - [BR-101](SoT.BUSINESS_RULES.md#br-101-local-only-processing) - No upload indicator needed
 
 ### Design Components
 
-- [DES-001](SoT.DESIGN_COMPONENTS.md#des-001-record-button) - Recording state (red square, subtle pulse)
-- [DES-002](SoT.DESIGN_COMPONENTS.md#des-002-audio-level-indicator) - Waveform visualization
-- [DES-004](SoT.DESIGN_COMPONENTS.md#des-004-sidebar-transcript-list) - Sidebar (still accessible)
-- [DES-005](SoT.DESIGN_COMPONENTS.md#des-005-toolbar) - Recording state (timer, stop button)
+- [DES-105](SoT.DESIGN_COMPONENTS.md#des-105-recording-hud-notch) - Notch realization
+- [DES-106](SoT.DESIGN_COMPONENTS.md#des-106-recording-hud-menu-bar-extra) - Menu Bar Extra realization
 
 ### Design Notes
 
-- **"Alive but not demanding attention"**: The waveform should feel organic and responsive, confirming audio capture, but the user should be able to glance at it for 1 second and know everything is working
-- Silence detection: If no audio detected for 10s, waveform turns amber (DES-305 warning) as subtle alert
-- PER-001 will switch to their meeting app immediately — this screen may only be visible as a small window or in the background
+- The HUD is **ambient**: the user is in a meeting, looking at Zoom/Teams/Meet. The HUD must confirm "still recording" at a glance and accept a single Stop action.
+- The red-dot oscillation is the liveness signal. No timer or waveform — those would invite glancing at the HUD instead of attending the meeting.
+- **Error states**: if mic permission is revoked mid-session or the capture pipeline crashes, the HUD briefly surfaces an error state (red dot turns amber + "Error" label) for ~2s, then dismisses while the main window is restored to handle recovery.
 
 ---
 
 ## SCR-003: Processing View
 
 **ID**: SCR-003
-**Type**: Page (content area state)
+**Type**: Page (content area state on the restored main window)
 **Status**: Planned
 **Confidence**: 3/5 (source: journey-mapping + design-interview)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-20
+**Last Updated**: 2026-05-16
 
 ### Purpose
 
-Shows transcription and diarization progress after recording stops. A brief interlude — the user just finished their call and is transitioning from "meeting mode" to "review mode."
+Shows transcription and diarization progress after recording stops. This is the **restored main window** — once Stop is hit on the HUD (SCR-002), the HUD dismisses and SCR-001's window comes back to host this view. A brief interlude — the user just finished their call and is transitioning from "meeting mode" to "review mode."
 
 ### Journeys
 
-- [UJ-001](#uj-001-record-and-transcribe-meeting) — Steps 5-6 (processing)
+- [UJ-001](#uj-001-record-and-transcribe-meeting) — Steps 6-9 (HUD dismisses → main window restores → processing → transcript ready)
 
 ### Features
 
@@ -297,7 +309,7 @@ Shows transcription and diarization progress after recording stops. A brief inte
 
 ### Navigation
 
-- **From**: SCR-002 (click stop)
+- **From**: SCR-002 (Stop clicked on HUD → HUD dismisses → main window restores → this view appears)
 - **To**: SCR-004 (processing complete, automatic), SCR-001 (cancel)
 
 ### Content
@@ -558,47 +570,50 @@ Always-visible sidebar listing past transcripts. This IS the sidebar (DES-004) �
 **Category**: Core
 **Type**: Core
 **Status**: Active
-**Confidence**: 3/5 (source: design-validation + feature-status-planned)
+**Confidence**: 3/5 (source: design-validation + feature-status-planned + BR-501)
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-20
+**Last Updated**: 2026-05-16
 
 ### Overview
 
 - **Persona**: PER-001 (primary), PER-002 (secondary)
 - **Trigger**: User has a meeting starting (calendar reminder, Zoom opening) — not "opens app"
-- **Goal**: Record a meeting and get a speaker-labeled transcript without audio leaving the machine
-- **Success Criteria**: Transcript with speaker labels and timestamps is generated locally
+- **Goal**: Record a meeting and get a speaker-labeled transcript without audio leaving the machine, **without the recording UI demanding attention during the meeting**
+- **Success Criteria**: Transcript with speaker labels and timestamps generated locally; main window stays out of the way for the duration of the call (BR-501)
 - **KPI Link**: KPI-001 (processing speed < 5 min for 30-min meeting), KPI-002 (diarization accuracy > 80%)
-- **Success Metric**: End-to-end time from "click record" to "transcript visible" for a 30-min meeting
+- **Success Metric**: End-to-end time from "click Record" to "transcript visible" for a 30-min meeting
 
 ### Steps
 
-1. **Open App**: User launches Transcript Shadow → sees SCR-001 (Main Window, idle) → FEA-001
-2. **Select Audio Source**: User verifies mic + system audio indicators in toolbar → FEA-001
-3. **Start Recording**: User clicks Record (DES-001) → content transitions to SCR-002 → FEA-001
-4. **Recording Active**: Audio captured in real-time, waveform (DES-002) shows levels, timer counts up → FEA-001
-5. **Stop Recording**: User clicks Stop → content transitions to SCR-003 → FEA-001
-6. **Transcription**: WhisperKit transcribes audio → progress in DES-102 stage 1 → FEA-002
+1. **Open App (Pre-Flight)**: User launches Transcript Shadow → SCR-001 (Main Window — Idle) → FEA-001
+2. **Pre-Flight Check**: User glances at source toggles (mic + system audio) and the pre-record level preview (DES-002) to confirm inputs are live → FEA-001
+3. **Start Recording**: User clicks Record (DES-001) → **main window hides** + Recording HUD appears (SCR-002, realized as DES-105 Notch or DES-106 Menu Bar Extra) → FEA-001
+4. **Recording Active (HUD-only)**: User switches to Zoom/Teams/Meet. Only the HUD is visible from this app — a red dot + Stop button. No timer, no waveform on the recording surface (BR-501). Audio captured continuously in background; temp file written incrementally for crash recovery (RISK-006) → FEA-001
+5. **Stop Recording**: User clicks Stop on the HUD (or fires the global hotkey) → **HUD dismisses** → main window restores → SCR-003 (Processing View) appears in the main content area → FEA-001
+6. **Transcription**: WhisperKit transcribes audio → progress in DES-102 stage 1 (visible on the restored main window) → FEA-002
 7. **Diarization**: pyannote identifies speakers → progress in DES-102 stage 2 → FEA-003
 8. **Formatting**: Transcription + diarization merged → progress in DES-102 stage 3 → FEA-004
-9. **Transcript Ready**: Processing complete → content transitions to SCR-004 → FEA-004
+9. **Transcript Ready**: Processing complete → content area transitions to SCR-004 → FEA-004
 10. **Audio Deleted**: Temp audio file is securely deleted (BR-103)
 
 ### Pain Points
 
-- **Step 1**: First-launch permission prompts may confuse PER-002 (medium tech comfort). Mitigation: DES-103 permission prompt with plain-language explanation.
-- **Step 4**: User can't tell if system audio is being captured (other participants). Mitigation: DES-002 waveform shows combined input; "Mic + System Audio" label visible.
-- **Step 6-8**: Processing wait for long meetings (RISK-001). Mitigation: Realistic time estimate in DES-102; user can browse past transcripts in sidebar during wait.
+- **Step 1-2**: First-launch permission prompts may confuse PER-002 (medium tech comfort). Mitigation: DES-103 permission prompt with plain-language explanation; pre-record level preview (DES-002) immediately tells the user mic/system are wired up.
+- **Step 4**: User cannot see realtime audio levels (BR-501 explicitly forbids them on the HUD). Mitigation: pre-flight check at Step 2 establishes "inputs are working"; the red-dot liveness oscillation on the HUD confirms the capture pipeline hasn't crashed. Trust is built before recording, not interrogated during.
+- **Step 4 (cont.)**: User may forget which Mac they're on and look for the HUD in the wrong place (notch vs menu bar). Mitigation: a one-time onboarding tooltip on first recording points at the correct surface for their hardware.
+- **Step 6-8**: Processing wait for long meetings (RISK-001). Mitigation: Realistic time estimate in DES-102; user can browse past transcripts in sidebar (now visible again) during wait.
 
 ### Moment of Value
 
-Step 9: Seeing the completed transcript with speaker names labeled and timestamps — "it worked, and I didn't have to do anything during the meeting."
+Step 9: Seeing the completed transcript with speaker names labeled and timestamps — "the app was invisible during my meeting, and it still got everything." Both the **absence** of the recording UI during the call and the **presence** of the transcript afterward are part of the value moment.
 
 ### Error Paths
 
-- **No microphone permission**: DES-103 prompt → guides to System Settings → re-check on return
+- **No microphone permission (pre-flight)**: DES-103 prompt → guides to System Settings → re-check on return. Record button stays disabled until granted.
+- **Screen Recording permission denied** (system audio): SCR-001 shows a yellow banner: "System audio unavailable — recording in mic-only mode. Grant Screen Recording in Settings to capture everyone in your call." User can proceed mic-only (PER-002 fallback) or open SCR-005 to fix the permission.
+- **Permission revoked mid-session**: The HUD briefly surfaces an error state (red dot turns amber, "Error" label) for ~2s, the recording stops gracefully (audio buffered so far is preserved and routed to SCR-003), the main window restores, and a banner explains what happened with a "Reopen Settings" link.
 - **Processing fails**: DES-102 error state with retry button. Temp audio preserved until retry or explicit cancel.
-- **App quit during recording**: Audio saved to temp continuously (RISK-006 mitigation). On next launch, orphaned audio cleaned (API-301).
+- **App quit during recording (crash or force-quit)**: Audio saved to temp continuously (RISK-006 mitigation). On next launch, the app detects the orphaned temp file: a recovery banner on SCR-001 asks "Recover unfinished recording from [time]?" — Yes routes the file directly into SCR-003 processing; No deletes per BR-103. API-301 handles silent cleanup of files older than the recovery window.
 
 ### APIs Used
 
@@ -641,14 +656,14 @@ Step 9: Seeing the completed transcript with speaker names labeled and timestamp
 ### Steps
 
 1. **View Transcript**: User sees SCR-004 with speaker-labeled content (DES-003) → FEA-004
-2. **Rename Speakers**: User clicks speaker pills (DES-101) → renames "Speaker 1" → "Alice" → FEA-003
+2. **Rename Speakers**: User clicks a speaker pill (DES-101) in the speaker summary row → the pill enters its Editing state (inline text field, teal focus ring per DES-101). User types "Alice" and presses Enter (or Esc to cancel). The rename writes to `API-201` `speakerNames` map and persists via `DBT-002.display_name`; the change propagates instantly to **every** transcript block (DES-003) for that speaker. A single-level Undo (Cmd+Z) reverts the most recent rename. If the rename collides with another speaker's existing display name, an inline error appears ("Two speakers can't share a name") and the field stays open. → FEA-003
 3. **Review Content**: User scrolls transcript, verifying content → FEA-004
 4. **Export to Obsidian**: User clicks "Export to Obsidian" button → file written to vault → FEA-005
 5. **Confirmation**: Success toast with file path + "Open in Obsidian" link
 
 ### Pain Points
 
-- **Step 2**: Speaker names are auto-generated ("Speaker 1") — user must manually identify who is who. Mitigation: Show speaking time per speaker so user can infer identity from duration.
+- **Step 2**: Speaker names are auto-generated ("Speaker 1") — user must manually identify who is who. Mitigation: Show speaking time per speaker so user can infer identity from duration. Renames are atomic across the transcript so the user never sees half-renamed segments.
 - **Step 4**: Vault path not configured yet (first use). Mitigation: If not configured, button opens SCR-005 settings with vault path section highlighted.
 
 ### Alternative Paths
@@ -753,8 +768,9 @@ _No deprecated entries._
 
 **Screens by Density Mode**:
 
-- Spacious: SCR-001, SCR-002, SCR-003, SCR-005
-- Dense: SCR-004, SCR-006
+- Spacious (main window): SCR-001, SCR-003, SCR-005
+- Dense (main window): SCR-004, SCR-006
+- HUD (not on main window — own window-level surface): SCR-002
 
 **APIs by Journey**:
 

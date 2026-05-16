@@ -14,14 +14,32 @@ template_version: "3.0.0"
 
 ## Session State (The "Brain Dump")
 
-- **Last Action**: 2026-05-12 — EPIC-06 merged (PR #7). EPIC-07 is now Active. No SwiftUI code yet.
-- **Stopping Point**: N/A — not yet started.
+- **Last Action**: 2026-05-16 — Claude Design handoff landed at `design/visual-prototype/`. All six screens + filmstrip + token sheet are now visually locked. Token values pixel-match `SoT/SoT.DESIGN_COMPONENTS.md` DES-301..305. EPIC-07 Phase A can now reference concrete pixels for every Deliverable. **BR-501 scope drift still applies** (see ⚠️ block below) — the prototype embodies the corrected direction.
+- **Visual SoT**: `design/visual-prototype/project/index.html` — open in any browser, no build step. The JSX → SwiftUI implementation map is in `design/visual-prototype/README.md`. Per-screen prototype files at `design/visual-prototype/project/src/scr00{1..6}.jsx`.
+- **Stopping Point**: Pre-Phase-A. Awaiting human decision on how Phase B scope absorbs DES-105/DES-106 (likely split into EPIC-07a + EPIC-07b — see the recommendation below).
 - **Next Steps**:
   1. **First** — on the Mac Studio, run `xcodegen generate && xcodebuild test -scheme TranscriptShadow -destination 'platform=macOS,arch=arm64'`. Verify all EPIC-01..06 XCTests are green. If anything is red, fix it before touching EPIC-07 — building UI on top of broken services compounds errors.
   2. Run the EPIC-05 Codex Gate 3 review (single-ask prompt in the EPIC-05 Phase D notes) and EPIC-06 Codex Gate 4 review (sketched at the bottom of this file).
-  3. Read SCR-001..006 + DES-XXX + the v0.4 visual identity in PRD.md. Open the ElevenLabs UI reference at <https://ui.elevenlabs.io/docs/>.
-  4. Phase A planning (see Execution Plan below).
+  3. **Re-plan against BR-501**: Read current SCR-001..006 + DES-001/002/105/106/201..203 + BR-501. The DES-201/202 (Layout) deliverables list below is intact; the new DES-105/DES-106 (Recording HUDs) ARE additional scope per BR-501 and the **"Menu bar app mode" Out-of-Scope line is now wrong** — DES-106 IS in scope.
+  4. Reconcile the **Deliverables section** and **Out of Scope section** below against the BR-501 recast (see ⚠️ block). Update or split into EPIC-07a (main-window UI) / EPIC-07b (HUDs) if Phase A judges the HUD work too heavy to keep bundled.
+  5. Phase A planning (see Execution Plan below) — now scoped to the post-recast direction.
 - **Context**: Largest Linux-blind risk of any remaining EPIC. SwiftUI previews and the actual permission prompts (mic + Screen Recording) cannot be simulated. Plan to ship the UI shell with mock data first, then wire to real services. Dependency injection is critical so the shell can be previewed without a real `AudioCaptureService` or model download.
+
+### ⚠️ BR-501 Scope Drift (added 2026-05-16)
+
+PR #3 (merged 2026-05-15) introduced **BR-501** (Minimal Recording UI). Two consequences for EPIC-07:
+
+1. **SCR-002 is no longer a content-area state** — it is the **Recording HUD**, a separate window-level surface realized as either **DES-105 (Notch HUD)** on notch MBPs or **DES-106 (Menu Bar Extra)** elsewhere. The Deliverables row reading *"SCR-002 Recording View — active state: audio level meter (DES-002), elapsed timer, stop button. Replaces SCR-001 main content during capture"* is now **wrong** and must be replaced with: *"SCR-002 Recording HUD — implemented as both DES-105 (`NSPanel` at `.statusBar + 1` anchored to display notch geometry) and DES-106 (`NSStatusItem` + `NSPopover`). Single Stop action only; no timer, no audio meter, no sidebar visible during recording. Main window hides on Record and restores on Stop."*
+2. **The "Menu bar app mode — explicit non-goal" Out-of-Scope line is now wrong.** The Menu Bar Extra HUD (DES-106) is mandatory for non-notch Macs per BR-501 and must be implemented in this EPIC (or a child EPIC-07b).
+
+Additional changes to fold in:
+- **DES-001 scope tightened**: Record button is start-only; Stop lives on the HUD, not on DES-001.
+- **DES-002 re-scoped**: pre-record level preview on SCR-001 only; no during-record visualization (BR-501 forbids it).
+- **UJ-001 error paths added**: permission revoked mid-session, Screen Recording denied fallback, orphaned temp-audio recovery on next launch.
+- **UJ-002 Step 2 sharpened**: inline DES-101 chip Editing state; rename propagates via `API-201.speakerNames` + `DBT-002.display_name`; single-level Undo; collision detection.
+- **New risk: RISK-008** (notch fullscreen-occlusion + parity). EPIC-07 Phase D Codex Gate sketch should add a `NSPanel` window-level / `Spaces` collection-behavior probe.
+
+**Recommended Phase A decision**: keep EPIC-07 bundled OR split into EPIC-07a (main-window screens: SCR-001/003/004/005/006) + EPIC-07b (HUD surfaces: SCR-002 via DES-105/DES-106). Both surfaces sit behind the same `AppEnvironment` so dependency injection is unchanged; the split is purely about review scope and Codex-Gate granularity. Defer the call to whoever picks this up on the Mac.
 
 ---
 
@@ -192,3 +210,5 @@ template_version: "3.0.0"
 | ---------- | ------------ | ------------ |
 | 2026-03-20 | Claude Agent | Created EPIC |
 | 2026-05-12 | Claude Agent | Mac-handoff prep: filled session state, cumulative carry-forward block, deliverables list per SCR, 5-phase execution plan, EPIC-specific risk callouts, Codex Gate 5 single-ask sketch. EPIC-07 is now ready for a Mac session to pick up. |
+| 2026-05-16 | Claude Agent | BR-501 scope-drift note added to Session State after PR #3 design audit. DES-201/202 (HUD) references renumbered to DES-105/DES-106 (HUD); existing DES-201/202/203 remain "Layout Principles." RISK-007 (UX/notch) renumbered to RISK-008 (RISK-007 stays the codesign risk EPIC-04b shipped against). Phase A re-plan flagged; deliverables + Out-of-Scope sections kept intact and will be reconciled by whoever picks this up on the Mac. |
+| 2026-05-16 | Claude Agent | Claude Design handoff landed at `design/visual-prototype/` (HTML + JSX, no build step). Token sheet validated DES-301..305 pixel-match. JSX → SwiftUI implementation map written at `design/visual-prototype/README.md`. Session State updated with Visual SoT pointer. `temp/visual-prototype-gate.md` marked fully superseded. |
