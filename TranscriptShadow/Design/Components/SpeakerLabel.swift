@@ -98,7 +98,7 @@ private struct BlinkModifier: ViewModifier {
             .opacity(visible ? 1 : 0)
             .onAppear {
                 Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
-                    visible.toggle()
+                    Task { @MainActor in visible.toggle() }
                 }
             }
     }

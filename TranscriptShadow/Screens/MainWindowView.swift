@@ -20,7 +20,7 @@ struct MainWindowView: View {
     @State private var content: MainContent = .preFlight
     @State private var selectedTranscriptID: String? = nil
     @State private var showSettings: Bool = false
-    @StateObject private var hud = RecordingHUDController()
+    @ObservedObject private var hud = RecordingHUDController.shared
 
     var body: some View {
         HStack(spacing: 0) {

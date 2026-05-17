@@ -4,7 +4,13 @@ import SwiftUI
 @main
 struct TranscriptShadowApp: App {
     var body: some Scene {
-        WindowGroup("Transcript Shadow") {
+        // Single-window scene — no `New Window` menu item, no second
+        // MainWindowView instance, no duplicate HUD state.
+        // See Codex Gate 5a (2026-05-17): WindowGroup permitted multiple
+        // windows whose per-instance @StateObject HUD controllers would
+        // fan out the demo notifications and stamp out duplicate
+        // NSPanel / NSStatusItem surfaces, breaking BR-501.
+        Window("Transcript Shadow", id: "main") {
             MainWindowView()
         }
         .windowResizability(.contentMinSize)

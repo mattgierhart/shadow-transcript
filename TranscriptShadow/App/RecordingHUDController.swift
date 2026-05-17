@@ -12,6 +12,14 @@ import SwiftUI
 
 @MainActor
 final class RecordingHUDController: ObservableObject {
+    /// App-wide singleton. There can only ever be one recording in flight,
+    /// one notch panel, and one menu-bar status item — see Codex Gate 5a
+    /// finding (2026-05-17): allowing per-window controllers under a
+    /// WindowGroup scene let the demo notifications fan out and stamped
+    /// out duplicate HUD surfaces, breaking BR-501. Pair this with the
+    /// `Window` (not `WindowGroup`) scene in TranscriptShadowApp.swift.
+    static let shared = RecordingHUDController()
+
     enum Realization { case notch, menuBar }
 
     /// True while a recording is conceptually active and the HUD is on screen.
@@ -35,6 +43,8 @@ final class RecordingHUDController: ObservableObject {
     /// Forced override for the Demo menu so the user can preview either
     /// realization regardless of hardware. nil = auto-detect.
     var forcedRealization: Realization?
+
+    private init() {}
 
     // MARK: - Start / Stop
 
