@@ -19,6 +19,8 @@ enum MainContent: Equatable {
 struct MainWindowView: View {
     @State private var content: MainContent = .preFlight
     @State private var selectedTranscriptID: String? = nil
+    @State private var showSettings: Bool = false
+    @StateObject private var hud = RecordingHUDController()
 
     var body: some View {
         HStack(spacing: 0) {
@@ -28,7 +30,25 @@ struct MainWindowView: View {
         .frame(minWidth: DesignSpacing.Layout.windowMinWidth,
                minHeight: DesignSpacing.Layout.windowMinHeight)
         .background(DesignColors.bgPrimary)
+        .background(WindowAccessor { window in
+            hud.mainWindow = window
+        })
         .preferredColorScheme(.dark)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: { showSettings = true }) {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 14))
+                }
+                .help("Settings (⌘,)")
+            }
+        }
+        .sheet(isPresented: $showSettings) { SettingsView() }
+        .onAppear {
+            // When Stop is tapped on the HUD, restore the main window into
+            // the processing view (SCR-003). Real audio pipeline is EPIC-08.
+            hud.onStop = { content = .processing }
+        }
         .onChange(of: selectedTranscriptID) { _, newValue in
             if let id = newValue {
                 content = .transcript(id: id)
@@ -50,6 +70,20 @@ struct MainWindowView: View {
         .onReceive(NotificationCenter.default.publisher(for: .demoNavTranscript)) { _ in
             selectedTranscriptID = "t1"
         }
+        .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in
+            showSettings = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .demoStartRecording)) { _ in
+            hud.startRecording()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .demoForceNotchHUD)) { _ in
+            hud.forcedRealization = .notch
+            hud.startRecording()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .demoForceMenuBarHUD)) { _ in
+            hud.forcedRealization = .menuBar
+            hud.startRecording()
+        }
     }
 
     @ViewBuilder
@@ -67,10 +101,11 @@ struct MainWindowView: View {
     // MARK: - Actions
 
     private func handleRecord() {
-        // EPIC-08 wires this to AudioCaptureService + hide-main / show-HUD.
-        // For the UI shell, jump straight to the processing surface so the
-        // visual flow can be eyeballed end-to-end.
-        content = .processing
+        // Per BR-501 — hide the main window and show the HUD.
+        // The HUD's Stop callback (set in onAppear) flips content to
+        // .processing and restores the window. Real audio capture is EPIC-08.
+        hud.forcedRealization = nil  // auto-detect notch
+        hud.startRecording()
     }
 }
 
@@ -80,6 +115,10 @@ extension Notification.Name {
     static let demoNavPreFlight = Notification.Name("ShadowTranscript.demoNavPreFlight")
     static let demoNavProcessing = Notification.Name("ShadowTranscript.demoNavProcessing")
     static let demoNavTranscript = Notification.Name("ShadowTranscript.demoNavTranscript")
+    static let openSettings = Notification.Name("ShadowTranscript.openSettings")
+    static let demoStartRecording = Notification.Name("ShadowTranscript.demoStartRecording")
+    static let demoForceNotchHUD = Notification.Name("ShadowTranscript.demoForceNotchHUD")
+    static let demoForceMenuBarHUD = Notification.Name("ShadowTranscript.demoForceMenuBarHUD")
 }
 
 #Preview("Pre-flight") {

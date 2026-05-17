@@ -1,4 +1,4 @@
-// @implements TECH-001, ENV-001, SCR-001, SCR-003, SCR-004
+// @implements TECH-001, ENV-001, SCR-001, SCR-003, SCR-004, SCR-005
 import SwiftUI
 
 @main
@@ -11,6 +11,15 @@ struct TranscriptShadowApp: App {
         .defaultSize(width: DesignSpacing.Layout.windowDefaultWidth,
                      height: DesignSpacing.Layout.windowDefaultHeight)
         .commands {
+            // Standard macOS Settings entry — Cmd+,
+            CommandGroup(replacing: .appSettings) {
+                Button("Settings…") {
+                    NotificationCenter.default.post(name: .openSettings, object: nil)
+                }
+                .keyboardShortcut(",", modifiers: .command)
+            }
+
+            // Demo menu — remove when EPIC-08 wires real state transitions.
             CommandMenu("Demo") {
                 Button("Pre-flight (SCR-001)") {
                     NotificationCenter.default.post(name: .demoNavPreFlight, object: nil)
@@ -26,6 +35,23 @@ struct TranscriptShadowApp: App {
                     NotificationCenter.default.post(name: .demoNavTranscript, object: nil)
                 }
                 .keyboardShortcut("3", modifiers: .command)
+
+                Divider()
+
+                Button("Start recording → HUD (auto-detect)") {
+                    NotificationCenter.default.post(name: .demoStartRecording, object: nil)
+                }
+                .keyboardShortcut("4", modifiers: .command)
+
+                Button("Force Notch HUD (DES-105)") {
+                    NotificationCenter.default.post(name: .demoForceNotchHUD, object: nil)
+                }
+                .keyboardShortcut("5", modifiers: .command)
+
+                Button("Force Menu Bar HUD (DES-106)") {
+                    NotificationCenter.default.post(name: .demoForceMenuBarHUD, object: nil)
+                }
+                .keyboardShortcut("6", modifiers: .command)
             }
         }
     }

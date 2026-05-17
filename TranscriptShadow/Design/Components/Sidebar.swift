@@ -1,9 +1,11 @@
-// @implements DES-004 (Sidebar Transcript List)
+// @implements DES-004 (Sidebar Transcript List), SCR-006 (Transcript History)
 // @see SoT/SoT.DESIGN_COMPONENTS.md DES-004
 // @see design/visual-prototype/project/src/shared.jsx :: Sidebar
+// @see design/visual-prototype/project/src/scr006.jsx :: SidebarSearching, ContextMenu
 //
-// Always-visible transcript history sidebar (also SCR-006). Mock data
-// embedded for the UI shell; production wires to TranscriptStore.list().
+// Always-visible transcript history sidebar. Mock data embedded for the
+// UI shell; production wires to TranscriptStore.list() and
+// TranscriptStore.search() for the filter case.
 
 import SwiftUI
 
@@ -24,10 +26,32 @@ struct SidebarGroup: Identifiable {
 struct Sidebar: View {
     let groups: [SidebarGroup]
     @Binding var selectedID: String?
+    @State private var query: String = ""
+    @FocusState private var searchFocused: Bool
 
     init(groups: [SidebarGroup] = SidebarMockData.groups, selectedID: Binding<String?>) {
         self.groups = groups
         self._selectedID = selectedID
+    }
+
+    private var isSearching: Bool { !query.isEmpty }
+
+    private var filteredGroups: [SidebarGroup] {
+        guard isSearching else { return groups }
+        let q = query.lowercased()
+        let matches = groups
+            .flatMap(\.items)
+            .filter { $0.title.lowercased().contains(q) }
+        guard !matches.isEmpty else { return [] }
+        return [SidebarGroup(id: "search", label: "Search · \"\(query)\"", items: matches)]
+    }
+
+    private var totalCount: Int {
+        groups.reduce(0) { $0 + $1.items.count }
+    }
+
+    private var matchCount: Int {
+        filteredGroups.reduce(0) { $0 + $1.items.count }
     }
 
     var body: some View {
@@ -39,32 +63,48 @@ struct Sidebar: View {
         .frame(width: DesignSpacing.Layout.sidebarDefault)
         .background(DesignColors.bgSecondary)
         .overlay(
-            Rectangle()
-                .fill(DesignColors.borderDefault)
-                .frame(width: 0.5),
+            Rectangle().fill(DesignColors.borderDefault).frame(width: 0.5),
             alignment: .trailing
         )
     }
+
+    // MARK: - Search bar
 
     private var searchBar: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 11, weight: .regular))
-                .foregroundStyle(DesignColors.textMuted)
-            Text("Search transcripts")
+                .foregroundStyle(isSearching ? DesignColors.accentPrimary : DesignColors.textMuted)
+
+            TextField("Search transcripts", text: $query)
+                .textFieldStyle(.plain)
+                .focused($searchFocused)
                 .font(DesignFonts.ui(12))
-                .foregroundStyle(DesignColors.textMuted)
-            Spacer()
-            Text("⌘F")
-                .font(DesignFonts.mono(10))
-                .foregroundStyle(DesignColors.textMuted.opacity(0.7))
+                .foregroundStyle(DesignColors.textPrimary)
+
+            if isSearching {
+                Text("\(matchCount) \(matchCount == 1 ? "match" : "matches")")
+                    .font(DesignFonts.mono(10))
+                    .foregroundStyle(DesignColors.textMuted)
+                Button(action: { query = "" }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(DesignColors.textMuted)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Text("⌘F")
+                    .font(DesignFonts.mono(10))
+                    .foregroundStyle(DesignColors.textMuted.opacity(0.7))
+            }
         }
         .padding(.horizontal, 10)
         .frame(height: 28)
         .background(DesignColors.bgTertiary)
         .overlay(
             RoundedRectangle(cornerRadius: 6)
-                .stroke(DesignColors.borderDefault, lineWidth: 0.5)
+                .stroke(isSearching ? DesignColors.accentPrimary.opacity(0.55) : DesignColors.borderDefault,
+                        lineWidth: isSearching ? 1 : 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .padding(.horizontal, 12)
@@ -72,22 +112,34 @@ struct Sidebar: View {
         .padding(.bottom, 8)
     }
 
+    // MARK: - List
+
     private var list: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 10) {
-                ForEach(groups) { group in
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(group.label.uppercased())
-                            .font(DesignFonts.ui(10, weight: .semibold))
-                            .tracking(0.6)
-                            .foregroundStyle(DesignColors.textMuted)
-                            .padding(.horizontal, 8)
-                            .padding(.top, 8)
-                            .padding(.bottom, 4)
+                if filteredGroups.isEmpty && isSearching {
+                    emptyResults
+                } else {
+                    ForEach(filteredGroups) { group in
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(group.label.uppercased())
+                                .font(DesignFonts.ui(10, weight: .semibold))
+                                .tracking(0.6)
+                                .foregroundStyle(DesignColors.textMuted)
+                                .padding(.horizontal, 8)
+                                .padding(.top, 8)
+                                .padding(.bottom, 4)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
 
-                        ForEach(group.items) { item in
-                            SidebarRow(item: item, isSelected: selectedID == item.id) {
-                                selectedID = item.id
+                            ForEach(group.items) { item in
+                                SidebarRow(
+                                    item: item,
+                                    isSelected: selectedID == item.id,
+                                    highlightQuery: isSearching ? query : nil
+                                ) {
+                                    selectedID = item.id
+                                }
                             }
                         }
                     }
@@ -98,10 +150,24 @@ struct Sidebar: View {
         .frame(maxHeight: .infinity)
     }
 
+    private var emptyResults: some View {
+        VStack(alignment: .center, spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 18, weight: .light))
+                .foregroundStyle(DesignColors.textMuted)
+            Text("No matches for \"\(query)\"")
+                .font(DesignFonts.ui(11.5))
+                .foregroundStyle(DesignColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 30)
+    }
+
+    // MARK: - Footer
+
     private var footer: some View {
         HStack {
-            let total = groups.reduce(0) { $0 + $1.items.count }
-            Text("\(total) transcripts · local")
+            Text("\(totalCount) transcripts · local")
                 .font(DesignFonts.mono(10.5))
                 .foregroundStyle(DesignColors.textMuted)
             Spacer()
@@ -112,9 +178,7 @@ struct Sidebar: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .overlay(
-            Rectangle()
-                .fill(DesignColors.borderDefault)
-                .frame(height: 0.5),
+            Rectangle().fill(DesignColors.borderDefault).frame(height: 0.5),
             alignment: .top
         )
     }
@@ -123,6 +187,7 @@ struct Sidebar: View {
 struct SidebarRow: View {
     let item: SidebarItem
     let isSelected: Bool
+    let highlightQuery: String?
     let action: () -> Void
 
     var body: some View {
@@ -133,12 +198,7 @@ struct SidebarRow: View {
                     .frame(width: 2)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(item.title)
-                        .font(DesignFonts.ui(12.5, weight: isSelected ? .semibold : .medium))
-                        .foregroundStyle(DesignColors.textPrimary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-
+                    highlightedTitle
                     HStack(spacing: 6) {
                         Text(item.time)
                             .font(DesignFonts.mono(10.5))
@@ -167,6 +227,44 @@ struct SidebarRow: View {
             .clipShape(RoundedRectangle(cornerRadius: 6))
         }
         .buttonStyle(.plain)
+        .contextMenu {
+            Button("Open") { action() }
+            Divider()
+            Button("Export to Obsidian") {}
+            Button("Copy markdown") {}
+            Button("Reveal in Finder") {}
+            Button("Rename…") {}
+            Divider()
+            Button(role: .destructive) {} label: { Text("Delete transcript…") }
+        }
+    }
+
+    @ViewBuilder
+    private var highlightedTitle: some View {
+        if let query = highlightQuery, !query.isEmpty,
+           let range = item.title.range(of: query, options: .caseInsensitive) {
+            let before = String(item.title[..<range.lowerBound])
+            let match = String(item.title[range])
+            let after = String(item.title[range.upperBound...])
+            (
+                Text(before)
+                + Text(match)
+                    .foregroundColor(DesignColors.textPrimary)
+                    .underline(false)
+                    .bold()
+                + Text(after)
+            )
+            .font(DesignFonts.ui(12.5, weight: isSelected ? .semibold : .medium))
+            .foregroundStyle(DesignColors.textPrimary)
+            .lineLimit(1)
+            .truncationMode(.tail)
+        } else {
+            Text(item.title)
+                .font(DesignFonts.ui(12.5, weight: isSelected ? .semibold : .medium))
+                .foregroundStyle(DesignColors.textPrimary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+        }
     }
 }
 
