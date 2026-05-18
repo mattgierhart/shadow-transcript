@@ -120,6 +120,37 @@ public final class PreviewTranscriptStore: TranscriptStore, @unchecked Sendable 
         }
     }
 
+    public func updateSpeakerDisplayName(
+        transcriptID: UUID,
+        canonicalSpeaker: String,
+        displayName: String
+    ) async throws {
+        try lock.withLock {
+            guard let transcript = stored[transcriptID] else {
+                throw TranscriptStoreError.notFound(transcriptID)
+            }
+            guard let speakerIdx = transcript.speakers.firstIndex(where: { $0.speakerKey == canonicalSpeaker }) else {
+                throw TranscriptStoreError.notFound(transcriptID)
+            }
+            var updatedSpeakers = transcript.speakers
+            updatedSpeakers[speakerIdx].displayName = displayName
+            stored[transcriptID] = StoredTranscript(
+                id: transcript.id,
+                title: transcript.title,
+                date: transcript.date,
+                durationSeconds: transcript.durationSeconds,
+                speakerCount: transcript.speakerCount,
+                markdown: transcript.markdown,
+                model: transcript.model,
+                exportedPath: transcript.exportedPath,
+                createdAt: transcript.createdAt,
+                updatedAt: Date(),
+                speakers: updatedSpeakers,
+                segments: transcript.segments
+            )
+        }
+    }
+
     private static func summary(from stored: StoredTranscript) -> StoredTranscriptSummary {
         StoredTranscriptSummary(
             id: stored.id,
