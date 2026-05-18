@@ -21,7 +21,7 @@ struct MainWindowView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            Sidebar(env: env, selectedID: Binding(
+            Sidebar(vm: vm.sidebarVM, selectedID: Binding(
                 get: { vm.selectedTranscriptID },
                 set: { vm.selectTranscript(id: $0) }
             ))

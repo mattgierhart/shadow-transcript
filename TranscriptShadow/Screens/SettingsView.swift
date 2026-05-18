@@ -87,7 +87,13 @@ struct SettingsView: View {
                        sub: "Pulls audio from other apps via ScreenCaptureKit. No screen content captured.",
                        isLast: true) {
                 HStack(spacing: 10) {
-                    StatusChip(ok: true, label: "granted")
+                    Button(action: { if !vm.screenRecordingGranted { vm.requestScreenRecording() } }) {
+                        StatusChip(
+                            ok: vm.screenRecordingGranted,
+                            label: vm.screenRecordingGranted ? "granted" : "open System Settings"
+                        )
+                    }
+                    .buttonStyle(.plain)
                     SettingsToggle(isOn: Binding(get: { vm.captureSystemAudio }, set: { vm.setCaptureSystemAudio($0) }))
                 }
             }
@@ -150,6 +156,12 @@ struct SettingsView: View {
         panel.title = "Choose Obsidian Vault"
         panel.prompt = "Choose"
         if panel.runModal() == .OK, let url = panel.url {
+            // TODO(EPIC-09): persist a security-scoped bookmark instead
+            // of the raw path. In sandboxed Release builds the granted
+            // URL is scoped to the picker result; storing only `url.path`
+            // means later auto-export / manual-export calls lose sandbox
+            // access (Codex Gate 5b P1). Debug builds currently run
+            // unsandboxed, so this works today.
             vm.setVaultPath(url.path)
         }
     }

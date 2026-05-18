@@ -135,4 +135,24 @@ final class TranscriptViewModelTests: XCTestCase {
         let s0 = vm.displayModel.speakers.first(where: { $0.canonicalKey == "SPEAKER_00" })
         XCTAssertEqual(s0?.name, "Speaker 1")
     }
+
+    // MARK: - Export re-emits markdown (Codex Gate 5b P1 fix)
+
+    func test_makeFormattedTranscript_reEmitsMarkdownFromCurrentDisplayNames() async throws {
+        let store = PreviewTranscriptStore()
+        let stored = try await seedThreeSpeakerTranscript(in: store)
+        // Rename without re-saving the markdown body
+        try await store.updateSpeakerDisplayName(
+            transcriptID: stored.id,
+            canonicalSpeaker: "SPEAKER_00",
+            displayName: "Greg"
+        )
+        let refetched = try await store.fetch(id: stored.id)!
+        let formatted = TranscriptViewModel.makeFormattedTranscript(from: refetched)
+        XCTAssertTrue(formatted.markdown.contains("**Greg**"), "Renamed name should appear in exported markdown body")
+        XCTAssertFalse(formatted.markdown.contains("**Speaker 1**"), "Old default name should be gone from the body")
+        // Other speakers untouched
+        XCTAssertTrue(formatted.markdown.contains("**Speaker 2**"))
+        XCTAssertTrue(formatted.markdown.contains("**Speaker 3**"))
+    }
 }

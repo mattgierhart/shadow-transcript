@@ -52,6 +52,10 @@ public extension SettingKey where Value == String {
 }
 
 public extension SettingKey where Value == Bool {
+    static var captureMicrophone: SettingKey<Bool> {
+        SettingKey<Bool>(rawKey: "capture_microphone", defaultValue: true)
+    }
+
     static var captureSystemAudio: SettingKey<Bool> {
         SettingKey<Bool>(rawKey: "capture_system_audio", defaultValue: true)
     }

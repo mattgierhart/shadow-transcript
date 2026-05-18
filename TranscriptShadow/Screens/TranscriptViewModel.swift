@@ -170,9 +170,9 @@ final class TranscriptViewModel: ObservableObject {
     }
 
     /// Rebuild a `FormattedTranscript` from a `StoredTranscript`. The
-    /// `markdown` field uses the at-save-time body; if speakers have
-    /// been renamed in-place via DBT-002 the markdown is mildly stale
-    /// but the frontmatter speakerMap is current.
+    /// `markdown` field is re-emitted from current `DBT-002.display_name`
+    /// values (not the at-save-time body) so a rename followed by
+    /// Export to Obsidian writes the new names — Codex Gate 5b P1 fix.
     static func makeFormattedTranscript(from stored: StoredTranscript) -> FormattedTranscript {
         let speakerMap = Dictionary(uniqueKeysWithValues: stored.speakers.map {
             ($0.speakerKey, $0.displayName)
@@ -196,7 +196,7 @@ final class TranscriptViewModel: ObservableObject {
         }
         let model = WhisperModel(rawValue: stored.model) ?? .baseEN
         return FormattedTranscript(
-            markdown: stored.markdown,
+            markdown: renderMarkdownBody(turns: turns),
             metadata: TranscriptMetadata(
                 durationSeconds: stored.durationSeconds,
                 speakerCount: stored.speakerCount,
@@ -209,6 +209,22 @@ final class TranscriptViewModel: ObservableObject {
             warnings: [],
             turns: turns
         )
+    }
+
+    /// Body-only markdown matching `DefaultTranscriptFormatter`'s emit
+    /// shape: `**Display Name** [HH:MM:SS]:\n<text>\n\n…`. We re-emit
+    /// here instead of caching the saved body so post-rename exports
+    /// reflect the new speaker labels.
+    static func renderMarkdownBody(turns: [TranscriptTurn]) -> String {
+        var output = ""
+        for turn in turns {
+            let timestamp = formatTimestamp(turn.startSeconds)
+            output += "**\(turn.displayName)** [\(timestamp)]:\n\(turn.text)\n\n"
+        }
+        // Trim the trailing blank line so the exporter's "\n\n" join with
+        // the frontmatter doesn't produce a triple newline.
+        while output.hasSuffix("\n\n") { output.removeLast() }
+        return output
     }
 
     // MARK: - Projection

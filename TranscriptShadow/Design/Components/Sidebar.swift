@@ -24,12 +24,12 @@ struct SidebarGroup: Identifiable {
 }
 
 struct Sidebar: View {
-    @StateObject private var vm: SidebarViewModel
+    @ObservedObject var vm: SidebarViewModel
     @Binding var selectedID: String?
     @FocusState private var searchFocused: Bool
 
-    init(env: AppEnvironment, selectedID: Binding<String?>) {
-        _vm = StateObject(wrappedValue: SidebarViewModel(env: env))
+    init(vm: SidebarViewModel, selectedID: Binding<String?>) {
+        self.vm = vm
         self._selectedID = selectedID
     }
 
@@ -285,7 +285,7 @@ enum SidebarMockData {
 }
 
 #Preview {
-    Sidebar(env: .preview(), selectedID: .constant(nil))
+    Sidebar(vm: SidebarViewModel(env: .preview()), selectedID: .constant(nil))
         .frame(height: 600)
         .background(DesignColors.bgPrimary)
 }

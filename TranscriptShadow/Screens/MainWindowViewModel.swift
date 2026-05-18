@@ -34,11 +34,13 @@ final class MainWindowViewModel: ObservableObject {
     let env: AppEnvironment
     let hud: RecordingHUDController
     let permissions: PermissionsCoordinator
+    let sidebarVM: SidebarViewModel
 
     init(env: AppEnvironment, hud: RecordingHUDController = .shared, permissions: PermissionsCoordinator = .init()) {
         self.env = env
         self.hud = hud
         self.permissions = permissions
+        self.sidebarVM = SidebarViewModel(env: env)
         // Default onStop is the demo-flow handler — transitions to
         // canned `processing` without an audioURL. handleRecord
         // replaces this for the real-recording path.
@@ -69,6 +71,7 @@ final class MainWindowViewModel: ObservableObject {
             return
         }
 
+        let wantsMic = (try? await env.settings.read(.captureMicrophone)) ?? true
         let wantsSystem = (try? await env.settings.read(.captureSystemAudio)) ?? true
         var useSystem = wantsSystem
         if wantsSystem && permissions.screenRecordingStatus != .granted {
@@ -77,9 +80,12 @@ final class MainWindowViewModel: ObservableObject {
             useSystem = false
             systemAudioFellBack = true
         }
-
+        if !wantsMic && !useSystem {
+            recordError = "Turn on at least one source (microphone or system audio)."
+            return
+        }
         let config = AudioCaptureConfiguration(
-            captureMicrophone: true,
+            captureMicrophone: wantsMic,
             captureSystemAudio: useSystem
         )
         do {
@@ -126,5 +132,9 @@ final class MainWindowViewModel: ObservableObject {
 
     func onPipelineComplete(transcriptID: UUID) {
         selectTranscript(id: transcriptID.uuidString)
+        // Codex Gate 5b P2 fix — SCR-006 sidebar would otherwise stay
+        // stale until next launch. Trigger a fresh
+        // TranscriptStore.list so the new row shows up.
+        Task { @MainActor [sidebarVM] in await sidebarVM.load() }
     }
 }

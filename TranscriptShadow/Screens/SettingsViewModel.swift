@@ -16,12 +16,15 @@ final class SettingsViewModel: ObservableObject {
     @Published private(set) var vaultPath: String = ""
     @Published private(set) var subfolder: String = SettingKey<String>.obsidianSubfolder.defaultValue
     @Published private(set) var autoExport: Bool = SettingKey<Bool>.autoExport.defaultValue
+    @Published private(set) var screenRecordingGranted: Bool = false
 
     let env: AppEnvironment
+    let permissions: PermissionsCoordinator
     private var hasLoaded = false
 
-    init(env: AppEnvironment) {
+    init(env: AppEnvironment, permissions: PermissionsCoordinator = .init()) {
         self.env = env
+        self.permissions = permissions
     }
 
     func load() async {
@@ -37,6 +40,18 @@ final class SettingsViewModel: ObservableObject {
         } catch {
             // ignore — keys keep their defaults
         }
+        refreshScreenRecordingStatus()
+    }
+
+    /// Re-reads the macOS permission state. Cheap (no system prompt);
+    /// call after the user returns from System Settings.
+    func refreshScreenRecordingStatus() {
+        screenRecordingGranted = permissions.screenRecordingStatus == .granted
+    }
+
+    func requestScreenRecording() {
+        _ = permissions.requestScreenRecording()
+        refreshScreenRecordingStatus()
     }
 
     // MARK: - Setters (each writes through to SettingsStore)

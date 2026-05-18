@@ -93,10 +93,10 @@ struct PreFlightContent: View {
         HStack(spacing: 12) {
             SourceToggle(systemIcon: "mic.fill", label: "Microphone",
                          sub: "MacBook Pro Microphone",
-                         isOn: Binding(get: { vm.micEnabled }, set: { vm.micEnabled = $0 }))
+                         isOn: Binding(get: { vm.micEnabled }, set: { vm.setMicEnabled($0) }))
             SourceToggle(systemIcon: "speaker.wave.2.fill", label: "System audio",
                          sub: "ScreenCaptureKit · all apps",
-                         isOn: Binding(get: { vm.systemAudioEnabled }, set: { vm.systemAudioEnabled = $0 }))
+                         isOn: Binding(get: { vm.systemAudioEnabled }, set: { vm.setSystemAudioEnabled($0) }))
         }
     }
 
