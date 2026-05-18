@@ -6,7 +6,7 @@ template_version: "3.0.0"
 
 > **Status**: Active
 > **Current PRD Version**: v0.7 (See `PRD.md`)
-> **Active EPIC**: EPIC-07 — SwiftUI Interface (EPIC-06 closed 2026-05-12 with `AppDatabase` + v1 migration + 4 GRDB record types + `TranscriptStore` with FTS5 + `SettingsStore` with typed keys + `ObsidianExporter` with INT-001 frontmatter and `MarkdownFilenameSanitizer`; EPIC-05's `Turn` promoted to public `TranscriptTurn` to back DBT-002/003 cleanly; ~37 new XCTests covering TEST-401..405 + cascade-delete + FTS trigger sync + settings round-trip; build verification deferred to CI) (See `epics/`)
+> **Active EPIC**: EPIC-08 — Pipeline Integration & Audio Lifecycle (EPIC-07 closed 2026-05-17 — full SwiftUI shell wired through `AppEnvironment` DI + 6 @MainActor view-models, real record loop with `PermissionsCoordinator` + `AudioCaptureService` + `RecordingHUDController`, real pipeline in `ProcessingViewModel` chaining Transcribe → Diarize → Format → Save → optional Export with `Task.cancel` propagation, inline speaker rename with `UndoManager` + new `TranscriptStore.updateSpeakerDisplayName` API-006 method + collision detection, SCR-004 Copy / Save-As / Export-to-Obsidian toolbar with re-emitted markdown reflecting renames, Codex Gate 5b fixed P1.1 + 3× P2; 31 new XCTests, 165 total green) (See `epics/`)
 
 ---
 
@@ -68,8 +68,8 @@ template_version: "3.0.0"
 | EPIC-04b | Swift `DiarizationService` Bridge | ✅ Complete | EPIC-04a |
 | EPIC-05 | Transcript Formatting & Alignment | ✅ Complete | EPIC-03, EPIC-04b |
 | EPIC-06 | Storage & Obsidian Export | ✅ Complete | EPIC-01, EPIC-05 |
-| EPIC-07 | SwiftUI Interface | Active | EPIC-02, EPIC-05, EPIC-06 |
-| EPIC-08 | Pipeline Integration & Audio Lifecycle | Planned | EPIC-02→07 |
+| EPIC-07 | SwiftUI Interface | ✅ Complete | EPIC-02, EPIC-05, EPIC-06 |
+| EPIC-08 | Pipeline Integration & Audio Lifecycle | Active | EPIC-02→07 |
 
 ### KPI Metrics
 
@@ -89,7 +89,7 @@ template_version: "3.0.0"
 | RISK-004 | Screen Recording permission friction | 3.0 | mitigating |
 | RISK-005 | Speaker-transcript alignment accuracy | 2.0 | mitigating |
 | RISK-006 | Crash during recording loses audio | 1.5 | mitigating |
-| RISK-007 | Notch HUD parity vs menu-bar fallback; fullscreen occlusion | 2.0 | mitigating |
+| RISK-008 | Notch HUD parity vs menu-bar fallback; fullscreen occlusion | 2.0 | mitigating |
 
 ---
 
@@ -166,7 +166,7 @@ pyinstaller diarize.spec   # release-only; multi-GB / multi-minute
 | `SoT.customer_feedback.md` | CFD-001→004, CFD-101→103 | Pain points and value hypotheses |
 | `SoT.BUSINESS_RULES.md` | BR-101→103, BR-201→203, BR-301→302, BR-401→402, BR-501 | Privacy, platform, output, UX rules |
 | `SoT.USER_JOURNEYS.md` | PER-001→002, UJ-001→003, SCR-001→006 | Personas, journeys, screens |
-| `SoT.DESIGN_COMPONENTS.md` | DES-001→005, DES-101→104, DES-201→203, DES-301→305 | UI components, layout principles, design tokens |
+| `SoT.DESIGN_COMPONENTS.md` | DES-001→005, DES-101→106, DES-201→203, DES-301→305 | UI components, recording HUDs (DES-105/106), layout principles, design tokens |
 | `SoT.TECHNICAL_DECISIONS.md` | TECH-001→007, ARC-001→003, ENV-001 | Stack, architecture, environment |
 | `SoT.API_CONTRACTS.md` | API-001→002, API-101→102, API-201→202, API-301 | Internal service contracts |
 | `SoT.DATA_MODEL.md` | DBT-001→003, DBT-101 | SQLite schema |

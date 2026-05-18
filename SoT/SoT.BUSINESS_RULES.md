@@ -315,11 +315,11 @@ The MVP supports meetings up to 2 hours in duration. Longer recordings MAY work 
 **Status**: Active
 **Severity**: High
 **Created**: 2026-04-24
-**Last Updated**: 2026-04-24
+**Last Updated**: 2026-05-16
 
 ### Rule Statement
 
-While a recording is active, the app's main window MUST be hidden. The only app-owned UI visible to the user during recording is the Recording HUD (SCR-002), realized as either the Notch HUD (DES-201) on notch-equipped MacBook Pros or the Menu Bar Extra (DES-202) on all other Macs. The Recording HUD MUST expose exactly one user-facing action: **Stop**. No timer, audio level, waveform, pause/resume, source toggles, settings, or navigation shall be shown on the recording surface itself; any such controls require the user to explicitly open the main window.
+While a recording is active, the app's main window MUST be hidden. The only app-owned UI visible to the user during recording is the Recording HUD (SCR-002), realized as either the Notch HUD (DES-105) on notch-equipped MacBook Pros or the Menu Bar Extra (DES-106) on all other Macs. The Recording HUD MUST expose exactly one user-facing action: **Stop**. No timer, audio level, waveform, pause/resume, source toggles, settings, or navigation shall be shown on the recording surface itself; any such controls require the user to explicitly open the main window.
 
 ### Rationale
 
@@ -342,9 +342,9 @@ While a recording is active, the app's main window MUST be hidden. The only app-
 
 - [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - enforces during
 - [SCR-002](SoT.USER_JOURNEYS.md#scr-002-recording-hud) - the single permitted recording surface
-- [DES-201](SoT.DESIGN_COMPONENTS.md#des-201-recording-hud-notch) - notch realization
-- [DES-202](SoT.DESIGN_COMPONENTS.md#des-202-recording-hud-menu-bar-extra) - menu bar realization
-- [RISK-007 in PRD](../PRD.md) - hardware fragmentation risk tied to this rule
+- [DES-105](SoT.DESIGN_COMPONENTS.md#des-105-recording-hud-notch) - notch realization
+- [DES-106](SoT.DESIGN_COMPONENTS.md#des-106-recording-hud-menu-bar-extra) - menu bar realization
+- [RISK-008 in PRD](../PRD.md) - hardware fragmentation risk tied to this rule
 
 ---
 

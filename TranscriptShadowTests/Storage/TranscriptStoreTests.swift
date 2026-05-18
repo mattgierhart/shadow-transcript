@@ -163,6 +163,47 @@ final class TranscriptStoreTests: XCTestCase {
         XCTAssertEqual(firstMap, secondMap)
     }
 
+    // MARK: - updateSpeakerDisplayName (UJ-002)
+
+    func test_updateSpeakerDisplayName_persistsAcrossFetch() async throws {
+        let stored = try await saveFixtureTranscript(title: "Rename me")
+        try await store.updateSpeakerDisplayName(
+            transcriptID: stored.id,
+            canonicalSpeaker: "SPEAKER_00",
+            displayName: "Greg"
+        )
+        let refetched = try await store.fetch(id: stored.id)
+        let greg = refetched?.speakers.first(where: { $0.speakerKey == "SPEAKER_00" })
+        XCTAssertEqual(greg?.displayName, "Greg")
+    }
+
+    func test_updateSpeakerDisplayName_throwsNotFound_forUnknownTranscript() async throws {
+        do {
+            try await store.updateSpeakerDisplayName(
+                transcriptID: UUID(),
+                canonicalSpeaker: "SPEAKER_00",
+                displayName: "Greg"
+            )
+            XCTFail("Expected notFound")
+        } catch let error as TranscriptStoreError {
+            if case .notFound = error { /* expected */ } else { XCTFail("Wrong error: \(error)") }
+        }
+    }
+
+    func test_updateSpeakerDisplayName_throwsNotFound_forUnknownCanonical() async throws {
+        let stored = try await saveFixtureTranscript(title: "x")
+        do {
+            try await store.updateSpeakerDisplayName(
+                transcriptID: stored.id,
+                canonicalSpeaker: "SPEAKER_99",
+                displayName: "X"
+            )
+            XCTFail("Expected notFound")
+        } catch let error as TranscriptStoreError {
+            if case .notFound = error { /* expected */ } else { XCTFail("Wrong error: \(error)") }
+        }
+    }
+
     // MARK: - Helpers
 
     private func saveFixtureTranscript(

@@ -1,8 +1,16 @@
 # Visual Prototype Gate — Transcript Shadow
 
-> **Date**: 2026-03-20
-> **Status**: Ready for prototype generation
-> **Tool**: Google Stitch (or equivalent UI generation tool)
+> ## ⚠️ FULLY SUPERSEDED — 2026-05-16
+>
+> **The canonical visual SoT now lives at `design/visual-prototype/` (Claude Design handoff, all six screens + filmstrip + token sheet, no build step).** Open `design/visual-prototype/project/index.html` in any browser. See `design/visual-prototype/README.md` for the JSX → SwiftUI implementation map.
+>
+> This file is kept for historical reference only — it captures the v0.4 Stitch-based first attempt. **Do not regenerate prototypes from it.** The prompts below pre-date BR-501 (Minimal Recording UI) and the DES-105/DES-106 HUD recast; they describe the old "main window with waveform during recording" design that has been replaced.
+>
+> If you need to refresh the prototype: re-run Claude Design against the current SoT (see `design/visual-prototype/README.md` "How to update the prototype"), then replace `design/visual-prototype/` with the new handoff.
+
+> **Date**: 2026-03-20 (original Stitch prompts); **Superseded**: 2026-05-16
+> **Status**: Historical reference only — canonical visual SoT is `design/visual-prototype/`
+> **Tool**: Google Stitch (no longer the primary visual workflow)
 > **Screens**: 6 (SCR-001 through SCR-006)
 > **Money Shot**: SCR-004 (Transcript View)
 

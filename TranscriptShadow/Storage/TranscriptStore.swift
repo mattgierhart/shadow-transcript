@@ -22,6 +22,17 @@ public protocol TranscriptStore: Sendable {
     func search(query: String, limit: Int) async throws -> [StoredTranscriptSummary]
     func markExported(id: UUID, to path: URL) async throws
     func delete(id: UUID) async throws
+
+    /// Updates `DBT-002.display_name` for the matching (transcript,
+    /// speaker_key) pair. Used by UJ-002's inline rename. Throws
+    /// `TranscriptStoreError.notFound` if the transcript-or-speaker pair
+    /// doesn't exist. The parent transcript's `updated_at` is bumped on
+    /// success so callers observing list ordering see the change.
+    func updateSpeakerDisplayName(
+        transcriptID: UUID,
+        canonicalSpeaker: String,
+        displayName: String
+    ) async throws
 }
 
 public struct StoredTranscript: Sendable, Equatable {
@@ -238,6 +249,33 @@ public final class DefaultTranscriptStore: TranscriptStore, Sendable {
             if !deleted {
                 throw TranscriptStoreError.notFound(id)
             }
+        }
+    }
+
+    public func updateSpeakerDisplayName(
+        transcriptID: UUID,
+        canonicalSpeaker: String,
+        displayName: String
+    ) async throws {
+        let updatedAt = ISO8601.string(from: clock())
+        try await database.queue.write { db in
+            try db.execute(
+                sql: """
+                    UPDATE speakers
+                    SET display_name = ?
+                    WHERE transcript_id = ? AND speaker_key = ?
+                """,
+                arguments: [displayName, transcriptID.uuidString, canonicalSpeaker]
+            )
+            if db.changesCount == 0 {
+                throw TranscriptStoreError.notFound(transcriptID)
+            }
+            // Touch the parent transcript so list-ordering / cache
+            // observers see the change.
+            try db.execute(
+                sql: "UPDATE transcripts SET updated_at = ? WHERE id = ?",
+                arguments: [updatedAt, transcriptID.uuidString]
+            )
         }
     }
 

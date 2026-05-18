@@ -1,8 +1,8 @@
 ---
-version: 2.0
+version: 2.1
 purpose: Source of Truth for UI components, design tokens, layout principles, and pattern library.
 id_prefix: DES-XXX
-last_updated: 2026-03-20
+last_updated: 2026-05-16
 authority: This is a SoT file - IDs here are referenced by SoT.USER_JOURNEYS.md, EPICs, and code
 ---
 
@@ -30,17 +30,14 @@ authority: This is a SoT file - IDs here are referenced by SoT.USER_JOURNEYS.md,
 - [DES-102](#des-102-progress-pipeline) - Progress Pipeline
 - [DES-103](#des-103-permission-prompt) - Permission Prompt
 - [DES-104](#des-104-empty-state) - Empty State
+- [DES-105](#des-105-recording-hud-notch) - Recording HUD — Notch
+- [DES-106](#des-106-recording-hud-menu-bar-extra) - Recording HUD — Menu Bar Extra
 
 **Layout Principles** (DES-201 to DES-299):
 
 - [DES-201](#des-201-page-layout-system) - Page Layout System
 - [DES-202](#des-202-navigation-pattern) - Navigation Pattern
 - [DES-203](#des-203-density-modes) - Density Modes
-
-**Ambient / HUD Surfaces** (DES-201 to DES-299):
-
-- [DES-201](#des-201-recording-hud-notch) - Recording HUD — Notch
-- [DES-202](#des-202-recording-hud-menu-bar-extra) - Recording HUD — Menu Bar Extra
 
 **Design Tokens** (DES-301 to DES-399):
 
@@ -56,49 +53,50 @@ authority: This is a SoT file - IDs here are referenced by SoT.USER_JOURNEYS.md,
 
 **ID**: DES-001
 **Category**: Core
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-20
+**Last Updated**: 2026-05-16
 
 ### Description
 
-Primary action button for starting/stopping audio recording. The only red element in the UI — recording red is reserved exclusively for this control. Centered in the main content area when no recording is active. Minimal, high-contrast against dark background.
+Primary action button for **starting** a recording. Per BR-501, the main window is hidden during active recording — so this button has no Stop responsibility. Stop lives on the Recording HUD (DES-105 Notch, DES-106 Menu Bar Extra). DES-001 is the only red element on the main window; recording red is reserved exclusively for this control.
 
 ### Specifications
 
-**Dimensions**: 64px circular (idle), 56px rounded-square (recording)
-**Color**: Recording red (#EF4444) only — this is the sole use of red as a brand element
-**Variants**: Idle (red circle), Recording (red rounded-square, subtle pulse animation), Disabled (gray, 30% opacity)
-**States**: idle → recording → processing (transitions to progress view)
-**Animation**: Subtle pulse glow on recording state (alive but not attention-demanding — user is in a meeting)
+**Dimensions**: 64px circular
+**Color**: Recording red (#EF4444) only — sole use of red as a brand element
+**Variants**: Idle (red circle, default), Disabled (gray, 30% opacity — shown when mic permission missing)
+**States**: idle → (click) → main window hides + HUD appears (per BR-501). No "recording" state lives on this control.
+**Animation**: Subtle hover glow only. No pulse — the button is unmounted during recording.
 
 ### Accessibility
 
-- VoiceOver: "Record meeting" / "Stop recording"
-- Keyboard: Space bar to toggle
+- VoiceOver: "Start recording"
+- Keyboard: Space bar to start
 
 ### Related IDs
 
-- [SCR-001](SoT.USER_JOURNEYS.md#scr-001-main-window) - Main window placement
-- [SCR-002](SoT.USER_JOURNEYS.md#scr-002-recording-view) - Recording state
-- [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - Step 3
+- [SCR-001](SoT.USER_JOURNEYS.md#scr-001-main-window-idle) - Main window placement (pre-record only)
+- [BR-501](SoT.BUSINESS_RULES.md#br-501-minimal-recording-ui) - Why this button has no Stop state
+- [DES-105](#des-105-recording-hud-notch) / [DES-106](#des-106-recording-hud-menu-bar-extra) - Where Stop lives
+- [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - Step 3 (click → hide main → show HUD)
 - [DES-301](#des-301-color-palette) - Uses recording red (only component to use red)
 
 ---
 
-## DES-002: Audio Level Indicator
+## DES-002: Audio Level Preview
 
 **ID**: DES-002
 **Category**: Core
-**Status**: Planned (deferred to post-MVP)
+**Status**: Implemented (2026-05-17, EPIC-07 — visual only; live levels stream wiring deferred to v0.8)
 **Platform**: macOS
 **Created**: 2026-03-11
-**Last Updated**: 2026-03-20
+**Last Updated**: 2026-05-16
 
 ### Description
 
-Real-time audio waveform showing input volume during recording. Must feel "alive" — confirming audio capture is working — but not demand attention. The user is in a meeting, not watching this.
+Pre-record audio level preview shown beneath the Record button on SCR-001 (Main Window — Idle). Lets the user confirm the mic is hearing them and that system audio is wired up **before** they click Record. Per BR-501, no audio-level visualization is shown during active recording — once the user clicks Record, the main window hides and the only surface visible is the Recording HUD (DES-105/DES-106).
 
 ### Specifications
 
@@ -106,22 +104,23 @@ Real-time audio waveform showing input volume during recording. Must feel "alive
 **Style**: Minimal waveform bars (not a full spectrogram). Teal accent color (DES-301 primary accent) with low opacity for inactive bars, bright for active peaks.
 **Variants**: Waveform (animated bars, default), Minimal (thin horizontal line with amplitude)
 **States**:
-- Active: Bars animate with audio input, teal accent
-- Silent: Bars flatline, amber warning tint after 10s silence
-- Disabled: Gray, no animation
+- Active: Bars animate with live mic + system audio, teal accent (only visible on SCR-001)
+- Silent: Bars flatline, amber warning tint if no input detected for 5s (encourages user to check mic before recording)
+- Disabled: Gray, no animation (no mic permission)
 
 ### Design Notes
 
-Per density mode (DES-203): Recording view is spacious. This indicator should breathe — generous padding above and below. It's a "heartbeat" that confirms the app is listening, not a diagnostic tool.
+This is a **pre-flight check**, not a recording indicator. The audio source toggles (mic + system audio) sit above it on SCR-001 so the user can see both inputs registering. After Record is clicked, this component is unmounted along with the rest of the main window per BR-501.
 
 ### Accessibility
 
-- VoiceOver: "Audio level: active" / "Audio level: no input detected"
+- VoiceOver: "Audio input level: active" / "Audio input level: no input detected"
 
 ### Related IDs
 
-- [SCR-002](SoT.USER_JOURNEYS.md#scr-002-recording-view) - Recording view
-- [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - Step 4
+- [SCR-001](SoT.USER_JOURNEYS.md#scr-001-main-window-idle) - Pre-record preview surface (only place this appears)
+- [BR-501](SoT.BUSINESS_RULES.md#br-501-minimal-recording-ui) - Why this is excluded from the recording surface
+- [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - Step 2 (pre-flight check)
 - [DES-301](#des-301-color-palette) - Teal accent for bars
 
 ---
@@ -130,7 +129,7 @@ Per density mode (DES-203): Recording view is spacious. This indicator should br
 
 **ID**: DES-003
 **Category**: Core
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS
 **Created**: 2026-03-11
 **Last Updated**: 2026-03-20
@@ -166,7 +165,7 @@ Rendered transcript segment showing speaker label, timestamp, and spoken text. E
 
 **ID**: DES-004
 **Category**: Core
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS
 **Created**: 2026-03-20
 **Last Updated**: 2026-03-20
@@ -204,7 +203,7 @@ Follows Obsidian's sidebar pattern. Dark surface (#141415) slightly lighter than
 
 **ID**: DES-005
 **Category**: Core
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS
 **Created**: 2026-03-20
 **Last Updated**: 2026-03-20
@@ -235,7 +234,7 @@ macOS native toolbar at top of window. Contains record button (centered), audio 
 
 **ID**: DES-101
 **Category**: Feature
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS
 **Created**: 2026-03-11
 **Last Updated**: 2026-03-20
@@ -273,7 +272,7 @@ Clickable pill showing speaker identity. Displays auto-assigned name ("Speaker 1
 
 **ID**: DES-102
 **Category**: Feature
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS
 **Created**: 2026-03-11
 **Last Updated**: 2026-03-20
@@ -309,7 +308,7 @@ Centered, spacious layout with generous whitespace. The user just finished a cal
 
 **ID**: DES-103
 **Category**: Feature
-**Status**: Planned
+**Status**: Partially Implemented (2026-05-17, EPIC-07 — inline banners on SCR-001 + Settings request chip; full first-launch prompt card deferred to v0.8)
 **Platform**: macOS
 **Created**: 2026-03-20
 **Last Updated**: 2026-03-20
@@ -340,7 +339,7 @@ First-launch permission request card explaining why microphone and Screen Record
 
 **ID**: DES-104
 **Category**: Feature
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS
 **Created**: 2026-03-20
 **Last Updated**: 2026-03-20
@@ -358,8 +357,110 @@ Shown when no transcripts exist (first launch, or sidebar is empty). Welcoming, 
 
 ### Related IDs
 
-- [SCR-001](SoT.USER_JOURNEYS.md#scr-001-main-window) - First-launch state
+- [SCR-001](SoT.USER_JOURNEYS.md#scr-001-main-window-idle) - First-launch state
 - [DES-004](#des-004-sidebar-transcript-list) - Sidebar empty variant
+
+---
+
+## DES-105: Recording HUD — Notch
+
+**ID**: DES-105
+**Category**: Feature
+**Status**: Implemented (2026-05-17, EPIC-07)
+**Platform**: macOS (notch-equipped MacBook Pro 14"/16", 2021+)
+**Created**: 2026-05-15
+**Last Updated**: 2026-05-16
+
+### Description
+
+Primary realization of SCR-002 (Recording HUD) on notch-equipped MacBook Pros. A persistent panel anchored at the display notch that hosts the only app-owned UI visible while recording is active. Per BR-501, exposes exactly one user-facing action: **Stop**. Sits at window level `.statusBar + 1` so it survives over fullscreen meeting apps (Zoom, Teams, Meet). Implemented as an `NSPanel` with non-activating + can-be-visible-on-all-spaces behavior.
+
+### Specifications
+
+**Surface**: Borderless `NSPanel` clamped to display notch geometry (top-center, ≈ notch width when collapsed, expandable left/right to ~280pt when revealed)
+**Window Level**: `.statusBar + 1` (above fullscreen apps)
+**Collected State** (default during recording):
+- Width: ≈ display notch width
+- Height: notch height
+- Content: small red dot indicator (recording active) — no text, no timer
+**Expanded State** (on hover or single click):
+- Width: 280pt, Height: 36pt
+- Content (left → right): small red dot · "Recording" label (SF Pro Medium 12px, DES-302) · **Stop** button (red square, DES-001 recording red, 24pt)
+- Stop is the only interactive element. No timer, audio level, source toggle, pause/resume, or settings.
+**Material**: NSVisualEffectView `.hudWindow` material (dark vibrancy that reads over any background)
+**Transitions**:
+- Appearing: fade + scale-down-from-notch (~150ms ease-out) when Record clicked on SCR-001
+- Stopping: collapse + fade-out (~120ms ease-in) before SCR-003 restores the main window
+- Hover expand: width tween 100ms ease-out
+**Animation**: red dot has a 1Hz subtle opacity oscillation (0.6 → 1.0) to confirm liveness without demanding attention.
+
+### Accessibility
+
+- VoiceOver: collapsed announces "Recording. Click to expand."; expanded announces "Recording. Stop button."
+- Keyboard: global hotkey (configurable, default Cmd+Shift+. ) sends Stop without needing to hover.
+
+### Design Notes
+
+The notch HUD is the **primary** realization, not a luxury alternative — design with feature parity to DES-106 (Menu Bar Extra). If the notch HUD cannot stay above fullscreen meeting apps reliably, RISK-008's mitigation plan promotes DES-106 to primary.
+
+### Related IDs
+
+- [SCR-002](SoT.USER_JOURNEYS.md#scr-002-recording-hud) - The screen this realizes
+- [BR-501](SoT.BUSINESS_RULES.md#br-501-minimal-recording-ui) - Mandate (single Stop action, no other UI)
+- [DES-106](#des-106-recording-hud-menu-bar-extra) - Peer realization for non-notch Macs
+- [DES-301](#des-301-color-palette) - Recording red, teal disallowed here
+- [DES-302](#des-302-typography-system) - "Recording" label uses SF Pro Medium 12px
+- [RISK-008 in PRD](../PRD.md) - Fullscreen-occlusion risk this HUD must clear
+
+---
+
+## DES-106: Recording HUD — Menu Bar Extra
+
+**ID**: DES-106
+**Category**: Feature
+**Status**: Implemented (2026-05-17, EPIC-07)
+**Platform**: macOS (all Macs without a display notch; also fallback when DES-105 cannot stay above fullscreen)
+**Created**: 2026-05-15
+**Last Updated**: 2026-05-16
+
+### Description
+
+Peer realization of SCR-002 (Recording HUD) on non-notch Macs. An `NSStatusItem` in the system menu bar serves as the always-visible recording indicator. Per BR-501, exposes exactly one user-facing action: **Stop**. Designed as a **peer**, not a degraded fallback — feature-parity with DES-105.
+
+### Specifications
+
+**Surface**: `NSStatusItem` in the system menu bar (`.variableLength`), accompanied by an `NSPopover` on click
+**Status Item (always visible during recording)**:
+- Icon: small filled red circle (16x16, recording red #EF4444) — same 1Hz opacity oscillation as DES-105
+- No text in the menu bar (icon-only to respect macOS conventions)
+**Popover (on click)**:
+- Size: 220pt x 80pt
+- Layout: vertical stack — "Recording" label (SF Pro Medium 14px) · **Stop** button (full-width, red, 36pt tall)
+- Stop is the only interactive element. No timer, audio level, source toggle, pause/resume, or settings.
+- Material: standard `.popover` background, no custom chrome
+**Transitions**:
+- Appearing: status item slides in from menu-bar-right (system default)
+- Stopping: status item fades + removes (~120ms) before SCR-003 restores the main window
+- Popover: standard macOS popover animation
+**Window Level**: status items are always above other windows by macOS design — no level juggling required (this is why DES-106 is the safety net when DES-105 fails fullscreen occlusion)
+
+### Accessibility
+
+- VoiceOver: status item announces "Recording. Click to show Stop button."; popover announces "Stop recording button."
+- Keyboard: same global hotkey as DES-105 (configurable, default Cmd+Shift+. ) sends Stop directly.
+
+### Design Notes
+
+Reliability advantage: macOS guarantees status items appear above fullscreen apps. This is why DES-106 is the safety net for the fullscreen-occlusion risk that motivates RISK-008. Visual treatment should NOT mark this as the "degraded" version — same red dot, same single Stop action, same liveness oscillation.
+
+### Related IDs
+
+- [SCR-002](SoT.USER_JOURNEYS.md#scr-002-recording-hud) - The screen this realizes
+- [BR-501](SoT.BUSINESS_RULES.md#br-501-minimal-recording-ui) - Mandate (single Stop action, no other UI)
+- [DES-105](#des-105-recording-hud-notch) - Peer realization for notch Macs
+- [DES-301](#des-301-color-palette) - Recording red
+- [DES-302](#des-302-typography-system) - "Recording" label typography
+- [RISK-008 in PRD](../PRD.md) - Promoted to primary if DES-105 fullscreen risk materializes
 
 ---
 
@@ -696,16 +797,16 @@ _No deprecated components._
 
 **Components by Screen**:
 
-- SCR-001 uses: DES-001, DES-004, DES-005, DES-104
-- SCR-002 uses: DES-001, DES-002, DES-004, DES-005
-- SCR-003 uses: DES-004, DES-005, DES-102
+- SCR-001 uses: DES-001 (start), DES-002 (pre-record preview), DES-004, DES-005, DES-104
+- SCR-002 uses: DES-105 (Notch HUD) OR DES-106 (Menu Bar Extra) — hardware-conditional; main window is hidden per BR-501
+- SCR-003 uses: DES-004, DES-005, DES-102 (main window restored to host processing)
 - SCR-004 uses: DES-003, DES-004, DES-005, DES-101
 - SCR-005 uses: DES-004, DES-005 (settings as sheet overlay)
 - SCR-006 uses: DES-004 (sidebar IS the history view)
 
 **Components by Journey**:
 
-- UJ-001 uses: DES-001, DES-002, DES-005, DES-102
+- UJ-001 uses: DES-001 (start), DES-002 (pre-flight), DES-105/106 (recording), DES-102 (processing)
 - UJ-002 uses: DES-003, DES-004, DES-101
 - UJ-003 uses: DES-103 (first-launch permissions)
 
@@ -717,6 +818,8 @@ _No deprecated components._
 - DES-004 uses: DES-301 (teal selection), DES-304 (sidebar vibrancy)
 - DES-101 uses: DES-301 (speaker colors), DES-302 (label font)
 - DES-102 uses: DES-305 (success/error states)
+- DES-105 uses: DES-301 (recording red), DES-302 (label typography)
+- DES-106 uses: DES-301 (recording red), DES-302 (label typography)
 
 ---
 
