@@ -89,10 +89,14 @@ jobs:
         working-directory: sidecar
         run: pip install -r requirements.txt
 
-      - name: Stub argparse smoke test
+      - name: Argparse loads + --help works
         working-directory: sidecar
-        run: |
-          python diarize.py --help
-          python diarize.py --audio /tmp/example.wav --output /tmp/example.json
-          test -s /tmp/example.json
-          python -c "import json; d = json.load(open('/tmp/example.json')); assert d.get('stub') is True"
+        run: python diarize.py --help
+
+      - name: Pytest suite (envelope / progress / errors / exit codes)
+        working-directory: sidecar
+        # Pure-Python tests — TEST-201..204 plus golden-fixture schema
+        # checks. pyannote is not invoked here; the integration spike
+        # and PyInstaller smoke test cover the real model path. CI-safe
+        # without an HF token.
+        run: pytest tests/ -v
