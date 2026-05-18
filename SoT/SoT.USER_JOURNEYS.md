@@ -134,7 +134,7 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, EPICs, and ot
 
 **ID**: SCR-001
 **Type**: Page (content area state)
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Confidence**: 3/5 (source: journey-mapping + design-interview)
 **Created**: 2026-03-11
 **Last Updated**: 2026-05-16
@@ -208,7 +208,7 @@ The main window of the app. Visible **before** recording (pre-flight surface —
 
 **ID**: SCR-002
 **Type**: HUD (not a content-area state — its own window-level surface)
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07 — DES-105 + DES-106 peers)
 **Confidence**: 3/5 (source: journey-mapping + design-interview + BR-501)
 **Created**: 2026-03-11
 **Last Updated**: 2026-05-16
@@ -280,7 +280,7 @@ Not a content-area screen — the HUD is a separate window surface at `.statusBa
 
 **ID**: SCR-003
 **Type**: Page (content area state on the restored main window)
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Confidence**: 3/5 (source: journey-mapping + design-interview)
 **Created**: 2026-03-11
 **Last Updated**: 2026-05-16
@@ -345,7 +345,7 @@ Shows transcription and diarization progress after recording stops. This is the 
 
 **ID**: SCR-004
 **Type**: Page (content area state)
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Confidence**: 3/5 (source: journey-mapping + design-interview)
 **Created**: 2026-03-11
 **Last Updated**: 2026-03-20
@@ -419,7 +419,7 @@ Display completed transcript with speaker labels and timestamps. The user is foc
 
 **ID**: SCR-005
 **Type**: Sheet (overlay)
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Confidence**: 3/5 (source: journey-mapping + design-interview)
 **Created**: 2026-03-11
 **Last Updated**: 2026-03-20
@@ -501,7 +501,7 @@ App configuration. Opens as a macOS sheet overlay (not a separate window), acces
 
 **ID**: SCR-006
 **Type**: Component (persistent sidebar)
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Confidence**: 3/5 (source: journey-mapping + design-interview)
 **Created**: 2026-03-11
 **Last Updated**: 2026-03-20

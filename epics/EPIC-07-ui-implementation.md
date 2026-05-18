@@ -4,9 +4,9 @@ template_version: "3.0.0"
 
 # EPIC-07 SwiftUI Interface
 
-> **State**: `Active (next up — Mac required)`
+> **State**: `✅ Complete (2026-05-17)`
 > **Lifecycle**: v0.7 Build Execution (See `README.md`)
-> **Epic Lead**: TBD
+> **Epic Lead**: Claude Agent
 > **Depends On**: EPIC-02 (audio capture services), EPIC-05 (`FormattedTranscript`), EPIC-06 (`TranscriptStore` + `SettingsStore` + `ObsidianExporter`)
 > **Environment Requirement**: macOS 15+ with Xcode 16+. The previous EPICs were built in a Linux-sandboxed Claude Code session; **EPIC-07 cannot be — SwiftUI previews, AppKit interop, audio permission prompts, and ScreenCaptureKit picker UI all require a Mac.** This EPIC is the natural pause point for "verify EPIC-01..06 on the real Mac before stacking the UI."
 
@@ -212,3 +212,4 @@ Additional changes to fold in:
 | 2026-05-12 | Claude Agent | Mac-handoff prep: filled session state, cumulative carry-forward block, deliverables list per SCR, 5-phase execution plan, EPIC-specific risk callouts, Codex Gate 5 single-ask sketch. EPIC-07 is now ready for a Mac session to pick up. |
 | 2026-05-16 | Claude Agent | BR-501 scope-drift note added to Session State after PR #3 design audit. DES-201/202 (HUD) references renumbered to DES-105/DES-106 (HUD); existing DES-201/202/203 remain "Layout Principles." RISK-007 (UX/notch) renumbered to RISK-008 (RISK-007 stays the codesign risk EPIC-04b shipped against). Phase A re-plan flagged; deliverables + Out-of-Scope sections kept intact and will be reconciled by whoever picks this up on the Mac. |
 | 2026-05-16 | Claude Agent | Claude Design handoff landed at `design/visual-prototype/` (HTML + JSX, no build step). Token sheet validated DES-301..305 pixel-match. JSX → SwiftUI implementation map written at `design/visual-prototype/README.md`. Session State updated with Visual SoT pointer. `temp/visual-prototype-gate.md` marked fully superseded. |
+| 2026-05-17 | Claude Agent | **EPIC-07 closed.** Phase 1 (AppEnvironment DI + 6 Preview fakes + 6 @MainActor view-models + view refactors, visuals unchanged), Phase 2 (Sidebar/Settings read-side wired with 250ms debounced server-side search + date-bucket grouping, NSOpenPanel vault picker, inline speaker rename via new `TranscriptStore.updateSpeakerDisplayName` + collision detection + UndoManager), Phase 3 (real record loop: `PermissionsCoordinator` + `AudioCaptureService.startCapture` + HUD show/hide + `stopCapture` → `ProcessingViewModel.start(audioURL:)` running Transcribe → Diarize → Format → Save → optional Export with monotonic progress + `Task.cancel` propagation; SCR-004 Copy/Save/Export toolbar with re-emitted markdown). Codex Gate 5b surfaced 2× P1 + 4× P2: fixed P1.1 (markdown re-emit on export), P2.3 (real Screen Recording status chip), P2.4 (new `captureMicrophone` SettingKey + handleRecord honors both pre-flight toggles), P2.6 (sidebar refresh on save). P1.2 (sandboxed-Release security-scoped bookmarks) documented and deferred to EPIC-09. P2.5 (sidebar context-menu wiring) deferred to follow-up. Tests: 31 new XCTests (165 total green; DiarizationCodable + PyannoteSidecar classes skipped due to Xcode 26.4.1 XCTMemoryChecker teardown hang — unrelated to EPIC-07 logic, see prior session). |

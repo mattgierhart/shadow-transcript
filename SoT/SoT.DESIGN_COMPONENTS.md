@@ -53,7 +53,7 @@ authority: This is a SoT file - IDs here are referenced by SoT.USER_JOURNEYS.md,
 
 **ID**: DES-001
 **Category**: Core
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS
 **Created**: 2026-03-11
 **Last Updated**: 2026-05-16
@@ -89,7 +89,7 @@ Primary action button for **starting** a recording. Per BR-501, the main window 
 
 **ID**: DES-002
 **Category**: Core
-**Status**: Planned (deferred to post-MVP)
+**Status**: Implemented (2026-05-17, EPIC-07 — visual only; live levels stream wiring deferred to v0.8)
 **Platform**: macOS
 **Created**: 2026-03-11
 **Last Updated**: 2026-05-16
@@ -129,7 +129,7 @@ This is a **pre-flight check**, not a recording indicator. The audio source togg
 
 **ID**: DES-003
 **Category**: Core
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS
 **Created**: 2026-03-11
 **Last Updated**: 2026-03-20
@@ -165,7 +165,7 @@ Rendered transcript segment showing speaker label, timestamp, and spoken text. E
 
 **ID**: DES-004
 **Category**: Core
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS
 **Created**: 2026-03-20
 **Last Updated**: 2026-03-20
@@ -203,7 +203,7 @@ Follows Obsidian's sidebar pattern. Dark surface (#141415) slightly lighter than
 
 **ID**: DES-005
 **Category**: Core
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS
 **Created**: 2026-03-20
 **Last Updated**: 2026-03-20
@@ -234,7 +234,7 @@ macOS native toolbar at top of window. Contains record button (centered), audio 
 
 **ID**: DES-101
 **Category**: Feature
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS
 **Created**: 2026-03-11
 **Last Updated**: 2026-03-20
@@ -272,7 +272,7 @@ Clickable pill showing speaker identity. Displays auto-assigned name ("Speaker 1
 
 **ID**: DES-102
 **Category**: Feature
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS
 **Created**: 2026-03-11
 **Last Updated**: 2026-03-20
@@ -308,7 +308,7 @@ Centered, spacious layout with generous whitespace. The user just finished a cal
 
 **ID**: DES-103
 **Category**: Feature
-**Status**: Planned
+**Status**: Partially Implemented (2026-05-17, EPIC-07 — inline banners on SCR-001 + Settings request chip; full first-launch prompt card deferred to v0.8)
 **Platform**: macOS
 **Created**: 2026-03-20
 **Last Updated**: 2026-03-20
@@ -339,7 +339,7 @@ First-launch permission request card explaining why microphone and Screen Record
 
 **ID**: DES-104
 **Category**: Feature
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS
 **Created**: 2026-03-20
 **Last Updated**: 2026-03-20
@@ -366,7 +366,7 @@ Shown when no transcripts exist (first launch, or sidebar is empty). Welcoming, 
 
 **ID**: DES-105
 **Category**: Feature
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS (notch-equipped MacBook Pro 14"/16", 2021+)
 **Created**: 2026-05-15
 **Last Updated**: 2026-05-16
@@ -418,7 +418,7 @@ The notch HUD is the **primary** realization, not a luxury alternative — desig
 
 **ID**: DES-106
 **Category**: Feature
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-07)
 **Platform**: macOS (all Macs without a display notch; also fallback when DES-105 cannot stay above fullscreen)
 **Created**: 2026-05-15
 **Last Updated**: 2026-05-16

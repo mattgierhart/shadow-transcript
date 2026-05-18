@@ -6,7 +6,7 @@ template_version: "3.0.0"
 
 > **Status**: Active
 > **Current PRD Version**: v0.7 (See `PRD.md`)
-> **Active EPIC**: EPIC-07 — SwiftUI Interface (EPIC-06 closed 2026-05-12 with `AppDatabase` + v1 migration + 4 GRDB record types + `TranscriptStore` with FTS5 + `SettingsStore` with typed keys + `ObsidianExporter` with INT-001 frontmatter and `MarkdownFilenameSanitizer`; EPIC-05's `Turn` promoted to public `TranscriptTurn` to back DBT-002/003 cleanly; ~37 new XCTests covering TEST-401..405 + cascade-delete + FTS trigger sync + settings round-trip; build verification deferred to CI) (See `epics/`)
+> **Active EPIC**: EPIC-08 — Pipeline Integration & Audio Lifecycle (EPIC-07 closed 2026-05-17 — full SwiftUI shell wired through `AppEnvironment` DI + 6 @MainActor view-models, real record loop with `PermissionsCoordinator` + `AudioCaptureService` + `RecordingHUDController`, real pipeline in `ProcessingViewModel` chaining Transcribe → Diarize → Format → Save → optional Export with `Task.cancel` propagation, inline speaker rename with `UndoManager` + new `TranscriptStore.updateSpeakerDisplayName` API-006 method + collision detection, SCR-004 Copy / Save-As / Export-to-Obsidian toolbar with re-emitted markdown reflecting renames, Codex Gate 5b fixed P1.1 + 3× P2; 31 new XCTests, 165 total green) (See `epics/`)
 
 ---
 
@@ -68,8 +68,8 @@ template_version: "3.0.0"
 | EPIC-04b | Swift `DiarizationService` Bridge | ✅ Complete | EPIC-04a |
 | EPIC-05 | Transcript Formatting & Alignment | ✅ Complete | EPIC-03, EPIC-04b |
 | EPIC-06 | Storage & Obsidian Export | ✅ Complete | EPIC-01, EPIC-05 |
-| EPIC-07 | SwiftUI Interface | Active | EPIC-02, EPIC-05, EPIC-06 |
-| EPIC-08 | Pipeline Integration & Audio Lifecycle | Planned | EPIC-02→07 |
+| EPIC-07 | SwiftUI Interface | ✅ Complete | EPIC-02, EPIC-05, EPIC-06 |
+| EPIC-08 | Pipeline Integration & Audio Lifecycle | Active | EPIC-02→07 |
 
 ### KPI Metrics
 
