@@ -91,7 +91,11 @@ final class ProcessingViewModelTests: XCTestCase {
         try await Task.sleep(nanoseconds: 200_000_000)
 
         XCTAssertNotNil(vm.error)
-        XCTAssertEqual(vm.error, "Deliberate failure")
+        // Phase-4 orchestrator wraps service errors in
+        // OrchestrationError.transcriptionFailed before surfacing —
+        // the VM shows the localizedDescription of that case.
+        XCTAssertTrue(vm.error?.contains("Transcription failed") == true,
+                      "Expected wrapped transcription error, got: \(vm.error ?? "nil")")
         let list = try await store.list(limit: 10, offset: 0)
         XCTAssertTrue(list.isEmpty, "Failed transcribe should not produce a saved row")
         // Transcribe stage marked error
