@@ -80,8 +80,9 @@ struct MainWindowView: View {
             PreFlightContent(env: env, onRecord: { vm.handleRecord() })
         case .processing:
             ProcessingView(env: env, onCancel: { vm.goToPreFlight() })
-        case .transcript:
-            TranscriptView(env: env)
+        case .transcript(let id):
+            TranscriptView(env: env, transcriptID: id)
+                .id(id)
         }
     }
 }

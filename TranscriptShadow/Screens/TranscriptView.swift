@@ -8,6 +8,9 @@ struct TranscriptSpeaker: Identifiable {
     let id = UUID()
     let name: String
     let colorIndex: Int
+    /// DBT-002 `speaker_key` — needed by UJ-002's inline rename to call
+    /// `TranscriptStore.updateSpeakerDisplayName(canonicalSpeaker:)`.
+    let canonicalKey: String
     let time: String
     /// Percent of total time (0..1).
     let share: Double
@@ -35,11 +38,11 @@ extension TranscriptDisplayModel {
         speakerCount: 5,
         modelLabel: "whisper:small.en · pyannote:3.1",
         speakers: [
-            TranscriptSpeaker(name: "Lena Ortiz",    colorIndex: 0, time: "14:08", share: 0.30, unlabeled: false),
-            TranscriptSpeaker(name: "Marc Schuler",  colorIndex: 1, time: "09:42", share: 0.21, unlabeled: false),
-            TranscriptSpeaker(name: "Priya Iyer",    colorIndex: 2, time: "11:31", share: 0.25, unlabeled: false),
-            TranscriptSpeaker(name: "You",            colorIndex: 3, time: "07:54", share: 0.17, unlabeled: false),
-            TranscriptSpeaker(name: "Speaker 5",     colorIndex: 4, time: "03:57", share: 0.07, unlabeled: true),
+            TranscriptSpeaker(name: "Lena Ortiz",    colorIndex: 0, canonicalKey: "SPEAKER_00", time: "14:08", share: 0.30, unlabeled: false),
+            TranscriptSpeaker(name: "Marc Schuler",  colorIndex: 1, canonicalKey: "SPEAKER_01", time: "09:42", share: 0.21, unlabeled: false),
+            TranscriptSpeaker(name: "Priya Iyer",    colorIndex: 2, canonicalKey: "SPEAKER_02", time: "11:31", share: 0.25, unlabeled: false),
+            TranscriptSpeaker(name: "You",            colorIndex: 3, canonicalKey: "SPEAKER_03", time: "07:54", share: 0.17, unlabeled: false),
+            TranscriptSpeaker(name: "Speaker 5",     colorIndex: 4, canonicalKey: "SPEAKER_04", time: "03:57", share: 0.07, unlabeled: true),
         ],
         turns: [
             DisplayTurn(speakerColorIndex: 2, speakerName: "Priya Iyer", timestamp: "00:00:04",
@@ -79,10 +82,17 @@ extension TranscriptDisplayModel {
 
 struct TranscriptView: View {
     @StateObject private var vm: TranscriptViewModel
+    @Environment(\.undoManager) private var undoManager: UndoManager?
+    @State private var editingCanonical: String? = nil
+    @State private var editingValue: String = ""
+    @FocusState private var renameFocused: Bool
+
+    let transcriptID: String?
     private var model: TranscriptDisplayModel { vm.displayModel }
 
-    init(env: AppEnvironment) {
+    init(env: AppEnvironment, transcriptID: String? = nil) {
         _vm = StateObject(wrappedValue: TranscriptViewModel(env: env))
+        self.transcriptID = transcriptID
     }
 
     var body: some View {
@@ -94,6 +104,11 @@ struct TranscriptView: View {
             statusFooter
         }
         .background(DesignColors.bgPrimary)
+        .task(id: transcriptID) {
+            if let id = transcriptID {
+                await vm.load(id: id)
+            }
+        }
     }
 
     // MARK: - Pieces
@@ -176,28 +191,42 @@ struct TranscriptView: View {
     }
 
     private var speakerSummary: some View {
-        HStack(alignment: .center, spacing: 10) {
-            Text("SPEAKERS")
-                .font(DesignFonts.mono(10))
-                .tracking(0.6)
-                .foregroundStyle(DesignColors.textMuted)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .center, spacing: 10) {
+                Text("SPEAKERS")
+                    .font(DesignFonts.mono(10))
+                    .tracking(0.6)
+                    .foregroundStyle(DesignColors.textMuted)
 
-            HStack(spacing: 8) {
-                ForEach(model.speakers) { speaker in
-                    SpeakerLabel(
-                        name: speaker.unlabeled ? "Speaker \(speaker.colorIndex + 1)" : speaker.name,
-                        colorIndex: speaker.colorIndex,
-                        time: speaker.time,
-                        size: .lg
-                    )
+                HStack(spacing: 8) {
+                    ForEach(model.speakers) { speaker in
+                        if editingCanonical == speaker.canonicalKey {
+                            editingPill(for: speaker)
+                        } else {
+                            Button(action: { beginRename(for: speaker) }) {
+                                SpeakerLabel(
+                                    name: speaker.name,
+                                    colorIndex: speaker.colorIndex,
+                                    time: speaker.time,
+                                    size: .lg
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                 }
+
+                Spacer()
+
+                Text("click a pill to rename")
+                    .font(DesignFonts.mono(10.5))
+                    .foregroundStyle(DesignColors.textMuted)
             }
-
-            Spacer()
-
-            Text("click a pill to rename")
-                .font(DesignFonts.mono(10.5))
-                .foregroundStyle(DesignColors.textMuted)
+            if let renameError = vm.renameError {
+                Text(renameError)
+                    .font(DesignFonts.mono(10.5))
+                    .foregroundStyle(DesignColors.Status.error)
+            }
         }
         .padding(.horizontal, 24)
         .padding(.top, 12)
@@ -206,6 +235,63 @@ struct TranscriptView: View {
             Rectangle().fill(DesignColors.borderDefault).frame(height: 0.5),
             alignment: .bottom
         )
+    }
+
+    private func editingPill(for speaker: TranscriptSpeaker) -> some View {
+        let color = DesignColors.speakerColor(index: speaker.colorIndex)
+        return HStack(spacing: 6) {
+            Circle().fill(color).frame(width: 6, height: 6)
+            TextField("", text: $editingValue)
+                .textFieldStyle(.plain)
+                .focused($renameFocused)
+                .font(DesignFonts.ui(12.5, weight: .medium))
+                .foregroundStyle(DesignColors.textPrimary)
+                .frame(width: 120)
+                .onSubmit { commitRename(for: speaker) }
+                .onExitCommand { cancelRename() }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 5)
+        .background(DesignColors.accentPrimary.opacity(0.10))
+        .overlay(
+            Capsule().stroke(DesignColors.accentPrimary, lineWidth: 1)
+        )
+        .clipShape(Capsule())
+    }
+
+    private func beginRename(for speaker: TranscriptSpeaker) {
+        editingCanonical = speaker.canonicalKey
+        editingValue = speaker.name
+        vm.renameError = nil
+        renameFocused = true
+    }
+
+    private func cancelRename() {
+        editingCanonical = nil
+        editingValue = ""
+    }
+
+    private func commitRename(for speaker: TranscriptSpeaker) {
+        let newName = editingValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let oldName = speaker.name
+        let canonical = speaker.canonicalKey
+        guard newName != oldName, !newName.isEmpty else {
+            cancelRename()
+            return
+        }
+        editingCanonical = nil
+        let vmRef = vm
+        Task { @MainActor in
+            await vmRef.renameSpeaker(canonical: canonical, to: newName)
+            if vmRef.renameError == nil {
+                undoManager?.registerUndo(withTarget: vmRef) { target in
+                    Task { @MainActor in
+                        await target.renameSpeaker(canonical: canonical, to: oldName)
+                    }
+                }
+                undoManager?.setActionName("Rename Speaker")
+            }
+        }
     }
 
     private var shareBar: some View {
@@ -282,6 +368,6 @@ struct TranscriptView: View {
 }
 
 #Preview {
-    TranscriptView(env: .preview())
+    TranscriptView(env: .preview(), transcriptID: nil)
         .frame(width: 1200, height: 800)
 }
