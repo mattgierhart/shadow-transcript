@@ -5,8 +5,7 @@
 // The main window is sidebar + content. The content swaps between three
 // states: pre-flight (SCR-001), processing (SCR-003), transcript (SCR-004).
 // Per BR-501, when recording is active, this entire window hides and the
-// Recording HUD (DES-105/DES-106) takes over — that wiring is EPIC-08's
-// pipeline-orchestrator scope and not implemented here yet.
+// Recording HUD (DES-105/DES-106) takes over.
 
 import SwiftUI
 
@@ -77,9 +76,19 @@ struct MainWindowView: View {
     private var contentArea: some View {
         switch vm.content {
         case .preFlight:
-            PreFlightContent(env: env, onRecord: { vm.handleRecord() })
-        case .processing:
-            ProcessingView(env: env, onCancel: { vm.goToPreFlight() })
+            PreFlightContent(
+                env: env,
+                onRecord: { Task { @MainActor in await vm.handleRecord() } },
+                errorMessage: vm.recordError,
+                systemAudioWarning: vm.systemAudioFellBack
+            )
+        case .processing(let url):
+            ProcessingView(
+                env: env,
+                audioURL: url,
+                onCancel: { vm.goToPreFlight() },
+                onComplete: { id in vm.onPipelineComplete(transcriptID: id) }
+            )
         case .transcript(let id):
             TranscriptView(env: env, transcriptID: id)
                 .id(id)

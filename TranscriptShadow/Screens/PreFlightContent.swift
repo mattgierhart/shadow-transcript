@@ -7,10 +7,19 @@ import SwiftUI
 struct PreFlightContent: View {
     @StateObject private var vm: PreFlightViewModel
     let onRecord: () -> Void
+    let errorMessage: String?
+    let systemAudioWarning: Bool
 
-    init(env: AppEnvironment, onRecord: @escaping () -> Void) {
+    init(
+        env: AppEnvironment,
+        onRecord: @escaping () -> Void,
+        errorMessage: String? = nil,
+        systemAudioWarning: Bool = false
+    ) {
         _vm = StateObject(wrappedValue: PreFlightViewModel(env: env))
         self.onRecord = onRecord
+        self.errorMessage = errorMessage
+        self.systemAudioWarning = systemAudioWarning
     }
 
     var body: some View {
@@ -25,6 +34,14 @@ struct PreFlightContent: View {
 
             ScrollView {
                 VStack(spacing: 32) {
+                    if let errorMessage {
+                        banner(text: errorMessage, color: DesignColors.Status.error)
+                    } else if systemAudioWarning {
+                        banner(
+                            text: "Screen Recording permission missing — recording microphone only. Grant it in System Settings → Privacy & Security → Screen Recording, then relaunch.",
+                            color: DesignColors.Status.warning
+                        )
+                    }
                     statusPill
                     sourceToggles
                     AudioLevelPreview()
@@ -39,6 +56,23 @@ struct PreFlightContent: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DesignColors.bgPrimary)
         .task { await vm.load() }
+    }
+
+    private func banner(text: String, color: Color) -> some View {
+        HStack(spacing: 8) {
+            Circle().fill(color).frame(width: 6, height: 6)
+            Text(text)
+                .font(DesignFonts.ui(11.5))
+                .foregroundStyle(color)
+                .multilineTextAlignment(.leading)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(color.opacity(0.10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8).stroke(color.opacity(0.5), lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     private var statusPill: some View {

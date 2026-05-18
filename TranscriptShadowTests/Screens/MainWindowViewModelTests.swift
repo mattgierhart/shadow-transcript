@@ -35,7 +35,7 @@ final class MainWindowViewModelTests: XCTestCase {
         let vm = MainWindowViewModel(env: .preview())
         vm.selectTranscript(id: "t1")
         vm.goToProcessing()
-        XCTAssertEqual(vm.content, .processing)
+        XCTAssertEqual(vm.content, .processing(audioURL: nil))
         XCTAssertNil(vm.selectedTranscriptID)
     }
 
