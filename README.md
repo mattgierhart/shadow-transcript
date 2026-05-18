@@ -5,8 +5,8 @@ template_version: "3.0.0"
 # Transcript Shadow — Product README
 
 > **Status**: Active
-> **Current PRD Version**: v0.7 (See `PRD.md`)
-> **Active EPIC**: EPIC-08 — Pipeline Integration & Audio Lifecycle (EPIC-07 closed 2026-05-17 — full SwiftUI shell wired through `AppEnvironment` DI + 6 @MainActor view-models, real record loop with `PermissionsCoordinator` + `AudioCaptureService` + `RecordingHUDController`, real pipeline in `ProcessingViewModel` chaining Transcribe → Diarize → Format → Save → optional Export with `Task.cancel` propagation, inline speaker rename with `UndoManager` + new `TranscriptStore.updateSpeakerDisplayName` API-006 method + collision detection, SCR-004 Copy / Save-As / Export-to-Obsidian toolbar with re-emitted markdown reflecting renames, Codex Gate 5b fixed P1.1 + 3× P2; 31 new XCTests, 165 total green) (See `epics/`)
+> **Current PRD Version**: v0.7 (See `PRD.md`) — EPIC-01 through EPIC-08 complete; v0.8 manual walkthrough (TEST-504 no-network probe + KPI-001/002 baselines + RISK-008 fullscreen probe) on Mac is the remaining v0.7 → v0.8 gate item.
+> **Active EPIC**: v0.8 Release & Deployment planning. EPIC-08 closed 2026-05-17 — `DefaultPipelineOrchestrator` extracts the EPIC-07 inline pipeline behind a public protocol with monotonic 5-stage `PipelineProgress`, single awaited cleanup point, per-stage error mapping (Codex Gate 6 P2). `DefaultTempAudioCleanup` (API-301) handles `delete(url:)` / `scanForOrphans()` (30s in-flight window so it can't race a fresh capture) / `cleanupAll()`. App-level orphan scan on `applicationDidFinishLaunching` + capped cleanup on `applicationWillTerminate`. 183 total XCTests green. (See `epics/`)
 
 ---
 
@@ -69,7 +69,7 @@ template_version: "3.0.0"
 | EPIC-05 | Transcript Formatting & Alignment | ✅ Complete | EPIC-03, EPIC-04b |
 | EPIC-06 | Storage & Obsidian Export | ✅ Complete | EPIC-01, EPIC-05 |
 | EPIC-07 | SwiftUI Interface | ✅ Complete | EPIC-02, EPIC-05, EPIC-06 |
-| EPIC-08 | Pipeline Integration & Audio Lifecycle | Active | EPIC-02→07 |
+| EPIC-08 | Pipeline Integration & Audio Lifecycle | ✅ Complete | EPIC-02→07 |
 
 ### KPI Metrics
 

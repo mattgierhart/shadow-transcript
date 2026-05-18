@@ -293,7 +293,7 @@ Use SQLite via Swift's native SQLite support (or GRDB.swift for a more ergonomic
 
 **ID**: ARC-001
 **Category**: Data Flow
-**Status**: Accepted
+**Status**: Accepted · Implemented (2026-05-17, EPIC-08 — DefaultPipelineOrchestrator)
 **Decision Date**: 2026-03-11
 **Last Reviewed**: 2026-03-11
 
@@ -389,7 +389,7 @@ Bundle a PyInstaller-compiled Python executable containing the pyannote diarizat
 
 **ID**: ARC-003
 **Category**: Data Flow
-**Status**: Accepted
+**Status**: Accepted · Implemented (2026-05-17, EPIC-08 — DefaultTempAudioCleanup)
 **Decision Date**: 2026-03-11
 **Last Reviewed**: 2026-03-11
 

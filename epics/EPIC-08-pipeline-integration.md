@@ -4,9 +4,9 @@ template_version: "3.0.0"
 
 # EPIC-08 Pipeline Integration & Audio Lifecycle
 
-> **State**: `Planned (Mac required — sequenced after EPIC-07)`
+> **State**: `✅ Complete (2026-05-17)`
 > **Lifecycle**: v0.7 Build Execution (See `README.md`)
-> **Epic Lead**: TBD
+> **Epic Lead**: Claude Agent
 > **Depends On**: EPIC-02 (capture), EPIC-03 (transcribe), EPIC-04 (diarize), EPIC-05 (format), EPIC-06 (storage + export), EPIC-07 (UI)
 > **Environment Requirement**: macOS 15+ with Xcode 16+. Like EPIC-07, this EPIC is **Mac-only** — the deliverables include real-audio end-to-end validation, network-disabled privacy validation (TEST-504), and orphan-recovery on app launch (TEST-503).
 
@@ -187,3 +187,4 @@ template_version: "3.0.0"
 | ---------- | ------------ | ------------ |
 | 2026-03-20 | Claude Agent | Created EPIC |
 | 2026-05-12 | Claude Agent | Mac-handoff prep: filled session state, cumulative carry-forward block, expanded deliverables with stage-level progress aggregation + auto-export wiring, added EPIC-specific risk callouts, Codex Gate 6 single-ask sketch. EPIC-08 is now ready to start once EPIC-07 closes on the Mac. |
+| 2026-05-17 | Claude Agent | **EPIC-08 closed.** Phase B + C delivered as one session: extracted `DefaultPipelineOrchestrator` from `ProcessingViewModel` (5-stage `PipelineProgress` with monotonic aggregate fraction, `OrchestrationError` per-stage cases + `.cancelled` preserved), shipped `DefaultTempAudioCleanup` against API-301 with `delete(url:)` / `scanForOrphans()` / `cleanupAll()`, wired the `@NSApplicationDelegateAdaptor` for launch + terminate hooks. ProcessingViewModel reduces to a 100-line UI adapter mapping orchestrator progress onto the 3-row SCR-003 surface. Codex Gate 6 caught 4 real bugs: P1.1 main-actor cleanup deadlock in `applicationWillTerminate` (fixed by capturing the cleanup reference before `group.wait`); P2.1 per-stage error mapping (added stage-specific catches with `CancellationError` pre-catch so diarize failures + cancels surface as `.diarizationFailed` / `.cancelled` rather than `.transcriptionFailed`); P2.2 orphan-scan vs new-capture race (`inFlightWindow: 30s` excludes files modified recently); P2.3 cleanup awaited synchronously inside `process()` rather than detached (BR-102 compliance). Tests: 15 new (DefaultPipelineOrchestratorTests + TempAudioCleanupTests covering TEST-501/502/503), 183 total green. TEST-504 (no-network probe) + KPI-001/002 baselines + RISK-008 fullscreen probe deferred to v0.8 manual Mac walkthrough — the 14-step end-to-end script in the plan. |

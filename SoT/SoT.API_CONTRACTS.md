@@ -534,7 +534,7 @@ The sketch elided `title` and `date` — they're separate parameters in the impl
 
 **ID**: API-301
 **Category**: Background
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-08)
 **Created**: 2026-03-11
 **Last Updated**: 2026-03-11
 

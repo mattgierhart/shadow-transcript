@@ -640,7 +640,7 @@ the same file without modification.
 
 **ID**: TEST-501
 **Category**: Integration
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-08)
 **Priority**: P0 (Critical)
 **Created**: 2026-03-20
 
@@ -667,7 +667,7 @@ the same file without modification.
 
 **ID**: TEST-502
 **Category**: Integration
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-08)
 **Priority**: P0 (Critical)
 **Created**: 2026-03-20
 
@@ -693,7 +693,7 @@ the same file without modification.
 
 **ID**: TEST-503
 **Category**: Integration
-**Status**: Planned
+**Status**: Implemented (2026-05-17, EPIC-08)
 **Priority**: P0 (Critical)
 **Created**: 2026-03-20
 
@@ -720,7 +720,7 @@ the same file without modification.
 
 **ID**: TEST-504
 **Category**: Integration
-**Status**: Planned
+**Status**: Planned — manual probe on Mac (tcpdump or Little Snitch during real recording) deferred to v0.8 walkthrough
 **Priority**: P0 (Critical)
 **Created**: 2026-03-20
 
