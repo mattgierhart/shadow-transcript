@@ -5,9 +5,13 @@
 import SwiftUI
 
 struct PreFlightContent: View {
-    @State private var micEnabled: Bool = true
-    @State private var systemAudioEnabled: Bool = true
+    @StateObject private var vm: PreFlightViewModel
     let onRecord: () -> Void
+
+    init(env: AppEnvironment, onRecord: @escaping () -> Void) {
+        _vm = StateObject(wrappedValue: PreFlightViewModel(env: env))
+        self.onRecord = onRecord
+    }
 
     var body: some View {
         ZStack {
@@ -34,6 +38,7 @@ struct PreFlightContent: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DesignColors.bgPrimary)
+        .task { await vm.load() }
     }
 
     private var statusPill: some View {
@@ -53,9 +58,11 @@ struct PreFlightContent: View {
     private var sourceToggles: some View {
         HStack(spacing: 12) {
             SourceToggle(systemIcon: "mic.fill", label: "Microphone",
-                         sub: "MacBook Pro Microphone", isOn: $micEnabled)
+                         sub: "MacBook Pro Microphone",
+                         isOn: Binding(get: { vm.micEnabled }, set: { vm.micEnabled = $0 }))
             SourceToggle(systemIcon: "speaker.wave.2.fill", label: "System audio",
-                         sub: "ScreenCaptureKit · all apps", isOn: $systemAudioEnabled)
+                         sub: "ScreenCaptureKit · all apps",
+                         isOn: Binding(get: { vm.systemAudioEnabled }, set: { vm.systemAudioEnabled = $0 }))
         }
     }
 
@@ -73,6 +80,6 @@ struct PreFlightContent: View {
 }
 
 #Preview {
-    PreFlightContent(onRecord: {})
+    PreFlightContent(env: .preview(), onRecord: {})
         .frame(width: 860, height: 700)
 }

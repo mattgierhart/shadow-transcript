@@ -3,9 +3,9 @@
 // @see design/visual-prototype/project/src/shared.jsx :: Sidebar
 // @see design/visual-prototype/project/src/scr006.jsx :: SidebarSearching, ContextMenu
 //
-// Always-visible transcript history sidebar. Mock data embedded for the
-// UI shell; production wires to TranscriptStore.list() and
-// TranscriptStore.search() for the filter case.
+// Always-visible transcript history sidebar. Phase 1 still seeds from
+// `SidebarMockData.groups` via the view-model; Phase 2 swaps the source
+// for `TranscriptStore.list/search` with a 250ms-debounced search.
 
 import SwiftUI
 
@@ -24,30 +24,29 @@ struct SidebarGroup: Identifiable {
 }
 
 struct Sidebar: View {
-    let groups: [SidebarGroup]
+    @StateObject private var vm: SidebarViewModel
     @Binding var selectedID: String?
-    @State private var query: String = ""
     @FocusState private var searchFocused: Bool
 
-    init(groups: [SidebarGroup] = SidebarMockData.groups, selectedID: Binding<String?>) {
-        self.groups = groups
+    init(env: AppEnvironment, selectedID: Binding<String?>) {
+        _vm = StateObject(wrappedValue: SidebarViewModel(env: env))
         self._selectedID = selectedID
     }
 
-    private var isSearching: Bool { !query.isEmpty }
+    private var isSearching: Bool { !vm.query.isEmpty }
 
     private var filteredGroups: [SidebarGroup] {
-        guard isSearching else { return groups }
-        let q = query.lowercased()
-        let matches = groups
+        guard isSearching else { return vm.groups }
+        let q = vm.query.lowercased()
+        let matches = vm.groups
             .flatMap(\.items)
             .filter { $0.title.lowercased().contains(q) }
         guard !matches.isEmpty else { return [] }
-        return [SidebarGroup(id: "search", label: "Search · \"\(query)\"", items: matches)]
+        return [SidebarGroup(id: "search", label: "Search · \"\(vm.query)\"", items: matches)]
     }
 
     private var totalCount: Int {
-        groups.reduce(0) { $0 + $1.items.count }
+        vm.groups.reduce(0) { $0 + $1.items.count }
     }
 
     private var matchCount: Int {
@@ -66,6 +65,7 @@ struct Sidebar: View {
             Rectangle().fill(DesignColors.borderDefault).frame(width: 0.5),
             alignment: .trailing
         )
+        .task { await vm.load() }
     }
 
     // MARK: - Search bar
@@ -76,7 +76,10 @@ struct Sidebar: View {
                 .font(.system(size: 11, weight: .regular))
                 .foregroundStyle(isSearching ? DesignColors.accentPrimary : DesignColors.textMuted)
 
-            TextField("Search transcripts", text: $query)
+            TextField("Search transcripts", text: Binding(
+                get: { vm.query },
+                set: { vm.updateQuery($0) }
+            ))
                 .textFieldStyle(.plain)
                 .focused($searchFocused)
                 .font(DesignFonts.ui(12))
@@ -86,7 +89,7 @@ struct Sidebar: View {
                 Text("\(matchCount) \(matchCount == 1 ? "match" : "matches")")
                     .font(DesignFonts.mono(10))
                     .foregroundStyle(DesignColors.textMuted)
-                Button(action: { query = "" }) {
+                Button(action: { vm.updateQuery("") }) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 11))
                         .foregroundStyle(DesignColors.textMuted)
@@ -136,7 +139,7 @@ struct Sidebar: View {
                                 SidebarRow(
                                     item: item,
                                     isSelected: selectedID == item.id,
-                                    highlightQuery: isSearching ? query : nil
+                                    highlightQuery: isSearching ? vm.query : nil
                                 ) {
                                     selectedID = item.id
                                 }
@@ -155,7 +158,7 @@ struct Sidebar: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 18, weight: .light))
                 .foregroundStyle(DesignColors.textMuted)
-            Text("No matches for \"\(query)\"")
+            Text("No matches for \"\(vm.query)\"")
                 .font(DesignFonts.ui(11.5))
                 .foregroundStyle(DesignColors.textSecondary)
         }
@@ -291,7 +294,7 @@ enum SidebarMockData {
 }
 
 #Preview {
-    Sidebar(selectedID: .constant(nil))
+    Sidebar(env: .preview(), selectedID: .constant(nil))
         .frame(height: 600)
         .background(DesignColors.bgPrimary)
 }

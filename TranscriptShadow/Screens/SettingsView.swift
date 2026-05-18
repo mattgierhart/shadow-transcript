@@ -10,15 +10,11 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var vm: SettingsViewModel
 
-    // Mocked state — production wires through SettingsStore typed keys.
-    @State private var inputDevice = "MacBook Pro Microphone"
-    @State private var captureSystemAudio = true
-    @State private var whisperModel = "small.en"
-    @State private var diarizationOn = true
-    @State private var vaultPath = "~/Vaults/work-notes"
-    @State private var subfolder = "Meetings"
-    @State private var autoExport = false
+    init(env: AppEnvironment) {
+        _vm = StateObject(wrappedValue: SettingsViewModel(env: env))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -38,6 +34,7 @@ struct SettingsView: View {
         .frame(maxHeight: 620)
         .background(Color(hex: 0x141415).opacity(0.98))
         .preferredColorScheme(.dark)
+        .task { await vm.load() }
     }
 
     // MARK: - Header
@@ -81,16 +78,17 @@ struct SettingsView: View {
     private var audioSection: some View {
         SettingsSection(title: "Audio") {
             SettingsRow(label: "Input device", sub: "Microphone used for your voice capture.") {
-                SettingsSelect(value: $inputDevice, options: ["MacBook Pro Microphone",
-                                                              "AirPods Pro",
-                                                              "Built-in input"])
+                SettingsSelect(value: Binding(get: { vm.inputDevice }, set: { vm.inputDevice = $0 }),
+                               options: ["MacBook Pro Microphone",
+                                         "AirPods Pro",
+                                         "Built-in input"])
             }
             SettingsRow(label: "Capture system audio",
                        sub: "Pulls audio from other apps via ScreenCaptureKit. No screen content captured.",
                        isLast: true) {
                 HStack(spacing: 10) {
                     StatusChip(ok: true, label: "granted")
-                    SettingsToggle(isOn: $captureSystemAudio)
+                    SettingsToggle(isOn: Binding(get: { vm.captureSystemAudio }, set: { vm.captureSystemAudio = $0 }))
                 }
             }
         }
@@ -100,12 +98,18 @@ struct SettingsView: View {
         SettingsSection(title: "Transcription") {
             SettingsRow(label: "Whisper model",
                        sub: "small.en · 466 MB · balanced accuracy / speed") {
-                SettingsSelect(value: $whisperModel, options: ["base.en", "small.en", "medium.en"])
+                SettingsSelect(value: Binding(
+                    get: { vm.whisperModel.rawValue },
+                    set: { rawValue in
+                        if let model = WhisperModel(rawValue: rawValue) { vm.whisperModel = model }
+                    }
+                ),
+                               options: WhisperModel.allCases.map(\.rawValue))
             }
             SettingsRow(label: "Speaker diarization",
                        sub: "pyannote 3.1 sidecar · runs locally as a separate process",
                        isLast: true) {
-                SettingsToggle(isOn: $diarizationOn)
+                SettingsToggle(isOn: Binding(get: { vm.diarizationOn }, set: { vm.diarizationOn = $0 }))
             }
         }
     }
@@ -114,10 +118,10 @@ struct SettingsView: View {
         SettingsSection(title: "Export") {
             SettingsRow(label: "Obsidian vault",
                        sub: "Path where transcripts are written as markdown.") {
-                FolderPickerControl(path: vaultPath)
+                FolderPickerControl(path: vm.vaultPath)
             }
             SettingsRow(label: "Subfolder", sub: "./Meetings/") {
-                TextField("Meetings", text: $subfolder)
+                TextField("Meetings", text: Binding(get: { vm.subfolder }, set: { vm.subfolder = $0 }))
                     .textFieldStyle(.plain)
                     .font(DesignFonts.mono(12))
                     .foregroundStyle(DesignColors.textPrimary)
@@ -133,7 +137,7 @@ struct SettingsView: View {
             SettingsRow(label: "Auto-export after processing",
                        sub: "Skip the manual Export click — useful for set-and-forget.",
                        isLast: true) {
-                SettingsToggle(isOn: $autoExport)
+                SettingsToggle(isOn: Binding(get: { vm.autoExport }, set: { vm.autoExport = $0 }))
             }
         }
     }
@@ -303,7 +307,7 @@ private struct FolderPickerControl: View {
                 .foregroundStyle(DesignColors.textPrimary)
                 .lineLimit(1)
                 .truncationMode(.middle)
-            Button("Choose…") { /* NSOpenPanel wiring deferred */ }
+            Button("Choose…") { /* NSOpenPanel wiring deferred to Phase 2 */ }
                 .buttonStyle(.plain)
                 .font(DesignFonts.ui(11, weight: .medium))
                 .foregroundStyle(DesignColors.textSecondary)
@@ -339,6 +343,6 @@ private struct StatusChip: View {
 }
 
 #Preview {
-    SettingsView()
+    SettingsView(env: .preview())
         .background(DesignColors.bgPrimary)
 }

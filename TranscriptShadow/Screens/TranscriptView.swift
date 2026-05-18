@@ -14,7 +14,7 @@ struct TranscriptSpeaker: Identifiable {
     let unlabeled: Bool
 }
 
-struct TranscriptViewModel {
+struct TranscriptDisplayModel {
     let title: String
     let dateLabel: String
     let duration: String
@@ -27,8 +27,8 @@ struct TranscriptViewModel {
     let audioDeletedAt: String
 }
 
-extension TranscriptViewModel {
-    static let mock = TranscriptViewModel(
+extension TranscriptDisplayModel {
+    static let mock = TranscriptDisplayModel(
         title: "Q3 Planning · Eng + Design",
         dateLabel: "Thu May 16 · 11:00 AM",
         duration: "47:12 duration",
@@ -78,10 +78,11 @@ extension TranscriptViewModel {
 }
 
 struct TranscriptView: View {
-    let model: TranscriptViewModel
+    @StateObject private var vm: TranscriptViewModel
+    private var model: TranscriptDisplayModel { vm.displayModel }
 
-    init(model: TranscriptViewModel = .mock) {
-        self.model = model
+    init(env: AppEnvironment) {
+        _vm = StateObject(wrappedValue: TranscriptViewModel(env: env))
     }
 
     var body: some View {
@@ -281,6 +282,6 @@ struct TranscriptView: View {
 }
 
 #Preview {
-    TranscriptView()
+    TranscriptView(env: .preview())
         .frame(width: 1200, height: 800)
 }

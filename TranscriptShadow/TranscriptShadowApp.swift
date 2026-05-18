@@ -1,8 +1,23 @@
-// @implements TECH-001, ENV-001, SCR-001, SCR-003, SCR-004, SCR-005
+// @implements TECH-001, ENV-001, SCR-001, SCR-003, SCR-004, SCR-005, ARC-001
 import SwiftUI
 
 @main
 struct TranscriptShadowApp: App {
+    private let env: AppEnvironment
+
+    init() {
+        // Try the real services; fall back to in-memory previews if the
+        // database can't open or WhisperKit fails to construct. The
+        // fallback keeps the UI usable in degraded modes (read-only) — a
+        // future EPIC may surface this as a first-launch error.
+        do {
+            self.env = try AppEnvironment.live()
+        } catch {
+            print("TranscriptShadow: AppEnvironment.live() failed (\(error)) — falling back to preview env.")
+            self.env = .preview()
+        }
+    }
+
     var body: some Scene {
         // Single-window scene — no `New Window` menu item, no second
         // MainWindowView instance, no duplicate HUD state.
@@ -11,7 +26,7 @@ struct TranscriptShadowApp: App {
         // fan out the demo notifications and stamp out duplicate
         // NSPanel / NSStatusItem surfaces, breaking BR-501.
         Window("Transcript Shadow", id: "main") {
-            MainWindowView()
+            MainWindowView(env: env)
         }
         .windowResizability(.contentMinSize)
         .defaultSize(width: DesignSpacing.Layout.windowDefaultWidth,

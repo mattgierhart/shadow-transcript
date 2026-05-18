@@ -5,23 +5,11 @@
 import SwiftUI
 
 struct ProcessingView: View {
-    let title: String
-    let elapsed: String
-    let estimatedRemaining: String
-    let stages: [PipelineStage]
+    @StateObject private var vm: ProcessingViewModel
     let onCancel: () -> Void
 
-    init(
-        title: String = "Q3 Planning · Eng + Design",
-        elapsed: String = "47:12 captured",
-        estimatedRemaining: String = "est. 2 min 10 s remaining",
-        stages: [PipelineStage] = ProcessingView.mockStages,
-        onCancel: @escaping () -> Void
-    ) {
-        self.title = title
-        self.elapsed = elapsed
-        self.estimatedRemaining = estimatedRemaining
-        self.stages = stages
+    init(env: AppEnvironment, onCancel: @escaping () -> Void) {
+        _vm = StateObject(wrappedValue: ProcessingViewModel(env: env))
         self.onCancel = onCancel
     }
 
@@ -38,7 +26,7 @@ struct ProcessingView: View {
             ScrollView {
                 VStack(spacing: 32) {
                     heading
-                    ProgressPipeline(stages: stages)
+                    ProgressPipeline(stages: vm.stages)
                     footer
                 }
                 .frame(maxWidth: DesignSpacing.Spacious.contentMaxWidth)
@@ -56,14 +44,14 @@ struct ProcessingView: View {
                 .tracking(0.8)
                 .foregroundStyle(DesignColors.textMuted)
                 .padding(.bottom, 4)
-            Text(title)
+            Text(vm.title)
                 .font(DesignFonts.ui(22, weight: .semibold))
                 .foregroundStyle(DesignColors.textPrimary)
                 .multilineTextAlignment(.center)
             HStack(spacing: 6) {
-                Text(elapsed)
+                Text(vm.elapsed)
                 Text("·")
-                Text(estimatedRemaining)
+                Text(vm.estimatedRemaining)
             }
             .font(DesignFonts.mono(12))
             .foregroundStyle(DesignColors.textSecondary)
@@ -83,7 +71,10 @@ struct ProcessingView: View {
 
                 Spacer()
 
-                Button(action: onCancel) {
+                Button(action: {
+                    vm.cancel()
+                    onCancel()
+                }) {
                     Text("Cancel")
                         .font(DesignFonts.ui(11.5))
                         .foregroundStyle(DesignColors.textSecondary)
@@ -111,6 +102,6 @@ struct ProcessingView: View {
 }
 
 #Preview {
-    ProcessingView(onCancel: {})
+    ProcessingView(env: .preview(), onCancel: {})
         .frame(width: 860, height: 700)
 }

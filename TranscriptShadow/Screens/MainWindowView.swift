@@ -10,21 +10,22 @@
 
 import SwiftUI
 
-enum MainContent: Equatable {
-    case preFlight
-    case processing
-    case transcript(id: String)
-}
-
 struct MainWindowView: View {
-    @State private var content: MainContent = .preFlight
-    @State private var selectedTranscriptID: String? = nil
-    @State private var showSettings: Bool = false
+    let env: AppEnvironment
+    @StateObject private var vm: MainWindowViewModel
     @ObservedObject private var hud = RecordingHUDController.shared
+
+    init(env: AppEnvironment) {
+        self.env = env
+        _vm = StateObject(wrappedValue: MainWindowViewModel(env: env))
+    }
 
     var body: some View {
         HStack(spacing: 0) {
-            Sidebar(selectedID: $selectedTranscriptID)
+            Sidebar(env: env, selectedID: Binding(
+                get: { vm.selectedTranscriptID },
+                set: { vm.selectTranscript(id: $0) }
+            ))
             contentArea
         }
         .frame(minWidth: DesignSpacing.Layout.windowMinWidth,
@@ -36,42 +37,28 @@ struct MainWindowView: View {
         .preferredColorScheme(.dark)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button(action: { showSettings = true }) {
+                Button(action: { vm.openSettings() }) {
                     Image(systemName: "gearshape")
                         .font(.system(size: 14))
                 }
                 .help("Settings (⌘,)")
             }
         }
-        .sheet(isPresented: $showSettings) { SettingsView() }
-        .onAppear {
-            // When Stop is tapped on the HUD, restore the main window into
-            // the processing view (SCR-003). Real audio pipeline is EPIC-08.
-            hud.onStop = { content = .processing }
-        }
-        .onChange(of: selectedTranscriptID) { _, newValue in
-            if let id = newValue {
-                content = .transcript(id: id)
-            }
-        }
-        .onChange(of: content) { _, newValue in
-            // Returning to pre-flight or processing clears the sidebar
-            // highlight so the next click reads as a fresh selection.
-            if case .preFlight = newValue { selectedTranscriptID = nil }
-            if case .processing = newValue { selectedTranscriptID = nil }
+        .sheet(isPresented: Binding(get: { vm.showSettings }, set: { vm.showSettings = $0 })) {
+            SettingsView(env: env)
         }
         // Demo navigation — temporary until EPIC-08 wires real state.
         .onReceive(NotificationCenter.default.publisher(for: .demoNavPreFlight)) { _ in
-            content = .preFlight
+            vm.goToPreFlight()
         }
         .onReceive(NotificationCenter.default.publisher(for: .demoNavProcessing)) { _ in
-            content = .processing
+            vm.goToProcessing()
         }
         .onReceive(NotificationCenter.default.publisher(for: .demoNavTranscript)) { _ in
-            selectedTranscriptID = "t1"
+            vm.selectTranscript(id: "t1")
         }
         .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in
-            showSettings = true
+            vm.openSettings()
         }
         .onReceive(NotificationCenter.default.publisher(for: .demoStartRecording)) { _ in
             hud.startRecording()
@@ -88,24 +75,14 @@ struct MainWindowView: View {
 
     @ViewBuilder
     private var contentArea: some View {
-        switch content {
+        switch vm.content {
         case .preFlight:
-            PreFlightContent(onRecord: handleRecord)
+            PreFlightContent(env: env, onRecord: { vm.handleRecord() })
         case .processing:
-            ProcessingView(onCancel: { content = .preFlight })
+            ProcessingView(env: env, onCancel: { vm.goToPreFlight() })
         case .transcript:
-            TranscriptView()
+            TranscriptView(env: env)
         }
-    }
-
-    // MARK: - Actions
-
-    private func handleRecord() {
-        // Per BR-501 — hide the main window and show the HUD.
-        // The HUD's Stop callback (set in onAppear) flips content to
-        // .processing and restores the window. Real audio capture is EPIC-08.
-        hud.forcedRealization = nil  // auto-detect notch
-        hud.startRecording()
     }
 }
 
@@ -122,6 +99,6 @@ extension Notification.Name {
 }
 
 #Preview("Pre-flight") {
-    MainWindowView()
+    MainWindowView(env: .preview())
         .frame(width: 1100, height: 700)
 }
