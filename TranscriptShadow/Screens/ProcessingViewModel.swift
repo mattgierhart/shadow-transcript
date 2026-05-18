@@ -1,11 +1,8 @@
 // @implements SCR-003, UJ-001, ARC-001
-// View-model for the SCR-003 processing view. Runs the pipeline:
-//   1. TranscriptionService.transcribe       (0-60% via stage 1)
-//   2. DiarizationService.diarize            (60-90% via stage 2)
-//   3. TranscriptFormatter.format            (snap to 95%)
-//   4. TranscriptStore.save                  (snap to 100%)
-//   5. (optional) ObsidianExporter.export    (non-fatal on failure)
-// `cancel()` propagates `Task.cancel()` through every awaited service.
+// View-model for the SCR-003 processing view. Phase 4 refactor: this
+// is now a thin wrapper around `AppEnvironment.pipeline` (the
+// `PipelineOrchestrator` from EPIC-08). The VM translates aggregate
+// progress into per-stage UI updates and handles cancellation.
 
 import Combine
 import Foundation
@@ -29,9 +26,9 @@ final class ProcessingViewModel: ObservableObject {
         self.env = env
     }
 
-    /// Called by SCR-003 in `.task(id: audioURL)`. A nil/already-handled
-    /// URL is treated as the demo flow (canned mock stages stay
-    /// visible).
+    /// Called by SCR-003 in `.task(id: audioURL)`. The orchestrator
+    /// runs the pipeline; we translate its `PipelineProgress` into the
+    /// 3-stage UI shape.
     func start(audioURL: URL) {
         pipelineTask?.cancel()
         pipelineTask = Task { @MainActor [weak self] in
@@ -54,113 +51,56 @@ final class ProcessingViewModel: ObservableObject {
         defer { isRunning = false }
         error = nil
 
-        let recordingTitle = Self.makeTitle(audioURL: audioURL)
-        title = recordingTitle
+        title = "Recording · \(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short))"
         elapsed = "Processing locally"
         estimatedRemaining = ""
 
         let model = (try? await env.settings.read(.whisperModel)) ?? .baseEN
         stages = [
-            PipelineStage(id: "transcribe",
-                          label: "Transcribing",
-                          sub: "WhisperKit · \(model.rawValue)",
-                          percent: 0,
-                          status: .active),
-            PipelineStage(id: "diarize",
-                          label: "Identifying speakers",
-                          sub: "pyannote · sidecar",
-                          percent: 0,
-                          status: .waiting),
-            PipelineStage(id: "format",
-                          label: "Saving transcript",
-                          sub: "merge · markdown · sqlite",
-                          percent: 0,
-                          status: .waiting),
+            PipelineStage(id: "transcribe", label: "Transcribing",
+                          sub: "WhisperKit · \(model.rawValue)", percent: 0, status: .active),
+            PipelineStage(id: "diarize",    label: "Identifying speakers",
+                          sub: "pyannote · sidecar",             percent: 0, status: .waiting),
+            PipelineStage(id: "format",     label: "Saving transcript",
+                          sub: "merge · markdown · sqlite",      percent: 0, status: .waiting),
         ]
 
         do {
-            try await env.transcription.prepare(model: model)
-            try Task.checkCancellation()
-
-            let transcript = try await env.transcription.transcribe(
-                audioURL: audioURL,
-                model: model
-            ) { [weak self] progress in
+            let id = try await env.pipeline.process(audioURL: audioURL) { [weak self] progress in
                 Task { @MainActor [weak self] in
-                    self?.updateStage(id: "transcribe", percent: Int(progress * 100), status: progress >= 1 ? .done : .active)
+                    self?.apply(progress: progress)
                 }
             }
-            updateStage(id: "transcribe", percent: 100, status: .done)
-            try Task.checkCancellation()
-
-            updateStage(id: "diarize", percent: 0, status: .active)
-            let diarization = try await env.diarization.diarize(audioURL: audioURL) { [weak self] progress in
-                Task { @MainActor [weak self] in
-                    self?.updateStage(id: "diarize", percent: Int(progress * 100), status: progress >= 1 ? .done : .active)
-                }
-            }
-            updateStage(id: "diarize", percent: 100, status: .done)
-            try Task.checkCancellation()
-
-            updateStage(id: "format", percent: 30, status: .active)
-            let formatted = try env.formatter.format(
-                transcription: transcript,
-                diarization: diarization,
-                speakerNames: [:]
-            )
-            updateStage(id: "format", percent: 70, status: .active)
-            try Task.checkCancellation()
-
-            let recordingDate = Date()
-            let stored = try await env.transcripts.save(
-                formatted: formatted,
-                title: recordingTitle,
-                date: recordingDate
-            )
-            updateStage(id: "format", percent: 100, status: .done)
-
-            // Auto-export — non-fatal. If the user has the toggle off
-            // or the vault path isn't set, skip silently.
-            await autoExportIfEnabled(
-                stored: stored,
-                formatted: formatted,
-                title: recordingTitle,
-                date: recordingDate
-            )
-
-            onComplete?(stored.id)
-        } catch is CancellationError {
+            onComplete?(id)
+        } catch OrchestrationError.cancelled {
             error = "Cancelled"
             onCancel?()
         } catch {
             self.error = describe(error)
-            // Mark the active stage as error
             markActiveStageError()
         }
     }
 
-    private func autoExportIfEnabled(
-        stored: StoredTranscript,
-        formatted: FormattedTranscript,
-        title: String,
-        date: Date
-    ) async {
-        guard (try? await env.settings.read(.autoExport)) == true,
-              let pathString = try? await env.settings.read(.obsidianVaultPath),
-              !pathString.isEmpty
-        else { return }
-        let subfolder = (try? await env.settings.read(.obsidianSubfolder)) ?? "Meetings"
-        do {
-            let exportedURL = try env.exporter.export(
-                transcript: formatted,
-                title: title,
-                date: date,
-                vaultPath: URL(fileURLWithPath: pathString),
-                subfolder: subfolder.isEmpty ? nil : subfolder
-            )
-            try? await env.transcripts.markExported(id: stored.id, to: exportedURL)
-        } catch {
-            // Best-effort. Future EPIC can surface this in the UI.
+    /// Maps `PipelineProgress.stage` onto our 3-row UI. Transcribe + diarize
+    /// each get their own row; format / save / export collapse into the
+    /// third "Saving transcript" row so the user sees three discrete
+    /// stages even though the orchestrator runs five.
+    private func apply(progress: PipelineProgress) {
+        switch progress.stage {
+        case .transcribe:
+            updateStage(id: "transcribe", percent: Int(progress.stageFraction * 100), status: progress.stageFraction >= 1 ? .done : .active)
+        case .diarize:
+            updateStage(id: "transcribe", percent: 100, status: .done)
+            updateStage(id: "diarize", percent: Int(progress.stageFraction * 100), status: progress.stageFraction >= 1 ? .done : .active)
+        case .format, .save, .export:
+            updateStage(id: "transcribe", percent: 100, status: .done)
+            updateStage(id: "diarize",    percent: 100, status: .done)
+            // Aggregate map of stage 3 (format / save / export → 90→100):
+            // turn that span into a 0..100 stage-row percent.
+            let lower = 0.9
+            let pct = Int(min(max((progress.aggregateFraction - lower) / (1 - lower), 0), 1) * 100)
+            let status: PipelineStage.Status = progress.aggregateFraction >= 1 ? .done : .active
+            updateStage(id: "format", percent: pct, status: status)
         }
     }
 
@@ -188,17 +128,7 @@ final class ProcessingViewModel: ObservableObject {
         }
     }
 
-    private static func makeTitle(audioURL: URL) -> String {
-        let dateString = DateFormatter.localizedString(
-            from: Date(),
-            dateStyle: .medium,
-            timeStyle: .short
-        )
-        return "Recording · \(dateString)"
-    }
-
     private func describe(_ error: Error) -> String {
-        let msg = (error as? LocalizedError)?.errorDescription ?? "\(error)"
-        return msg
+        (error as? LocalizedError)?.errorDescription ?? "\(error)"
     }
 }

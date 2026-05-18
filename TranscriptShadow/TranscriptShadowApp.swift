@@ -1,8 +1,10 @@
-// @implements TECH-001, ENV-001, SCR-001, SCR-003, SCR-004, SCR-005, ARC-001
+// @implements TECH-001, ENV-001, SCR-001, SCR-003, SCR-004, SCR-005, ARC-001, ARC-003, API-301
+import AppKit
 import SwiftUI
 
 @main
 struct TranscriptShadowApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     private let env: AppEnvironment
 
     init() {
@@ -10,12 +12,18 @@ struct TranscriptShadowApp: App {
         // database can't open or WhisperKit fails to construct. The
         // fallback keeps the UI usable in degraded modes (read-only) — a
         // future EPIC may surface this as a first-launch error.
+        let resolvedEnv: AppEnvironment
         do {
-            self.env = try AppEnvironment.live()
+            resolvedEnv = try AppEnvironment.live()
         } catch {
             print("TranscriptShadow: AppEnvironment.live() failed (\(error)) — falling back to preview env.")
-            self.env = .preview()
+            resolvedEnv = .preview()
         }
+        self.env = resolvedEnv
+        // Hand the AppDelegate a cleanup reference so it can run the
+        // orphan scan on launch and the partial cleanup on terminate
+        // (ARC-003 + API-301).
+        AppDelegate.sharedCleanup = resolvedEnv.cleanup
     }
 
     var body: some Scene {
@@ -75,5 +83,38 @@ struct TranscriptShadowApp: App {
                 .keyboardShortcut("6", modifiers: .command)
             }
         }
+    }
+}
+
+// MARK: - AppDelegate (ARC-003 cleanup hooks)
+
+@MainActor
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// Set by `TranscriptShadowApp.init` after the live `AppEnvironment`
+    /// is built. Allows the delegate (whose own init takes no args) to
+    /// reach the cleanup service for launch + terminate hooks.
+    static var sharedCleanup: (any TempAudioCleanup)?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // Orphan scan (RISK-006 mitigation). Runs once at launch; deletes
+        // every leftover WAV in the recordings dir per EPIC-08 scope
+        // (silent delete, no recoverable UX in v0.7).
+        Task { @MainActor in
+            await AppDelegate.sharedCleanup?.scanForOrphans()
+        }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        // Best-effort terminal cleanup of any in-flight partials.
+        // applicationWillTerminate is synchronous from AppKit's view —
+        // we cap the wait at 2 s so a slow file-system can't hold the
+        // process up indefinitely.
+        let group = DispatchGroup()
+        group.enter()
+        Task.detached {
+            await AppDelegate.sharedCleanup?.cleanupAll()
+            group.leave()
+        }
+        _ = group.wait(timeout: .now() + 2)
     }
 }
