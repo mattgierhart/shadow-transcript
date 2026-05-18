@@ -33,6 +33,9 @@ public final class PreviewTranscriptionService: TranscriptionService, @unchecked
 
     public var prepareError: Error?
     public var transcribeError: Error?
+    /// Sleep this many nanoseconds inside `transcribe` before returning,
+    /// so tests can race the call against a cancel.
+    public var transcribeDelayNanoseconds: UInt64 = 0
 
     public init() {}
 
@@ -55,8 +58,11 @@ public final class PreviewTranscriptionService: TranscriptionService, @unchecked
             _loadedModel = model
         }
         progress(0.0)
-        progress(0.5)
+        if transcribeDelayNanoseconds > 0 {
+            try await Task.sleep(nanoseconds: transcribeDelayNanoseconds)
+        }
         try Task.checkCancellation()
+        progress(0.5)
         progress(1.0)
         return nextTranscript
     }

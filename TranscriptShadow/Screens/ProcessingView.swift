@@ -6,11 +6,20 @@ import SwiftUI
 
 struct ProcessingView: View {
     @StateObject private var vm: ProcessingViewModel
+    let audioURL: URL?
     let onCancel: () -> Void
+    let onComplete: (UUID) -> Void
 
-    init(env: AppEnvironment, onCancel: @escaping () -> Void) {
+    init(
+        env: AppEnvironment,
+        audioURL: URL? = nil,
+        onCancel: @escaping () -> Void,
+        onComplete: @escaping (UUID) -> Void = { _ in }
+    ) {
         _vm = StateObject(wrappedValue: ProcessingViewModel(env: env))
+        self.audioURL = audioURL
         self.onCancel = onCancel
+        self.onComplete = onComplete
     }
 
     var body: some View {
@@ -35,6 +44,12 @@ struct ProcessingView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DesignColors.bgPrimary)
+        .task(id: audioURL) {
+            guard let audioURL else { return }
+            vm.onComplete = onComplete
+            vm.onCancel = onCancel
+            vm.start(audioURL: audioURL)
+        }
     }
 
     private var heading: some View {
@@ -50,11 +65,18 @@ struct ProcessingView: View {
                 .multilineTextAlignment(.center)
             HStack(spacing: 6) {
                 Text(vm.elapsed)
-                Text("·")
-                Text(vm.estimatedRemaining)
+                if !vm.estimatedRemaining.isEmpty {
+                    Text("·")
+                    Text(vm.estimatedRemaining)
+                }
             }
             .font(DesignFonts.mono(12))
             .foregroundStyle(DesignColors.textSecondary)
+            if let error = vm.error {
+                Text(error)
+                    .font(DesignFonts.mono(11))
+                    .foregroundStyle(DesignColors.Status.error)
+            }
         }
     }
 
@@ -102,6 +124,6 @@ struct ProcessingView: View {
 }
 
 #Preview {
-    ProcessingView(env: .preview(), onCancel: {})
+    ProcessingView(env: .preview(), audioURL: nil, onCancel: {})
         .frame(width: 860, height: 700)
 }
