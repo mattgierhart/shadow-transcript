@@ -78,7 +78,7 @@ struct SettingsView: View {
     private var audioSection: some View {
         SettingsSection(title: "Audio") {
             SettingsRow(label: "Input device", sub: "Microphone used for your voice capture.") {
-                SettingsSelect(value: Binding(get: { vm.inputDevice }, set: { vm.inputDevice = $0 }),
+                SettingsSelect(value: Binding(get: { vm.inputDevice }, set: { vm.setInputDevice($0) }),
                                options: ["MacBook Pro Microphone",
                                          "AirPods Pro",
                                          "Built-in input"])
@@ -88,7 +88,7 @@ struct SettingsView: View {
                        isLast: true) {
                 HStack(spacing: 10) {
                     StatusChip(ok: true, label: "granted")
-                    SettingsToggle(isOn: Binding(get: { vm.captureSystemAudio }, set: { vm.captureSystemAudio = $0 }))
+                    SettingsToggle(isOn: Binding(get: { vm.captureSystemAudio }, set: { vm.setCaptureSystemAudio($0) }))
                 }
             }
         }
@@ -101,7 +101,7 @@ struct SettingsView: View {
                 SettingsSelect(value: Binding(
                     get: { vm.whisperModel.rawValue },
                     set: { rawValue in
-                        if let model = WhisperModel(rawValue: rawValue) { vm.whisperModel = model }
+                        if let model = WhisperModel(rawValue: rawValue) { vm.setWhisperModel(model) }
                     }
                 ),
                                options: WhisperModel.allCases.map(\.rawValue))
@@ -118,10 +118,10 @@ struct SettingsView: View {
         SettingsSection(title: "Export") {
             SettingsRow(label: "Obsidian vault",
                        sub: "Path where transcripts are written as markdown.") {
-                FolderPickerControl(path: vm.vaultPath)
+                FolderPickerControl(path: vm.vaultPath, onChoose: pickVaultDirectory)
             }
             SettingsRow(label: "Subfolder", sub: "./Meetings/") {
-                TextField("Meetings", text: Binding(get: { vm.subfolder }, set: { vm.subfolder = $0 }))
+                TextField("Meetings", text: Binding(get: { vm.subfolder }, set: { vm.setSubfolder($0) }))
                     .textFieldStyle(.plain)
                     .font(DesignFonts.mono(12))
                     .foregroundStyle(DesignColors.textPrimary)
@@ -137,8 +137,20 @@ struct SettingsView: View {
             SettingsRow(label: "Auto-export after processing",
                        sub: "Skip the manual Export click — useful for set-and-forget.",
                        isLast: true) {
-                SettingsToggle(isOn: Binding(get: { vm.autoExport }, set: { vm.autoExport = $0 }))
+                SettingsToggle(isOn: Binding(get: { vm.autoExport }, set: { vm.setAutoExport($0) }))
             }
+        }
+    }
+
+    private func pickVaultDirectory() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.title = "Choose Obsidian Vault"
+        panel.prompt = "Choose"
+        if panel.runModal() == .OK, let url = panel.url {
+            vm.setVaultPath(url.path)
         }
     }
 
@@ -296,18 +308,19 @@ private struct SettingsToggle: View {
 
 private struct FolderPickerControl: View {
     let path: String
+    let onChoose: () -> Void
 
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "folder.fill")
                 .font(.system(size: 11))
                 .foregroundStyle(DesignColors.accentPrimary)
-            Text(path)
+            Text(path.isEmpty ? "Not configured" : path)
                 .font(DesignFonts.mono(11.5))
-                .foregroundStyle(DesignColors.textPrimary)
+                .foregroundStyle(path.isEmpty ? DesignColors.textMuted : DesignColors.textPrimary)
                 .lineLimit(1)
                 .truncationMode(.middle)
-            Button("Choose…") { /* NSOpenPanel wiring deferred to Phase 2 */ }
+            Button("Choose…", action: onChoose)
                 .buttonStyle(.plain)
                 .font(DesignFonts.ui(11, weight: .medium))
                 .foregroundStyle(DesignColors.textSecondary)

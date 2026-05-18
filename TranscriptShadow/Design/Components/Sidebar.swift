@@ -35,23 +35,14 @@ struct Sidebar: View {
 
     private var isSearching: Bool { !vm.query.isEmpty }
 
-    private var filteredGroups: [SidebarGroup] {
-        guard isSearching else { return vm.groups }
-        let q = vm.query.lowercased()
-        let matches = vm.groups
-            .flatMap(\.items)
-            .filter { $0.title.lowercased().contains(q) }
-        guard !matches.isEmpty else { return [] }
-        return [SidebarGroup(id: "search", label: "Search · \"\(vm.query)\"", items: matches)]
-    }
-
+    /// Server-side filtered already (via SidebarViewModel.updateQuery →
+    /// TranscriptStore.search). Render whatever vm.groups contains
+    /// directly.
     private var totalCount: Int {
         vm.groups.reduce(0) { $0 + $1.items.count }
     }
 
-    private var matchCount: Int {
-        filteredGroups.reduce(0) { $0 + $1.items.count }
-    }
+    private var matchCount: Int { totalCount }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -120,10 +111,10 @@ struct Sidebar: View {
     private var list: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 10) {
-                if filteredGroups.isEmpty && isSearching {
+                if vm.groups.isEmpty && isSearching {
                     emptyResults
                 } else {
-                    ForEach(filteredGroups) { group in
+                    ForEach(vm.groups) { group in
                         VStack(alignment: .leading, spacing: 0) {
                             Text(group.label.uppercased())
                                 .font(DesignFonts.ui(10, weight: .semibold))
