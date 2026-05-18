@@ -2,7 +2,9 @@
 // @see SoT/SoT.USER_JOURNEYS.md SCR-004
 // @see design/visual-prototype/project/src/scr004.jsx :: ScreenSCR004
 
+import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct TranscriptSpeaker: Identifiable {
     let id = UUID()
@@ -140,9 +142,12 @@ struct TranscriptView: View {
             Spacer()
 
             HStack(spacing: 8) {
-                toolbarButton("Copy", sub: "⌘C")
-                toolbarButton("Save as…", sub: "⌘S")
+                toolbarButton("Copy", sub: "⌘C", action: copyToPasteboard)
+                    .keyboardShortcut("c", modifiers: .command)
+                toolbarButton("Save as…", sub: "⌘S", action: saveAs)
+                    .keyboardShortcut("s", modifiers: .command)
                 exportButton
+                    .keyboardShortcut("e", modifiers: .command)
             }
         }
         .padding(.horizontal, 24)
@@ -153,8 +158,29 @@ struct TranscriptView: View {
         )
     }
 
-    private func toolbarButton(_ label: String, sub: String) -> some View {
-        Button(action: {}) {
+    private func copyToPasteboard() {
+        _ = vm.copyMarkdownToPasteboard()
+    }
+
+    private func saveAs() {
+        guard vm.stored != nil else { return }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.init(filenameExtension: "md") ?? .plainText]
+        panel.nameFieldStringValue = MarkdownFilenameSanitizer.makeFilename(
+            date: vm.stored?.date ?? Date(),
+            title: vm.stored?.title ?? "Transcript"
+        )
+        if panel.runModal() == .OK, let url = panel.url {
+            vm.saveMarkdown(to: url)
+        }
+    }
+
+    private func exportToObsidian() {
+        Task { await vm.exportToObsidian() }
+    }
+
+    private func toolbarButton(_ label: String, sub: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             HStack(spacing: 8) {
                 Text(label).font(DesignFonts.ui(12, weight: .medium))
                 Text(sub).font(DesignFonts.mono(10)).foregroundStyle(DesignColors.textMuted)
@@ -170,7 +196,7 @@ struct TranscriptView: View {
     }
 
     private var exportButton: some View {
-        Button(action: {}) {
+        Button(action: exportToObsidian) {
             HStack(spacing: 8) {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: 12, weight: .semibold))

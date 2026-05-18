@@ -8,6 +8,9 @@
 // shortcut) bypass the fetch and surface the canned `.mock` display
 // model unchanged — keeps the demo flow alive through Phase 3.
 
+#if canImport(AppKit)
+import AppKit
+#endif
 import Combine
 import Foundation
 
@@ -16,9 +19,12 @@ final class TranscriptViewModel: ObservableObject {
     @Published var displayModel: TranscriptDisplayModel = .mock
     @Published var loadError: String?
     @Published var renameError: String?
+    @Published var exportError: String?
+    @Published var exportedURL: URL?
     @Published var isLoading: Bool = false
 
     private(set) var transcriptID: UUID?
+    private(set) var stored: StoredTranscript?
     let env: AppEnvironment
 
     init(env: AppEnvironment) {
@@ -43,12 +49,15 @@ final class TranscriptViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         do {
-            guard let stored = try await env.transcripts.fetch(id: id) else {
+            guard let fetched = try await env.transcripts.fetch(id: id) else {
                 loadError = "Transcript not found"
+                stored = nil
                 return
             }
-            displayModel = Self.makeDisplayModel(from: stored)
+            stored = fetched
+            displayModel = Self.makeDisplayModel(from: fetched)
             loadError = nil
+            exportedURL = fetched.exportedPath
         } catch {
             loadError = "\(error)"
         }
@@ -90,6 +99,116 @@ final class TranscriptViewModel: ObservableObject {
         } catch {
             renameError = "\(error)"
         }
+    }
+
+    // MARK: - Export / Copy / Save As
+
+    /// Copies the stored markdown to `NSPasteboard.general`. Returns
+    /// false if no transcript is loaded (e.g. demo flow).
+    @discardableResult
+    func copyMarkdownToPasteboard() -> Bool {
+        #if canImport(AppKit)
+        guard let stored else { return false }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(stored.markdown, forType: .string)
+        return true
+        #else
+        return false
+        #endif
+    }
+
+    /// Writes the stored markdown to the given URL. Used by SCR-004's
+    /// "Save as…" button after `NSSavePanel` returns.
+    func saveMarkdown(to url: URL) {
+        exportError = nil
+        guard let stored else {
+            exportError = "No transcript loaded."
+            return
+        }
+        do {
+            try stored.markdown.write(to: url, atomically: true, encoding: .utf8)
+        } catch {
+            exportError = "Couldn't save: \(error.localizedDescription)"
+        }
+    }
+
+    /// Exports the loaded transcript to the user's configured Obsidian
+    /// vault via `ObsidianExporter`. Marks the transcript as exported
+    /// on success.
+    func exportToObsidian() async {
+        exportError = nil
+        guard let stored else {
+            exportError = "No transcript loaded."
+            return
+        }
+        let vaultPath: String?
+        do {
+            vaultPath = try await env.settings.read(.obsidianVaultPath)
+        } catch {
+            exportError = "Couldn't read vault path: \(error.localizedDescription)"
+            return
+        }
+        guard let path = vaultPath, !path.isEmpty else {
+            exportError = "Set an Obsidian vault in Settings first."
+            return
+        }
+        let subfolder = (try? await env.settings.read(.obsidianSubfolder)) ?? "Meetings"
+        let formatted = Self.makeFormattedTranscript(from: stored)
+        do {
+            let url = try env.exporter.export(
+                transcript: formatted,
+                title: stored.title,
+                date: stored.date,
+                vaultPath: URL(fileURLWithPath: path),
+                subfolder: subfolder.isEmpty ? nil : subfolder
+            )
+            try? await env.transcripts.markExported(id: stored.id, to: url)
+            exportedURL = url
+        } catch {
+            exportError = "Export failed: \(error.localizedDescription)"
+        }
+    }
+
+    /// Rebuild a `FormattedTranscript` from a `StoredTranscript`. The
+    /// `markdown` field uses the at-save-time body; if speakers have
+    /// been renamed in-place via DBT-002 the markdown is mildly stale
+    /// but the frontmatter speakerMap is current.
+    static func makeFormattedTranscript(from stored: StoredTranscript) -> FormattedTranscript {
+        let speakerMap = Dictionary(uniqueKeysWithValues: stored.speakers.map {
+            ($0.speakerKey, $0.displayName)
+        })
+        let speakerByID = Dictionary(uniqueKeysWithValues: stored.speakers.map {
+            ($0.id, $0)
+        })
+        let sortedSegments = stored.segments.sorted { $0.sequence < $1.sequence }
+        let turns: [TranscriptTurn] = sortedSegments.compactMap { segment in
+            guard let speaker = speakerByID[segment.speakerId] else { return nil }
+            return TranscriptTurn(
+                canonicalSpeaker: speaker.speakerKey,
+                displayName: speaker.displayName,
+                startSeconds: segment.startTime,
+                endSeconds: segment.endTime,
+                text: segment.text
+            )
+        }
+        let wordCount = stored.segments.reduce(0) { partial, seg in
+            partial + seg.text.split { $0.isWhitespace || $0.isNewline }.count
+        }
+        let model = WhisperModel(rawValue: stored.model) ?? .baseEN
+        return FormattedTranscript(
+            markdown: stored.markdown,
+            metadata: TranscriptMetadata(
+                durationSeconds: stored.durationSeconds,
+                speakerCount: stored.speakerCount,
+                language: "en",
+                model: model,
+                wordCount: wordCount,
+                turnCount: turns.count
+            ),
+            speakerMap: speakerMap,
+            warnings: [],
+            turns: turns
+        )
     }
 
     // MARK: - Projection
