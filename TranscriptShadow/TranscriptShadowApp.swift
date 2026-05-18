@@ -109,10 +109,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // applicationWillTerminate is synchronous from AppKit's view —
         // we cap the wait at 2 s so a slow file-system can't hold the
         // process up indefinitely.
+        //
+        // Codex Gate 6 P1: capture the cleanup reference up front. The
+        // static is @MainActor-isolated, so reading it inside a Task
+        // running off-main while the main actor is blocked in
+        // `group.wait` would deadlock until the wait times out, and
+        // cleanupAll() would never run.
+        guard let cleanup = AppDelegate.sharedCleanup else { return }
         let group = DispatchGroup()
         group.enter()
         Task.detached {
-            await AppDelegate.sharedCleanup?.cleanupAll()
+            await cleanup.cleanupAll()
             group.leave()
         }
         _ = group.wait(timeout: .now() + 2)

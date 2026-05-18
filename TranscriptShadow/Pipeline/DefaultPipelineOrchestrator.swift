@@ -52,84 +52,109 @@ public final class DefaultPipelineOrchestrator: PipelineOrchestrator, @unchecked
         audioURL: URL,
         progress: @escaping @Sendable (PipelineProgress) -> Void
     ) async throws -> UUID {
-        // Single cleanup point. Fires on success, cancel, and any
-        // throw. Detached so a cancelled outer Task still runs the
-        // cleanup (Task.detached is not cancelled by the parent).
-        defer {
-            let url = audioURL
-            let cleanup = self.cleanup
-            Task.detached { await cleanup.delete(url: url) }
-        }
-
+        // Single cleanup point. Codex Gate 6 P2 fix — cleanup is now
+        // awaited (not detached) so callers can rely on the temp WAV
+        // being gone the instant `process` returns or throws (BR-102 /
+        // API-301).
+        let result: Result<UUID, Error>
         do {
-            let model = (try? await settings.read(.whisperModel)) ?? .baseEN
-            try await transcription.prepare(model: model)
-            try Task.checkCancellation()
+            let id = try await runStages(audioURL: audioURL, progress: progress)
+            result = .success(id)
+        } catch {
+            result = .failure(error)
+        }
+        await cleanup.delete(url: audioURL)
+        return try result.get()
+    }
 
-            // Stage 1: Transcribe [0.0 → 0.6]
-            let transcript = try await transcription.transcribe(
+    private func runStages(
+        audioURL: URL,
+        progress: @escaping @Sendable (PipelineProgress) -> Void
+    ) async throws -> UUID {
+        let model = (try? await settings.read(.whisperModel)) ?? .baseEN
+        // Prepare — service errors here are still transcription-stage.
+        do {
+            try await transcription.prepare(model: model)
+        } catch is CancellationError {
+            throw OrchestrationError.cancelled
+        } catch {
+            throw OrchestrationError.transcriptionFailed("\(error)")
+        }
+        try Task.checkCancellation()
+
+        // Stage 1: Transcribe [0.0 → 0.6]
+        let transcript: Transcript
+        do {
+            transcript = try await transcription.transcribe(
                 audioURL: audioURL,
                 model: model
             ) { fraction in
                 let agg = max(0, min(fraction, 1)) * 0.6
                 progress(PipelineProgress(stage: .transcribe, stageFraction: fraction, aggregateFraction: agg))
             }
-            progress(PipelineProgress(stage: .transcribe, stageFraction: 1, aggregateFraction: 0.6))
-            try Task.checkCancellation()
+        } catch is CancellationError {
+            throw OrchestrationError.cancelled
+        } catch {
+            throw OrchestrationError.transcriptionFailed("\(error)")
+        }
+        progress(PipelineProgress(stage: .transcribe, stageFraction: 1, aggregateFraction: 0.6))
+        try Task.checkCancellation()
 
-            // Stage 2: Diarize [0.6 → 0.9]
-            let diarization = try await diarization.diarize(audioURL: audioURL) { fraction in
+        // Stage 2: Diarize [0.6 → 0.9] — Codex Gate 6 P2 fix: per-stage
+        // error mapping so SCR-003 reports speaker-identification
+        // failures distinctly from transcription failures, and cancel
+        // during diarize still surfaces .cancelled.
+        let diarizationResult: DiarizationResult
+        do {
+            diarizationResult = try await diarization.diarize(audioURL: audioURL) { fraction in
                 let agg = 0.6 + max(0, min(fraction, 1)) * 0.3
                 progress(PipelineProgress(stage: .diarize, stageFraction: fraction, aggregateFraction: agg))
             }
-            progress(PipelineProgress(stage: .diarize, stageFraction: 1, aggregateFraction: 0.9))
-            try Task.checkCancellation()
-
-            // Stage 3: Format [0.9 → 0.92]
-            let formatted: FormattedTranscript
-            do {
-                formatted = try formatter.format(
-                    transcription: transcript,
-                    diarization: diarization,
-                    speakerNames: [:]
-                )
-            } catch {
-                throw OrchestrationError.formattingFailed("\(error)")
-            }
-            progress(PipelineProgress(stage: .format, stageFraction: 1, aggregateFraction: 0.92))
-            try Task.checkCancellation()
-
-            // Stage 4: Save [0.92 → 0.97]
-            let now = Date()
-            let title = titleFactory(now)
-            let stored: StoredTranscript
-            do {
-                stored = try await transcripts.save(formatted: formatted, title: title, date: now)
-            } catch is CancellationError {
-                throw OrchestrationError.cancelled
-            } catch {
-                throw OrchestrationError.saveFailed("\(error)")
-            }
-            progress(PipelineProgress(stage: .save, stageFraction: 1, aggregateFraction: 0.97))
-
-            // Stage 5: Export [0.97 → 1.0] — best-effort
-            await maybeAutoExport(
-                stored: stored,
-                formatted: formatted,
-                title: title,
-                date: now,
-                progress: progress
-            )
-
-            return stored.id
         } catch is CancellationError {
             throw OrchestrationError.cancelled
-        } catch let error as OrchestrationError {
-            throw error
         } catch {
-            // Any service throw at the transcribe/diarize stages flows here.
-            throw OrchestrationError.transcriptionFailed("\(error)")
+            throw OrchestrationError.diarizationFailed("\(error)")
         }
+        progress(PipelineProgress(stage: .diarize, stageFraction: 1, aggregateFraction: 0.9))
+        try Task.checkCancellation()
+
+        // Stage 3: Format [0.9 → 0.92]
+        let formatted: FormattedTranscript
+        do {
+            formatted = try formatter.format(
+                transcription: transcript,
+                diarization: diarizationResult,
+                speakerNames: [:]
+            )
+        } catch {
+            throw OrchestrationError.formattingFailed("\(error)")
+        }
+        progress(PipelineProgress(stage: .format, stageFraction: 1, aggregateFraction: 0.92))
+        try Task.checkCancellation()
+
+        // Stage 4: Save [0.92 → 0.97]
+        let now = Date()
+        let title = titleFactory(now)
+        let stored: StoredTranscript
+        do {
+            stored = try await transcripts.save(formatted: formatted, title: title, date: now)
+        } catch is CancellationError {
+            throw OrchestrationError.cancelled
+        } catch {
+            throw OrchestrationError.saveFailed("\(error)")
+        }
+        progress(PipelineProgress(stage: .save, stageFraction: 1, aggregateFraction: 0.97))
+
+        // Stage 5: Export [0.97 → 1.0] — best-effort
+        await maybeAutoExport(
+            stored: stored,
+            formatted: formatted,
+            title: title,
+            date: now,
+            progress: progress
+        )
+
+        return stored.id
     }
 
     // MARK: - Auto export

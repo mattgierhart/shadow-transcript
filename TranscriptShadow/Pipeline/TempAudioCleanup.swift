@@ -31,11 +31,18 @@ public final class DefaultTempAudioCleanup: TempAudioCleanup, @unchecked Sendabl
     /// Recent files (less than `staleAge`) are also deleted but logged.
     private let staleAge: TimeInterval
 
+    /// Files modified within `inFlightWindow` are skipped by
+    /// `scanForOrphans` because they may be an active capture that
+    /// raced the launch hook (Codex Gate 6 P2). `cleanupAll` ignores
+    /// this window — terminate cleanup is intentional.
+    private let inFlightWindow: TimeInterval
+
     public init(
         fileManager: FileManager = .default,
         directoryURL: URL? = nil,
         clock: @escaping @Sendable () -> Date = { Date() },
-        staleAge: TimeInterval = 24 * 60 * 60
+        staleAge: TimeInterval = 24 * 60 * 60,
+        inFlightWindow: TimeInterval = 30
     ) {
         self.fileManager = fileManager
         // Mirror DefaultAudioCaptureService's directory choice. Fall
@@ -49,6 +56,7 @@ public final class DefaultTempAudioCleanup: TempAudioCleanup, @unchecked Sendabl
         }
         self.clock = clock
         self.staleAge = staleAge
+        self.inFlightWindow = inFlightWindow
     }
 
     public func delete(url: URL) async {
@@ -66,13 +74,15 @@ public final class DefaultTempAudioCleanup: TempAudioCleanup, @unchecked Sendabl
         let now = clock()
         for fileURL in contents where fileURL.pathExtension.lowercased() == "wav" {
             let mtime = (try? fileURL.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
-            if now.timeIntervalSince(mtime) >= staleAge {
-                try? fileManager.removeItem(at: fileURL)
-            } else {
-                // Recent orphan — under v0.7 scope still silently
-                // delete. EPIC-09+ may surface a recoverable record.
-                try? fileManager.removeItem(at: fileURL)
-            }
+            let age = now.timeIntervalSince(mtime)
+            // Codex Gate 6 P2 fix — skip files written within the
+            // in-flight window. Avoids racing a fresh recording that
+            // started seconds after the launch scan kicked off.
+            if age < inFlightWindow { continue }
+            // Otherwise delete (whether older than staleAge or merely
+            // older than inFlightWindow — both are orphans under
+            // EPIC-08's v0.7 silent-delete policy).
+            try? fileManager.removeItem(at: fileURL)
         }
     }
 

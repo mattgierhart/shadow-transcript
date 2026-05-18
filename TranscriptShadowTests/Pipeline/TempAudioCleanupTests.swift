@@ -52,21 +52,30 @@ final class TempAudioCleanupTests: XCTestCase {
 
     // MARK: - scanForOrphans
 
-    func test_scanForOrphans_deletesAllWAVs() async throws {
+    func test_scanForOrphans_deletesOrphansOlderThanInFlightWindow() async throws {
         let a = try makeWAV(named: "old-1.wav", age: 48 * 3600)
         let b = try makeWAV(named: "old-2.wav", age: 25 * 3600)
-        let c = try makeWAV(named: "fresh.wav", age: 10)
+        let c = try makeWAV(named: "recent-orphan.wav", age: 5 * 60)  // 5 min
         let cleanup = DefaultTempAudioCleanup(directoryURL: sandboxDir)
         await cleanup.scanForOrphans()
         XCTAssertFalse(fileManager.fileExists(atPath: a.path))
         XCTAssertFalse(fileManager.fileExists(atPath: b.path))
-        // Recent files also get deleted under the v0.7 "silent delete"
-        // policy.
-        XCTAssertFalse(fileManager.fileExists(atPath: c.path), "TEST-503 — orphan scan deletes all WAVs (v0.7 silent-delete policy)")
+        XCTAssertFalse(fileManager.fileExists(atPath: c.path),
+                       "TEST-503 — anything outside the in-flight window is treated as orphan")
+    }
+
+    func test_scanForOrphans_skipsInFlightWAV_avoidingActiveCaptureRace() async throws {
+        // Codex Gate 6 P2 — a brand-new capture started ~seconds after
+        // the launch scan kicked off must not be deleted.
+        let inflight = try makeWAV(named: "inflight.wav", age: 5)  // 5 s old
+        let cleanup = DefaultTempAudioCleanup(directoryURL: sandboxDir, inFlightWindow: 30)
+        await cleanup.scanForOrphans()
+        XCTAssertTrue(fileManager.fileExists(atPath: inflight.path),
+                      "Scan must preserve files within the in-flight window")
     }
 
     func test_scanForOrphans_skipsNonWAV() async throws {
-        let wav = try makeWAV(named: "audio.wav")
+        let wav = try makeWAV(named: "audio.wav", age: 10 * 60)  // 10 min — outside window
         let log = sandboxDir.appendingPathComponent("not-audio.log")
         try Data([0xFF]).write(to: log)
         let cleanup = DefaultTempAudioCleanup(directoryURL: sandboxDir)
