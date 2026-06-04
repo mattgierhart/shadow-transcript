@@ -17,8 +17,11 @@
 // stage failure (EPIC-03 lesson).
 
 import Foundation
+import os
 
 public final class DefaultPipelineOrchestrator: PipelineOrchestrator, @unchecked Sendable {
+    private static let log = Logger(subsystem: "ai.gearheart.TranscriptShadow", category: "pipeline")
+
     private let transcription: any TranscriptionService
     private let diarization: any DiarizationService
     private let formatter: any TranscriptFormatter
@@ -54,15 +57,15 @@ public final class DefaultPipelineOrchestrator: PipelineOrchestrator, @unchecked
     public func process(
         audioURL: URL,
         progress: @escaping @Sendable (PipelineProgress) -> Void
-    ) async throws -> UUID {
+    ) async throws -> PipelineResult {
         // Single cleanup point. Codex Gate 6 P2 fix — cleanup is now
         // awaited (not detached) so callers can rely on the temp WAV
         // being gone the instant `process` returns or throws (BR-102 /
         // API-301).
-        let result: Result<UUID, Error>
+        let result: Result<PipelineResult, Error>
         do {
-            let id = try await runStages(audioURL: audioURL, progress: progress)
-            result = .success(id)
+            let outcome = try await runStages(audioURL: audioURL, progress: progress)
+            result = .success(outcome)
         } catch {
             result = .failure(error)
         }
@@ -73,7 +76,7 @@ public final class DefaultPipelineOrchestrator: PipelineOrchestrator, @unchecked
     private func runStages(
         audioURL: URL,
         progress: @escaping @Sendable (PipelineProgress) -> Void
-    ) async throws -> UUID {
+    ) async throws -> PipelineResult {
         let model = (try? await settings.read(.whisperModel)) ?? .baseEN
         // Prepare — service errors here are still transcription-stage.
         do {
@@ -158,8 +161,10 @@ public final class DefaultPipelineOrchestrator: PipelineOrchestrator, @unchecked
         progress(PipelineProgress(stage: .save, stageFraction: 1, aggregateFraction: 0.97))
 
         // Stage 5: Export [0.97 → 1.0] — best-effort. Exports `enriched`
-        // so the Obsidian note carries the embedded summary.
-        await maybeAutoExport(
+        // so the Obsidian note carries the embedded summary. A failure here
+        // is non-fatal: maybeAutoExport returns a warning (F-1) rather than
+        // throwing, so the saved transcript is never invalidated.
+        let exportWarning = await maybeAutoExport(
             stored: stored,
             formatted: enriched,
             title: title,
@@ -167,7 +172,7 @@ public final class DefaultPipelineOrchestrator: PipelineOrchestrator, @unchecked
             progress: progress
         )
 
-        return stored.id
+        return PipelineResult(id: stored.id, exportWarning: exportWarning)
     }
 
     // MARK: - Summary (API-401 / FEA-007)
@@ -193,20 +198,25 @@ public final class DefaultPipelineOrchestrator: PipelineOrchestrator, @unchecked
 
     // MARK: - Auto export
 
+    /// Returns nil when export is disabled/unconfigured or succeeds; returns a
+    /// user-facing warning when an *enabled* export fails. Never throws — the
+    /// save is already durable and must not be invalidated (EPIC-08 contract).
+    /// The failure was previously swallowed with no log and no UI signal
+    /// (F-1, codebase review 2026-05-30); it is now logged and surfaced.
     private func maybeAutoExport(
         stored: StoredTranscript,
         formatted: FormattedTranscript,
         title: String,
         date: Date,
         progress: @Sendable (PipelineProgress) -> Void
-    ) async {
+    ) async -> String? {
         guard (try? await settings.read(.autoExport)) == true,
               let path = try? await settings.read(.obsidianVaultPath),
               !path.isEmpty
         else {
             // No auto-export → snap stage 5 to done so the bar reaches 100%.
             progress(PipelineProgress(stage: .export, stageFraction: 1, aggregateFraction: 1.0))
-            return
+            return nil
         }
         let subfolder = (try? await settings.read(.obsidianSubfolder)) ?? "Meetings"
         do {
@@ -219,11 +229,21 @@ public final class DefaultPipelineOrchestrator: PipelineOrchestrator, @unchecked
             )
             try? await transcripts.markExported(id: stored.id, to: url)
             progress(PipelineProgress(stage: .export, stageFraction: 1, aggregateFraction: 1.0))
+            return nil
         } catch {
-            // Non-fatal — the transcript is saved. Snap progress to 1
-            // so the UI doesn't hang at 97 %.
+            // Non-fatal — the transcript is saved. Log + return a warning
+            // (F-1) instead of swallowing it; never invalidate the save. Snap
+            // progress to 1 so the UI doesn't hang at 97 %.
+            Self.log.warning("Auto-export to Obsidian failed (transcript \(stored.id.uuidString, privacy: .public) still saved): \(String(describing: error), privacy: .public)")
             progress(PipelineProgress(stage: .export, stageFraction: 1, aggregateFraction: 1.0))
+            return Self.exportWarningMessage(error)
         }
+    }
+
+    /// User-facing copy for a non-fatal export failure (F-1).
+    private static func exportWarningMessage(_ error: Error) -> String {
+        let detail = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        return "Transcript saved, but export to your Obsidian vault failed: \(detail)"
     }
 
     // MARK: - Title

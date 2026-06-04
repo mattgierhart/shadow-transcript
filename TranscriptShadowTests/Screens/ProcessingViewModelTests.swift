@@ -40,7 +40,7 @@ final class ProcessingViewModelTests: XCTestCase {
 
         let exp = expectation(description: "pipeline complete")
         var savedID: UUID?
-        vm.onComplete = { id in
+        vm.onComplete = { id, _ in
             savedID = id
             exp.fulfill()
         }
@@ -116,7 +116,7 @@ final class ProcessingViewModelTests: XCTestCase {
 
         let vm = ProcessingViewModel(env: env)
         let exp = expectation(description: "pipeline complete")
-        vm.onComplete = { _ in exp.fulfill() }
+        vm.onComplete = { _, _ in exp.fulfill() }
 
         vm.start(audioURL: dummyAudioURL)
         await fulfillment(of: [exp], timeout: 5.0)
@@ -142,8 +142,10 @@ final class ProcessingViewModelTests: XCTestCase {
         let vm = ProcessingViewModel(env: env)
         let exp = expectation(description: "pipeline complete despite export failure")
         var savedID: UUID?
-        vm.onComplete = { id in
+        var exportWarning: String?
+        vm.onComplete = { id, warning in
             savedID = id
+            exportWarning = warning
             exp.fulfill()
         }
         vm.start(audioURL: dummyAudioURL)
@@ -156,5 +158,7 @@ final class ProcessingViewModelTests: XCTestCase {
         // exportedPath was never written (markExported is best-effort
         // and only fires on successful export)
         XCTAssertNil(saved?.exportedPath)
+        // F-1: the non-fatal export warning must reach the VM completion handler.
+        XCTAssertNotNil(exportWarning, "ProcessingViewModel should receive the export warning")
     }
 }

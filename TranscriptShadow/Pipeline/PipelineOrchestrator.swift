@@ -34,9 +34,28 @@ public struct PipelineProgress: Sendable, Equatable {
     }
 }
 
+/// Result of a successful pipeline run. The transcript is durably saved by
+/// the time this is returned; `exportWarning` is the only soft-failure channel.
+public struct PipelineResult: Sendable, Equatable {
+    /// The stored transcript's id.
+    public let id: UUID
+    /// Non-nil when auto-export to Obsidian was attempted but failed. The save
+    /// is intact regardless (EPIC-08 contract: an export failure "surfaces in
+    /// UI but does not invalidate the save"), so callers show this as a
+    /// dismissible warning, never a hard error. Nil when export is disabled,
+    /// not configured, or succeeded.
+    public let exportWarning: String?
+
+    public init(id: UUID, exportWarning: String? = nil) {
+        self.id = id
+        self.exportWarning = exportWarning
+    }
+}
+
 public protocol PipelineOrchestrator: Sendable {
-    /// Runs the full pipeline on the given audio file. Returns the
-    /// stored transcript's UUID on success. Throws `OrchestrationError`
+    /// Runs the full pipeline on the given audio file. Returns a
+    /// `PipelineResult` — the saved transcript's id plus an optional,
+    /// non-fatal `exportWarning` — on success. Throws `OrchestrationError`
     /// for typed failures; throws `OrchestrationError.cancelled` if
     /// `Task.cancel()` lands on the calling task.
     ///
@@ -45,12 +64,12 @@ public protocol PipelineOrchestrator: Sendable {
     func process(
         audioURL: URL,
         progress: @escaping @Sendable (PipelineProgress) -> Void
-    ) async throws -> UUID
+    ) async throws -> PipelineResult
 }
 
 public extension PipelineOrchestrator {
     /// Convenience for callers that don't care about progress.
-    func process(audioURL: URL) async throws -> UUID {
+    func process(audioURL: URL) async throws -> PipelineResult {
         try await process(audioURL: audioURL, progress: { _ in })
     }
 }

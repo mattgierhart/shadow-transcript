@@ -30,6 +30,10 @@ final class MainWindowViewModel: ObservableObject {
     /// Set when system-audio permission is missing but the user chose to
     /// proceed mic-only. Cleared on next Record.
     @Published var systemAudioFellBack: Bool = false
+    /// Set when a transcript saved but its auto-export to Obsidian failed
+    /// (F-1). Surfaced as a dismissible window banner; cleared on the next
+    /// Record or navigation.
+    @Published var exportWarning: String?
 
     let env: AppEnvironment
     let hud: RecordingHUDController
@@ -62,6 +66,7 @@ final class MainWindowViewModel: ObservableObject {
     func handleRecord() async {
         recordError = nil
         systemAudioFellBack = false
+        exportWarning = nil
 
         let mic = permissions.microphoneStatus
         let micResolved: PermissionsCoordinator.Status
@@ -137,13 +142,14 @@ final class MainWindowViewModel: ObservableObject {
         if let id { content = .transcript(id: id) }
     }
 
-    func goToPreFlight() { content = .preFlight; selectedTranscriptID = nil }
+    func goToPreFlight() { content = .preFlight; selectedTranscriptID = nil; exportWarning = nil }
     #if DEBUG
     // Demo nav only (Cmd+2) — routes to canned processing with no audio.
     func goToProcessing() { content = .processing(audioURL: nil); selectedTranscriptID = nil }
     #endif
 
-    func onPipelineComplete(transcriptID: UUID) {
+    func onPipelineComplete(transcriptID: UUID, exportWarning: String? = nil) {
+        self.exportWarning = exportWarning
         selectTranscript(id: transcriptID.uuidString)
         // Codex Gate 5b P2 fix — SCR-006 sidebar would otherwise stay
         // stale until next launch. Trigger a fresh

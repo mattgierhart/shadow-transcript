@@ -78,11 +78,12 @@ final class DefaultPipelineOrchestratorTests: XCTestCase {
         let b = Builder()
         let orchestrator = b.build()
         let box = ProgressBox()
-        let id = try await orchestrator.process(audioURL: dummyAudioURL) { progress in
+        let result = try await orchestrator.process(audioURL: dummyAudioURL) { progress in
             box.append(progress)
         }
-        let stored = try await b.store.fetch(id: id)
+        let stored = try await b.store.fetch(id: result.id)
         XCTAssertNotNil(stored)
+        XCTAssertNil(result.exportWarning, "no export configured → no warning on success")
         // First aggregate fraction should be ≤ last; monotonic
         let aggs = box.snapshot.map(\.aggregateFraction)
         for i in 1..<aggs.count {
@@ -224,10 +225,13 @@ final class DefaultPipelineOrchestratorTests: XCTestCase {
         try await b.settings.write(.autoExport, true)
         try await b.settings.write(.obsidianVaultPath, "/tmp/preview-vault")
         let orchestrator = b.build()
-        let id = try await orchestrator.process(audioURL: dummyAudioURL)
-        let stored = try await b.store.fetch(id: id)
+        let result = try await orchestrator.process(audioURL: dummyAudioURL)
+        let stored = try await b.store.fetch(id: result.id)
         XCTAssertNotNil(stored)
         XCTAssertNil(stored?.exportedPath, "markExported must not run when export fails")
+        // F-1: the failure must now be observable to the caller, not swallowed.
+        XCTAssertNotNil(result.exportWarning,
+                        "an enabled export that throws must surface a non-fatal warning (F-1)")
     }
 
     func test_autoExportDisabled_noExporterCall() async throws {

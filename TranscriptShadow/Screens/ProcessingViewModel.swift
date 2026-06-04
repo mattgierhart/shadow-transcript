@@ -26,7 +26,9 @@ final class ProcessingViewModel: ObservableObject {
     @Published var isRunning: Bool = false
 
     let env: AppEnvironment
-    var onComplete: ((UUID) -> Void)?
+    /// (transcriptID, exportWarning?). The warning is non-nil when auto-export
+    /// failed but the transcript saved (F-1) — the caller surfaces it.
+    var onComplete: ((UUID, String?) -> Void)?
     var onCancel: (() -> Void)?
 
     private var pipelineTask: Task<Void, Never>?
@@ -75,12 +77,12 @@ final class ProcessingViewModel: ObservableObject {
         ]
 
         do {
-            let id = try await env.pipeline.process(audioURL: audioURL) { [weak self] progress in
+            let result = try await env.pipeline.process(audioURL: audioURL) { [weak self] progress in
                 Task { @MainActor [weak self] in
                     self?.apply(progress: progress)
                 }
             }
-            onComplete?(id)
+            onComplete?(result.id, result.exportWarning)
         } catch OrchestrationError.cancelled {
             error = "Cancelled"
             onCancel?()
