@@ -34,6 +34,10 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.USER_JOUR
 
 - [API-301](#api-301-temp-audio-cleanup) - Temp Audio Cleanup
 
+**Summarization Services** (API-401 to API-499):
+
+- [API-401](#api-401-summarization-service) - On-Device Summarization Service
+
 ---
 
 ## API-001: Audio Capture Service
@@ -571,6 +575,62 @@ _No deprecated endpoints._
 
 ---
 
+## API-401: Summarization Service
+
+**ID**: API-401
+**Category**: Internal
+**Status**: Implemented (EPIC-09, 2026-06-04)
+**Implements**: FEA-007, BR-104, TECH-008
+
+### Purpose
+
+On-device meeting summary. Runs after `TranscriptFormatter.format` (API-201)
+and before `TranscriptStore.save` (API-202); the orchestrator embeds the
+rendered summary into the transcript markdown so it reaches SQLite (DBT-001)
+and the Obsidian export (API-202) with no schema change.
+
+### Interface
+
+```swift
+public protocol SummarizationService: Sendable {
+    func summarize(transcript: FormattedTranscript) async throws -> MeetingSummary
+}
+
+public struct MeetingSummary: Codable, Sendable, Equatable {
+    public let overview: String
+    public let keyPoints: [String]
+    public let actionItems: [String]
+    public let generator: String   // engine label, shown in the markdown footer
+}
+
+public enum SummarizationError: Error, Equatable {
+    case emptyTranscript
+    case modelUnavailable(String)
+    case generationFailed(String)
+}
+```
+
+### Implementations
+
+- `DefaultSummarizationService` — runtime engine selection; prefers the LLM,
+  falls back to extractive on any unavailability/failure.
+- `ExtractiveSummarizer` — deterministic, dependency-free; always available
+  (macOS 15+). Doubles as the test oracle.
+- `FoundationModelsSummarizer` — Apple on-device LLM (macOS 26+), behind
+  `#if canImport(FoundationModels)` so the macOS-15 SDK build is unaffected.
+
+### Contract notes
+
+- **Best-effort / non-fatal**: the orchestrator pre-catches every throw and
+  proceeds with the un-summarized transcript. Summarization never blocks a
+  save (mirrors API-202 auto-export discipline).
+- **Gating**: only runs when `SettingKey.summarizeOnComplete` is true (default).
+- **On-device**: no network — BR-104 / BR-101.
+
+**Tests**: TEST-601 (extractive oracle), TEST-602 (orchestrator embedding).
+
+---
+
 ## Cross-Reference Index
 
 **Services by Journey**:
@@ -584,6 +644,7 @@ _No deprecated endpoints._
 - Capture: API-001, API-002
 - Process: API-101, API-102
 - Output: API-201, API-202
+- Summarize: API-401
 - Cleanup: API-301
 
 ---

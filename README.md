@@ -6,7 +6,7 @@ template_version: "3.0.0"
 
 > **Status**: Active
 > **Current PRD Version**: v0.7 (See `PRD.md`) — EPIC-01 through EPIC-08 complete; v0.8 manual walkthrough (TEST-504 no-network probe + KPI-001/002 baselines + RISK-008 fullscreen probe) on Mac is the remaining v0.7 → v0.8 gate item.
-> **Active EPIC**: v0.8 Release & Deployment planning. EPIC-08 closed 2026-05-17 — `DefaultPipelineOrchestrator` extracts the EPIC-07 inline pipeline behind a public protocol with monotonic 5-stage `PipelineProgress`, single awaited cleanup point, per-stage error mapping (Codex Gate 6 P2). `DefaultTempAudioCleanup` (API-301) handles `delete(url:)` / `scanForOrphans()` (30s in-flight window so it can't race a fresh capture) / `cleanupAll()`. App-level orphan scan on `applicationDidFinishLaunching` + capped cleanup on `applicationWillTerminate`. 183 total XCTests green. (See `epics/`)
+> **Active EPIC**: EPIC-09 — on-device meeting summary (FEA-007 / API-401 / BR-104) shipped behind `SummarizationService` (Apple Foundation Models on macOS 26+, deterministic `ExtractiveSummarizer` fallback everywhere; summary embeds into the transcript markdown → Obsidian + copy). Remaining: the Mac validation gate (TEST-504 no-network probe, KPI-001/002 baselines, RISK-008 fullscreen probe). EPIC-08 closed 2026-05-17 — `DefaultPipelineOrchestrator` extracts the EPIC-07 inline pipeline behind a public protocol with monotonic 5-stage `PipelineProgress`, single awaited cleanup point, per-stage error mapping (Codex Gate 6 P2). `DefaultTempAudioCleanup` (API-301) handles `delete(url:)` / `scanForOrphans()` (30s in-flight window so it can't race a fresh capture) / `cleanupAll()`. App-level orphan scan on `applicationDidFinishLaunching` + capped cleanup on `applicationWillTerminate`. 183 total XCTests green. (See `epics/`)
 
 ---
 
@@ -70,6 +70,7 @@ template_version: "3.0.0"
 | EPIC-06 | Storage & Obsidian Export | ✅ Complete | EPIC-01, EPIC-05 |
 | EPIC-07 | SwiftUI Interface | ✅ Complete | EPIC-02, EPIC-05, EPIC-06 |
 | EPIC-08 | Pipeline Integration & Audio Lifecycle | ✅ Complete | EPIC-02→07 |
+| EPIC-09 | On-Device Summary (FEA-007) + Mac Release Validation | 🔵 Active | EPIC-05→08 |
 
 ### KPI Metrics
 

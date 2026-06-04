@@ -18,7 +18,8 @@ public extension AppEnvironment {
             formatter: PreviewTranscriptFormatter(),
             transcripts: PreviewTranscriptStore(seed: seedTranscripts),
             settings: PreviewSettingsStore(),
-            exporter: PreviewObsidianExporter()
+            exporter: PreviewObsidianExporter(),
+            summarizer: PreviewSummarizationService()
         )
     }
 }

@@ -63,6 +63,13 @@ public extension SettingKey where Value == Bool {
     static var autoExport: SettingKey<Bool> {
         SettingKey<Bool>(rawKey: "auto_export", defaultValue: false)
     }
+
+    /// When true (default), the pipeline runs the on-device summarizer
+    /// (API-401 / FEA-007) after formatting and embeds the summary into
+    /// the transcript markdown. On-device only — BR-104.
+    static var summarizeOnComplete: SettingKey<Bool> {
+        SettingKey<Bool>(rawKey: "summarize_on_complete", defaultValue: true)
+    }
 }
 
 public extension SettingKey where Value == WhisperModel {
