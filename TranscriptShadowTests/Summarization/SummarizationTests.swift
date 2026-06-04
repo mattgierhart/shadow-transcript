@@ -21,7 +21,10 @@ final class SummarizationTests: XCTestCase {
                 wordCount: turns.reduce(0) { $0 + $1.text.split(separator: " ").count },
                 turnCount: turns.count
             ),
-            speakerMap: Dictionary(uniqueKeysWithValues: turns.map { ($0.canonicalSpeaker, $0.displayName) }),
+            // Speakers repeat across turns (Alice/Bob/Alice…), so collapse to
+            // one entry per canonical speaker. `uniqueKeysWithValues` would trap
+            // on the duplicate keys; keep the first display name (they match).
+            speakerMap: Dictionary(turns.map { ($0.canonicalSpeaker, $0.displayName) }, uniquingKeysWith: { first, _ in first }),
             warnings: [],
             turns: turns
         )
