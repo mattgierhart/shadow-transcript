@@ -48,7 +48,10 @@ struct TranscriptShadowApp: App {
                 .keyboardShortcut(",", modifiers: .command)
             }
 
-            // Demo menu — remove when EPIC-08 wires real state transitions.
+            #if DEBUG
+            // Demo menu — DEBUG only (F-2, codebase review 2026-05-30). The
+            // whole menu and its `.demo*` handlers are compiled out of Release
+            // so no shipped build can drive the UI into mock states.
             CommandMenu("Demo") {
                 Button("Pre-flight (SCR-001)") {
                     NotificationCenter.default.post(name: .demoNavPreFlight, object: nil)
@@ -82,6 +85,7 @@ struct TranscriptShadowApp: App {
                 }
                 .keyboardShortcut("6", modifiers: .command)
             }
+            #endif
         }
     }
 }

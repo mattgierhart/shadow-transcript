@@ -41,12 +41,16 @@ final class MainWindowViewModel: ObservableObject {
         self.hud = hud
         self.permissions = permissions
         self.sidebarVM = SidebarViewModel(env: env)
-        // Default onStop is the demo-flow handler — transitions to
-        // canned `processing` without an audioURL. handleRecord
-        // replaces this for the real-recording path.
+        #if DEBUG
+        // Default onStop is the demo-flow handler — transitions to canned
+        // `processing` without an audioURL. handleRecord replaces this for the
+        // real-recording path. DEBUG only (F-2): no demo entry points ship in
+        // Release, so the real handler handleRecord installs is the only
+        // onStop a shipped build ever uses.
         hud.onStop = { [weak self] in
             self?.content = .processing(audioURL: nil)
         }
+        #endif
     }
 
     // MARK: - Intent
@@ -108,11 +112,17 @@ final class MainWindowViewModel: ObservableObject {
                     self.recordError = "Couldn't stop recording cleanly: \(error.localizedDescription)"
                     self.content = .preFlight
                 }
+                #if DEBUG
                 // Restore the demo onStop so a subsequent Cmd+4..6 demo
                 // starts fresh without a stale URL flow.
                 self.hud.onStop = { [weak self] in
                     self?.content = .processing(audioURL: nil)
                 }
+                #else
+                // No demo flow in Release — clear onStop so a stray Stop is a
+                // no-op; the next handleRecord() installs a fresh real handler.
+                self.hud.onStop = nil
+                #endif
             }
         }
         hud.forcedRealization = nil
@@ -128,7 +138,10 @@ final class MainWindowViewModel: ObservableObject {
     }
 
     func goToPreFlight() { content = .preFlight; selectedTranscriptID = nil }
+    #if DEBUG
+    // Demo nav only (Cmd+2) — routes to canned processing with no audio.
     func goToProcessing() { content = .processing(audioURL: nil); selectedTranscriptID = nil }
+    #endif
 
     func onPipelineComplete(transcriptID: UUID) {
         selectTranscript(id: transcriptID.uuidString)

@@ -46,7 +46,13 @@ struct MainWindowView: View {
         .sheet(isPresented: Binding(get: { vm.showSettings }, set: { vm.showSettings = $0 })) {
             SettingsView(env: env)
         }
-        // Demo navigation — temporary until EPIC-08 wires real state.
+        // Settings (⌘,) — real, always present.
+        .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in
+            vm.openSettings()
+        }
+        #if DEBUG
+        // Demo navigation (Cmd+1..6) — DEBUG only (F-2). The Demo menu that
+        // posts these is itself #if DEBUG, so none of this ships in Release.
         .onReceive(NotificationCenter.default.publisher(for: .demoNavPreFlight)) { _ in
             vm.goToPreFlight()
         }
@@ -55,9 +61,6 @@ struct MainWindowView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .demoNavTranscript)) { _ in
             vm.selectTranscript(id: "t1")
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in
-            vm.openSettings()
         }
         .onReceive(NotificationCenter.default.publisher(for: .demoStartRecording)) { _ in
             hud.startRecording()
@@ -70,6 +73,7 @@ struct MainWindowView: View {
             hud.forcedRealization = .menuBar
             hud.startRecording()
         }
+        #endif
     }
 
     @ViewBuilder
@@ -99,13 +103,15 @@ struct MainWindowView: View {
 // MARK: - Demo navigation (temporary; remove when EPIC-08 wires real state)
 
 extension Notification.Name {
+    static let openSettings = Notification.Name("ShadowTranscript.openSettings")
+    #if DEBUG
     static let demoNavPreFlight = Notification.Name("ShadowTranscript.demoNavPreFlight")
     static let demoNavProcessing = Notification.Name("ShadowTranscript.demoNavProcessing")
     static let demoNavTranscript = Notification.Name("ShadowTranscript.demoNavTranscript")
-    static let openSettings = Notification.Name("ShadowTranscript.openSettings")
     static let demoStartRecording = Notification.Name("ShadowTranscript.demoStartRecording")
     static let demoForceNotchHUD = Notification.Name("ShadowTranscript.demoForceNotchHUD")
     static let demoForceMenuBarHUD = Notification.Name("ShadowTranscript.demoForceMenuBarHUD")
+    #endif
 }
 
 #Preview("Pre-flight") {

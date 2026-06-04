@@ -9,10 +9,19 @@ import Foundation
 
 @MainActor
 final class ProcessingViewModel: ObservableObject {
+    // SCR-003 state. Release starts neutral; the demo placeholder copy below
+    // is DEBUG-only (F-2) — only reachable via the Cmd+2 demo flow, and it's
+    // overwritten the instant a real pipeline run starts (see runPipeline).
+    #if DEBUG
     @Published var title: String = "Q3 Planning · Eng + Design"
     @Published var elapsed: String = "47:12 captured"
-    @Published var estimatedRemaining: String = ""
     @Published var stages: [PipelineStage] = ProcessingView.mockStages
+    #else
+    @Published var title: String = ""
+    @Published var elapsed: String = ""
+    @Published var stages: [PipelineStage] = []
+    #endif
+    @Published var estimatedRemaining: String = ""
     @Published var error: String?
     @Published var isRunning: Bool = false
 
