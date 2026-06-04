@@ -17,31 +17,57 @@ template_version: "3.0.0"
 
 ## Session State (The "Brain Dump")
 
-- **Last Action**: 2026-06-04 — Built the on-device summarization stage
-  (API-401 / FEA-007). New `Summarization/` module: `SummarizationService`
-  protocol, `ExtractiveSummarizer` (dependency-free fallback),
-  `FoundationModelsSummarizer` (`#if canImport(FoundationModels)`,
-  macOS 26+), `DefaultSummarizationService` (runtime engine selection),
-  `SummaryMarkdownRenderer`. Wired a non-fatal summarize step into
-  `DefaultPipelineOrchestrator` between format and save; the summary embeds
-  into the transcript markdown (no DB migration) so it reaches SQLite +
-  Obsidian. New `summarize_on_complete` setting (default on). 9 new tests.
-- **Stopping Point**: Code pushed to `claude/codebase-review-next-steps-92HST`
-  (PR #12). Awaiting `macos-15` CI build/test to confirm compile + green.
-- **Next Steps**:
-  1. Confirm CI green on the macOS-15 SDK (FoundationModels path compiles out
-     there — that's expected; the extractive path is what CI exercises).
-  2. **On the Mac**: build, run a real recording, confirm the summary appears
-     in the exported Obsidian note + copied markdown. If on macOS 26, confirm
-     the Foundation Models engine activates (summary footer reads "Apple
-     Foundation Models"); otherwise it reads "Extractive (on-device)".
-  3. Run the deferred **Mac validation walkthrough** (§ Phase D) — TEST-504
-     no-network probe, KPI-001/002 baselines, RISK-008 fullscreen probe.
-  4. (Polish, optional today) surface the summary in the SCR-004 view and
-     preserve it through manual re-export (see Known Limitations).
-- **Context**: User decision (2026-06-04): on-device LLM only (BR-104, no
-  network); build today, validate on the user's Mac. Build verification is
-  CI-driven (no Swift toolchain in the authoring container).
+- **Last Action**: 2026-06-04 (Mac build + validation session):
+  - **Build + full suite green on the Mac** (macOS 26.5 / Xcode 26.4.1, macOS
+    26.4 SDK). The app compiles *including* `FoundationModelsSummarizer` — its
+    first compile on a real Xcode 26 SDK (the prior cloud session wrote it
+    blind; it was API-correct). **213 tests pass.**
+  - **Root-caused + fixed the `macos-15` CI red** (PR #12). It was **not** a
+    compile error: `SummarizationTests`' `sampleTranscript` built `speakerMap`
+    with `Dictionary(uniqueKeysWithValues:)`, which traps on its repeated
+    speakers — crashing exactly the 6 tests CI reported. Fixed with
+    `Dictionary(_:uniquingKeysWith:)` (commit `1943027`).
+  - **Foundation Models runs for real here**: Apple Intelligence is active, so
+    `DefaultSummarizationService` selects the on-device LLM (footer "Apple
+    Foundation Models"), not the extractive fallback. The live path passes in
+    ~2.9 s, no hang.
+  - **Hardened golden-fixture tests** to read from the test bundle (commit
+    `53f06a0`). The repo sits in **iCloud-synced `~/Documents`**; the app
+    binary's `open()` of source-tree fixtures stalls in-kernel via CloudDocs
+    FileProvider, which hung the Diarization tests and froze `xcodebuild test`.
+    Bundling fixtures into the `.xctest` (read via `Bundle(for:)`) makes them
+    local + instant. Not a code bug; doesn't affect CI.
+  - **F-2** (commit `c2a5217`): `#if DEBUG`-gated all demo scaffolding (Demo
+    menu, `.demo*` handlers/names, mock VM state, demo `onStop`). Release
+    compiles clean (0 Swift errors).
+  - **F-1** (commit `1f9d97c`): auto-export failures are no longer swallowed —
+    `process()` returns `PipelineResult { id, exportWarning }`; the orchestrator
+    logs the failure and the UI shows a dismissible banner. SoT API-202 updated.
+- **Stopping Point**: 4 code commits + SoT/EPIC docs on
+  `claude/codebase-review-next-steps-92HST`. A **new PR → `main`** lands the fix
+  (PR #12 already merged with the failing test, so `main`'s CI is red).
+- **Next Steps** — the remaining Phase D gate is **device-bound + needs the
+  user**, and is blocked only by the iCloud file-mediation environment, not by
+  code:
+  1. **Resolve iCloud `~/Documents` for the real app.** If the Obsidian vault
+     path is also under iCloud sync, real-app export I/O may stall like the
+     tests did. Cleanest: move the repo/workspace to a non-synced path
+     (e.g. `~/Developer`). See memory `env-icloud-documents-fileprovider`.
+  2. **Real-audio E2E**: record a ~30 s, 2–3 speaker clip; run the pipeline;
+     confirm the summary lands in the Obsidian note + Copy + Save As, footer
+     "Apple Foundation Models".
+  3. **TEST-504** no-network probe (Wi-Fi off / Little Snitch / `tcpdump`):
+     zero outbound during a run, post model-download. BR-101/BR-104 blocker.
+  4. **KPI-001** (≤5 min / 30-min) + **KPI-002** (>80% diarization) baselines
+     → README, measured with summary on and off.
+  5. **RISK-008** notch-HUD vs menu-bar fallback + fullscreen occlusion probe.
+  6. Cancel mid-stage → no orphan WAV; force-quit mid-recording → relaunch →
+     orphan gone.
+  7. (Stretch, still open) surface the summary in the SCR-004 view + preserve
+     it on manual re-export (Known Limitations #1/#2).
+- **Context**: macOS 26 + Apple Intelligence → the real on-device LLM (BR-104).
+  The automated suite is fully green locally; what remains is the manual,
+  device-bound walkthrough.
 
 ---
 
@@ -129,9 +155,12 @@ template_version: "3.0.0"
 - [x] `DefaultPipelineOrchestrator` summarize stage + `AppEnvironment` wiring.
 - [x] `TranscriptShadowTests/Summarization/SummarizationTests.swift`.
 
-### Phase D: Validate (Mac — pending)
+### Phase D: Validate (Mac — in progress)
 
-- [ ] CI green on `macos-15` (build + full suite incl. new tests).
+- [x] **Build + full suite green on the Mac** (macOS 26.5 / Xcode 26.4.1) —
+  213 tests, incl. the `FoundationModels` compile and the live LLM path. The
+  `macos-15` CI red (PR #12) was a test-fixture crash, now fixed; CI confirms
+  on the new PR.
 - [ ] Real recording on the Mac → summary present in Obsidian note + copied md.
 - [ ] If macOS 26: confirm Foundation Models engine activates.
 - [ ] **TEST-504** no-network probe (BR-101/BR-104 — release blocker if violated).
@@ -158,7 +187,7 @@ template_version: "3.0.0"
 | 1 | Summary shows in the exported Obsidian note, the **Copy**, and **Save As** (all read `stored.markdown`), but **not** in the SCR-004 turn-list view, which projects from `segments`. | Add a summary header to `TranscriptDisplayModel` / SCR-004. |
 | 2 | Manual **re-export** from SCR-004 (`makeFormattedTranscript(from:)`) re-emits the body from `turns` and drops the embedded summary. The pipeline's initial auto-export keeps it. | Persist the summary (DB column) or re-summarize on manual export. |
 | 3 | Summary is regenerated each run; not editable. | Post-MVP: editable summary + regenerate button. |
-| 4 | FoundationModels API surface is young; `FoundationModelsSummarizer` may need adjustment when first compiled on Xcode 26. | Verify on the Mac; fix in this file only. |
+| 4 | ~~FoundationModels API surface is young; may need adjustment when first compiled on Xcode 26.~~ **Resolved 2026-06-04** — compiled clean on Xcode 26.4.1 (macOS 26.4 SDK); no source changes needed. | — |
 
 ---
 
@@ -175,3 +204,4 @@ sidecar), PyInstaller release bundle, first-launch model-download UX
 | Date       | Agent        | Action       |
 | ---------- | ------------ | ------------ |
 | 2026-06-04 | Claude Agent | Created EPIC; shipped the on-device summarization stage (API-401/FEA-007/BR-104/TECH-008) + tests; carried the EPIC-08 Mac validation gate forward into Phase D. |
+| 2026-06-04 | Claude Agent | Mac build/validation: fixed the CI test-fixture crash (dup speaker keys); verified compile + 213 tests on Xcode 26 with the live Foundation Models LLM; hardened golden-fixture loading for iCloud `~/Documents`; resolved F-1 (auto-export surfacing) + F-2 (DEBUG-gate demo scaffolding). Remaining Phase D = the manual, device-bound walkthrough. |

@@ -489,7 +489,7 @@ Default speaker display names are 1-indexed by first appearance in `diarization.
 **Category**: Internal
 **Status**: Implemented (EPIC-06, 2026-05-12)
 **Created**: 2026-03-11
-**Last Updated**: 2026-05-12
+**Last Updated**: 2026-06-04 (F-1: auto-export failures are surfaced, not swallowed)
 
 ### Specification
 
@@ -523,6 +523,10 @@ public enum ObsidianExportError: Error, Equatable {
 ### Notes vs. Original Sketch
 
 The sketch elided `title` and `date` — they're separate parameters in the impl because the user-facing title is editable after recording and the recording date is not a property of `FormattedTranscript` (which carries `metadata.durationSeconds` but not a wall-clock anchor). The `ObsidianExportError` enum + `overwriteExisting` flag on `DefaultObsidianExporter`'s init were added for the EPIC-08 orchestrator's failure semantics. Filename sanitization is delegated to `MarkdownFilenameSanitizer` (per BR-302); duration is rendered as `MM:SS` (or `H:MM:SS`) matching INT-001's example. Subfolder is created on demand.
+
+### Auto-export discipline (orchestrator)
+
+When `SettingKey.autoExport` is on and a vault path is set, `DefaultPipelineOrchestrator` runs `export` after `TranscriptStore.save`. A failure here is **non-fatal**: the save is already durable, so the orchestrator never throws on an export error and never invalidates the transcript. The failure is logged (`os.Logger`, category `pipeline`) and returned as `PipelineResult.exportWarning` — a user-facing string the UI surfaces as a dismissible banner on SCR-003/SCR-004. This realizes the EPIC-08 contract ("an export error surfaces in UI but does not invalidate the save"), which earlier code violated by swallowing the error silently (F-1, 2026-06-04).
 
 ### Related IDs
 
