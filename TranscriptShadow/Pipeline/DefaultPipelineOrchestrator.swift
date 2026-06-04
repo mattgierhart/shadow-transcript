@@ -25,6 +25,7 @@ public final class DefaultPipelineOrchestrator: PipelineOrchestrator, @unchecked
     private let transcripts: any TranscriptStore
     private let settings: any SettingsStore
     private let exporter: any ObsidianExporter
+    private let summarizer: any SummarizationService
     private let cleanup: any TempAudioCleanup
     private let titleFactory: @Sendable (Date) -> String
 
@@ -35,6 +36,7 @@ public final class DefaultPipelineOrchestrator: PipelineOrchestrator, @unchecked
         transcripts: any TranscriptStore,
         settings: any SettingsStore,
         exporter: any ObsidianExporter,
+        summarizer: any SummarizationService = DefaultSummarizationService(),
         cleanup: any TempAudioCleanup,
         titleFactory: @escaping @Sendable (Date) -> String = DefaultPipelineOrchestrator.defaultTitle
     ) {
@@ -44,6 +46,7 @@ public final class DefaultPipelineOrchestrator: PipelineOrchestrator, @unchecked
         self.transcripts = transcripts
         self.settings = settings
         self.exporter = exporter
+        self.summarizer = summarizer
         self.cleanup = cleanup
         self.titleFactory = titleFactory
     }
@@ -129,6 +132,15 @@ public final class DefaultPipelineOrchestrator: PipelineOrchestrator, @unchecked
         } catch {
             throw OrchestrationError.formattingFailed("\(error)")
         }
+        progress(PipelineProgress(stage: .format, stageFraction: 0.5, aggregateFraction: 0.91))
+
+        // Stage 3b: On-device summary (API-401 / FEA-007 / BR-104) — runs
+        // within the format span, best-effort. A missing/failed summarizer
+        // must never block the save, so every error is swallowed and the
+        // un-summarized transcript proceeds (same non-fatal discipline as
+        // auto-export). The summary is embedded into the markdown so it
+        // reaches both SQLite and the Obsidian export with no schema change.
+        let enriched = await maybeSummarize(formatted)
         progress(PipelineProgress(stage: .format, stageFraction: 1, aggregateFraction: 0.92))
         try Task.checkCancellation()
 
@@ -137,7 +149,7 @@ public final class DefaultPipelineOrchestrator: PipelineOrchestrator, @unchecked
         let title = titleFactory(now)
         let stored: StoredTranscript
         do {
-            stored = try await transcripts.save(formatted: formatted, title: title, date: now)
+            stored = try await transcripts.save(formatted: enriched, title: title, date: now)
         } catch is CancellationError {
             throw OrchestrationError.cancelled
         } catch {
@@ -145,16 +157,38 @@ public final class DefaultPipelineOrchestrator: PipelineOrchestrator, @unchecked
         }
         progress(PipelineProgress(stage: .save, stageFraction: 1, aggregateFraction: 0.97))
 
-        // Stage 5: Export [0.97 → 1.0] — best-effort
+        // Stage 5: Export [0.97 → 1.0] — best-effort. Exports `enriched`
+        // so the Obsidian note carries the embedded summary.
         await maybeAutoExport(
             stored: stored,
-            formatted: formatted,
+            formatted: enriched,
             title: title,
             date: now,
             progress: progress
         )
 
         return stored.id
+    }
+
+    // MARK: - Summary (API-401 / FEA-007)
+
+    /// Runs the on-device summarizer when `summarizeOnComplete` is enabled,
+    /// then embeds the rendered summary above the transcript body. Returns
+    /// the original transcript unchanged if summarization is off, the
+    /// transcript has no turns, the summary is empty, or the engine throws
+    /// — summarization is never allowed to fail the pipeline (BR-104 is a
+    /// quality feature, not a gate).
+    private func maybeSummarize(_ formatted: FormattedTranscript) async -> FormattedTranscript {
+        guard (try? await settings.read(.summarizeOnComplete)) == true else { return formatted }
+        guard !formatted.turns.isEmpty else { return formatted }
+        do {
+            let summary = try await summarizer.summarize(transcript: formatted)
+            guard !summary.isEmpty else { return formatted }
+            let merged = SummaryMarkdownRenderer.prepend(summary, to: formatted.markdown)
+            return formatted.replacingMarkdown(merged)
+        } catch {
+            return formatted
+        }
     }
 
     // MARK: - Auto export

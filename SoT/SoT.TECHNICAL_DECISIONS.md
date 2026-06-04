@@ -485,6 +485,56 @@ xcodebuild build -scheme TranscriptShadow
 
 ---
 
+## TECH-008: Apple Foundation Models for On-Device Summarization
+
+**ID**: TECH-008
+**Category**: ML/AI
+**Status**: Active
+**Created**: 2026-06-04 (EPIC-09)
+**Implements**: FEA-007, API-401, BR-104
+
+### Decision
+
+Use Apple's **Foundation Models** framework (on-device Apple Intelligence,
+macOS 26+) as the meeting-summary LLM, with a deterministic, dependency-free
+`ExtractiveSummarizer` as the universal fallback.
+
+### Rationale
+
+- **On-device (BR-104)**: Apple Foundation Models runs locally — no network,
+  no account, no extra model download we manage. Satisfies BR-101/BR-104 by
+  construction.
+- **No bundle bloat**: the model is system-provided; unlike bundling an
+  MLX/llama.cpp model, it adds nothing to the app size (cf. RISK-003).
+- **Deployment-target safety**: the app targets macOS 15, but Foundation
+  Models is macOS 26-only. `FoundationModelsSummarizer` is isolated behind
+  `#if canImport(FoundationModels)` + `@available(macOS 26.0, *)`, so the
+  macOS-15 SDK build (incl. CI) compiles and runs against the extractive
+  fallback. The LLM lights up automatically on macOS 26 + Apple Intelligence.
+
+### Alternatives considered
+
+- **Cloud LLM (Claude/OpenAI)** — rejected: violates BR-101/BR-104 without an
+  explicit privacy-rule change + opt-in.
+- **Bundled local model (MLX Swift / llama.cpp)** — deferred: adds a multi-GB
+  download + SPM/binary dependency and bundle weight for marginal benefit over
+  the system model. Revisit if Foundation Models proves insufficient or for
+  pre-macOS-26 LLM support.
+
+### Risks / Notes
+
+- The Foundation Models API is young; `FoundationModelsSummarizer` may need
+  adjustment on first compile against Xcode 26. The change surface is confined
+  to that one file.
+- Summarization adds to processing time (KPI-001) — measure with it on and off.
+
+### Related IDs
+
+- [TECH-002](#tech-002-whisperkit-transcription-engine) - peer on-device model
+- API-401, FEA-007, BR-104 - implemented-by
+
+---
+
 ## Deprecated Decisions
 
 _No deprecated decisions._
@@ -496,7 +546,7 @@ _No deprecated decisions._
 **Decisions by Domain**:
 
 - App Framework: TECH-001
-- ML/AI: TECH-002, TECH-006
+- ML/AI: TECH-002, TECH-006, TECH-008
 - Audio: TECH-003, TECH-004
 - Export: TECH-005
 - Storage: TECH-007

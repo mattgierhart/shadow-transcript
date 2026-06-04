@@ -742,6 +742,53 @@ the same file without modification.
 
 ---
 
+## TEST-601: Extractive Summarizer Oracle
+
+**ID**: TEST-601
+**Category**: Unit
+**Status**: Implemented (EPIC-09, 2026-06-04)
+**Priority**: P1
+**Validates**: API-401, FEA-007, BR-104
+
+### Test Case (Given-When-Then)
+
+**Given**: A multi-turn `FormattedTranscript` with action-cue sentences.
+**When**: `ExtractiveSummarizer.summarize` runs.
+**Then**: Returns a non-empty `MeetingSummary` (overview reports speaker/turn
+counts; ≥1 key point; ≥1 action item detected); output is deterministic across
+runs; an empty transcript throws `.emptyTranscript`.
+
+### Implementation
+
+**File**: `TranscriptShadowTests/Summarization/SummarizationTests.swift`
+**Traceability**: `// @implements TEST-601`
+
+---
+
+## TEST-602: Orchestrator Summary Embedding
+
+**ID**: TEST-602
+**Category**: Integration
+**Status**: Implemented (EPIC-09, 2026-06-04)
+**Priority**: P1
+**Validates**: API-401, FEA-007, ARC-001
+
+### Test Case (Given-When-Then)
+
+**Given**: A pipeline with a fake `SummarizationService`.
+**When**: `process(...)` runs with `summarizeOnComplete` on / off / and with the
+summarizer throwing.
+**Then**: On = saved markdown contains the `## Summary` block above the body;
+Off = no summarizer call and no summary block; Throw = save still succeeds
+(non-fatal) with no summary block.
+
+### Implementation
+
+**File**: `TranscriptShadowTests/Summarization/SummarizationTests.swift`
+**Traceability**: `// @implements TEST-602`
+
+---
+
 ## Deprecated Tests
 
 _No deprecated tests._
@@ -759,12 +806,14 @@ _No deprecated tests._
 - API-201: TEST-301, TEST-302, TEST-303
 - API-202: TEST-401, TEST-402
 - API-301: TEST-501, TEST-502, TEST-503
+- API-401: TEST-601, TEST-602
 
 **Tests by Business Rule**:
 
 - BR-101: TEST-504
 - BR-102: TEST-501
 - BR-103: TEST-501, TEST-502
+- BR-104: TEST-504, TEST-601, TEST-602
 - BR-301: TEST-301
 - BR-302: TEST-402
 - BR-402: TEST-004

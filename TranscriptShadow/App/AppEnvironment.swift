@@ -19,6 +19,7 @@ public struct AppEnvironment: Sendable {
     public let transcripts: any TranscriptStore
     public let settings: any SettingsStore
     public let exporter: any ObsidianExporter
+    public let summarizer: any SummarizationService
     public let cleanup: any TempAudioCleanup
     public let pipeline: any PipelineOrchestrator
 
@@ -30,10 +31,12 @@ public struct AppEnvironment: Sendable {
         transcripts: any TranscriptStore,
         settings: any SettingsStore,
         exporter: any ObsidianExporter,
+        summarizer: (any SummarizationService)? = nil,
         cleanup: (any TempAudioCleanup)? = nil,
         pipeline: (any PipelineOrchestrator)? = nil
     ) {
         let resolvedCleanup = cleanup ?? DefaultTempAudioCleanup()
+        let resolvedSummarizer = summarizer ?? DefaultSummarizationService()
         self.audioCapture = audioCapture
         self.transcription = transcription
         self.diarization = diarization
@@ -41,6 +44,7 @@ public struct AppEnvironment: Sendable {
         self.transcripts = transcripts
         self.settings = settings
         self.exporter = exporter
+        self.summarizer = resolvedSummarizer
         self.cleanup = resolvedCleanup
         self.pipeline = pipeline ?? DefaultPipelineOrchestrator(
             transcription: transcription,
@@ -49,6 +53,7 @@ public struct AppEnvironment: Sendable {
             transcripts: transcripts,
             settings: settings,
             exporter: exporter,
+            summarizer: resolvedSummarizer,
             cleanup: resolvedCleanup
         )
     }

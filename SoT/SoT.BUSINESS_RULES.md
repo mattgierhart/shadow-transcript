@@ -20,6 +20,7 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, SoT.API_CONTR
 - [BR-101](#br-101-local-only-processing) - Local-only processing
 - [BR-102](#br-102-no-persistent-audio-storage) - No persistent audio storage
 - [BR-103](#br-103-audio-deletion-after-processing) - Audio deletion after processing
+- [BR-104](#br-104-on-device-summarization) - On-device summarization
 
 **Platform & Scope** (BR-201 to BR-299):
 
@@ -131,6 +132,41 @@ Temporary audio files MUST be securely deleted upon: (a) successful transcript g
 
 - [BR-102](#br-102-no-persistent-audio-storage) - enforces
 - [UJ-001](SoT.USER_JOURNEYS.md#uj-001-record-and-transcribe-meeting) - applies during
+
+---
+
+## BR-104: On-Device Summarization
+
+**ID**: BR-104
+**Category**: Data & Security
+**Status**: Active
+**Severity**: Critical
+**Created**: 2026-06-04 (EPIC-09)
+
+### Rule Statement
+
+Meeting summarization (FEA-007 / API-401) MUST run entirely on-device. The
+transcript text MUST NOT be sent to any network service for summarization.
+Permitted engines: Apple Foundation Models (on-device Apple Intelligence) and
+the local deterministic `ExtractiveSummarizer`. A cloud LLM is explicitly
+prohibited unless BR-101 is formally revised with explicit, opt-in user consent.
+
+### Rationale
+
+- **Business Driver**: Refinement of BR-101 (local-only). The privacy promise
+  ("no data leaves the device") must hold for the summary feature too.
+- **User Impact**: Summaries of private meetings never leave the Mac.
+
+### Enforcement
+
+**Location**: `DefaultSummarizationService` (engine selection) + the pipeline.
+**Timing**: Each pipeline run when `summarizeOnComplete` is enabled.
+**Verification**: TEST-504 no-network probe covers the summarize stage too.
+
+### Related IDs
+
+- [BR-101](#br-101-local-only-processing) - refines
+- API-401, FEA-007, TECH-008 - implemented-by
 
 ---
 
