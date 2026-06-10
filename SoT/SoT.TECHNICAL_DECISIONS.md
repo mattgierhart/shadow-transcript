@@ -1,8 +1,8 @@
 ---
-version: 1.1
+version: 1.2
 purpose: Source of Truth for technology choices, architecture decisions, and environment specifications.
 id_prefix: TECH-XXX, ARC-XXX, ENV-XXX
-last_updated: 2026-03-11
+last_updated: 2026-06-09
 authority: This is a SoT file - IDs here are referenced by PRD.md, EPICs, and code
 ---
 
@@ -30,6 +30,7 @@ authority: This is a SoT file - IDs here are referenced by PRD.md, EPICs, and co
 - [ARC-001](#arc-001-local-first-pipeline) - Local-first processing pipeline
 - [ARC-002](#arc-002-python-sidecar-for-diarization) - Python sidecar for diarization
 - [ARC-003](#arc-003-temporary-audio-lifecycle) - Temporary audio lifecycle management
+- [ARC-004](#arc-004-two-layer-claude-scaffolding) - Two-layer .claude/ scaffolding (workspace-provided skills/hooks)
 
 **Environment Specifications** (ENV-001 to ENV-099):
 
@@ -535,6 +536,37 @@ macOS 26+) as the meeting-summary LLM, with a deterministic, dependency-free
 
 ---
 
+## ARC-004: Two-Layer .claude/ Scaffolding
+
+**ID**: ARC-004
+**Category**: Methodology / Workspace Architecture
+**Status**: Accepted · Implemented (2026-04-24, commit `f01edf0`; registry restored 2026-06-09, EPIC-10)
+**Decision Date**: 2026-04-24
+**Last Reviewed**: 2026-06-09
+
+### Context
+
+This repo forked the PRD-CE template (v3.0.0) with a full local `.claude/` tree — 24 skills, hooks, agent AGENT.md definitions, domain-profile.yaml, VERSION (~39.7k lines). The MLG.Github workspace runs a two-layer architecture: methodology tooling lives once at the workspace root (`MLG.Github/.claude/` — skills, hooks, agent definitions), and each product repo's `.claude/` carries only project-specific data (agent MEMORY.md files, optional settings.json overrides). Duplicated local tooling drifts from the workspace copy and bloats the repo.
+
+### Decision
+
+1. **Strip local methodology tooling** (done 2026-04-24, commit `f01edf0` — message "update with readiness" undersold it; this entry records the real rationale): skills, hooks, AGENT.md files, and VERSION are workspace-provided and never re-copied into this repo.
+2. **Repo-native surfaces stay local**: `.claude/agents/*/MEMORY.md` (project knowledge), `.claude/settings.json` (override stub), `.claude/rules/` (repo operating rules, auto-loaded), and `.claude/domain-profile.yaml`.
+3. **domain-profile.yaml is registry DATA, not tooling** — it is this repo's machine-readable ID contract, consumed by validate-ids.sh/validate-edges.py/readiness. Its removal in `f01edf0` over-reached; restored 2026-06-09 pruned to the prefixes in use.
+
+### Rationale
+
+- **Chosen because**: one canonical copy of skills/hooks at the workspace root; repo keeps only what is repo-specific. Capability evidence: workspace hooks demonstrably fire here (the EPIC-04 split was triggered by a BROAD-scope hook), and workspace skills drove every lifecycle stage (see PRD Lifecycle Change Log).
+- **Consequences**: this repo is not standalone — cloning it without the MLG.Github workspace loses skills/hooks (run `/localize` to copy methodology in if the repo ever leaves the workspace). Validators and readiness remain local so CI and the portfolio readiness loop work without the workspace.
+
+### Related IDs
+
+- [LL-001](SoT.LESSONS_LEARNED.md#ll-001-codex-gate-mandatory-cross-model-review-before-epic-close) - Codex Gate (workspace-provided `/codex-review` skill is the dependency)
+- [LL-202](SoT.LESSONS_LEARNED.md#ll-202-single-persona-continuity-via-epic-session-state) - single-persona practice in the same workspace architecture
+- ENV-001 - development environment this decision assumes
+
+---
+
 ## Deprecated Decisions
 
 _No deprecated decisions._
@@ -551,6 +583,7 @@ _No deprecated decisions._
 - Export: TECH-005
 - Storage: TECH-007
 - Architecture: ARC-001, ARC-002, ARC-003
+- Methodology/Workspace: ARC-004
 - Environment: ENV-001
 
 ---

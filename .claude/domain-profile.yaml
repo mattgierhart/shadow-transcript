@@ -1,0 +1,87 @@
+# Domain Profile — Transcript Shadow (shadow-transcript)
+# The repo-specific ID-prefix registry: REGISTRY DATA, not tooling.
+#
+# Restored 2026-06-09 (EPIC-10). The 2026-04-24 strip (commit f01edf0) removed
+# local skills/hooks/AGENT.md per the MLG.Github two-layer workspace rule —
+# that removal stands (see ARC-004 in SoT/SoT.TECHNICAL_DECISIONS.md). This
+# file returns because it is the machine-readable ID *contract* that
+# SoT.UNIQUE_ID_SYSTEM.md, validate-ids.sh (check 4), validate-edges.py, and
+# the readiness suite all resolve against. Pruned to the prefixes this repo
+# actually uses; the reference template's skill taxonomy and devgraph node
+# schemas are intentionally omitted (skills/hooks are workspace-provided; the
+# Development Graph layer is not yet adopted here).
+#
+# Local numbering convention: several SoT files use sub-series numbering
+# (e.g. API-001/002 capture, API-101/102 transcribe+diarize, API-201/202
+# format+export, API-301 cleanup; TEST-xxx blocks per pipeline stage).
+# Sub-series are a navigation aid only — IDs remain unique per prefix and are
+# NEVER renumbered (precedent: the RISK-007→RISK-008 / DES-201→DES-105/106
+# collision repair).
+
+profile: product
+
+# --- ID Prefix Registry ---
+# Each prefix maps to the file that owns it. Validators and readiness scoring
+# read from this section to resolve ID → file lookups.
+id_prefixes:
+  # SoT-owned IDs
+  BR:   { file: "SoT/SoT.BUSINESS_RULES.md",       description: "Business rules & constraints" }
+  UJ:   { file: "SoT/SoT.USER_JOURNEYS.md",         description: "User journeys" }
+  PER:  { file: "SoT/SoT.USER_JOURNEYS.md",         description: "Personas" }
+  SCR:  { file: "SoT/SoT.USER_JOURNEYS.md",         description: "Screens" }
+  API:  { file: "SoT/SoT.API_CONTRACTS.md",          description: "Service contracts (Swift protocols + sidecar envelope)" }
+  DBT:  { file: "SoT/SoT.DATA_MODEL.md",            description: "Database tables (GRDB/SQLite)" }
+  TEST: { file: "SoT/SoT.TESTING.md",               description: "Test cases" }
+  DEP:  { file: "SoT/SoT.DEPLOYMENT.md",            description: "Deployment steps" }
+  RUN:  { file: "SoT/SoT.DEPLOYMENT.md",            description: "Runbooks" }
+  MON:  { file: "SoT/SoT.DEPLOYMENT.md",            description: "Monitoring rules" }
+  SEC:  { file: "SoT/SoT.DEPLOYMENT.md",            description: "Secrets inventory (local addition, e.g. HF token)" }
+  CFD:  { file: "SoT/SoT.customer_feedback.md",     description: "Customer feedback / evidence" }
+  DES:  { file: "SoT/SoT.DESIGN_COMPONENTS.md",     description: "Design components" }
+  TECH: { file: "SoT/SoT.TECHNICAL_DECISIONS.md",   description: "Tech stack decisions" }
+  ARC:  { file: "SoT/SoT.TECHNICAL_DECISIONS.md",   description: "Architecture decisions" }
+  ENV:  { file: "SoT/SoT.TECHNICAL_DECISIONS.md",   description: "Environment setup (local addition)" }
+  INT:  { file: "SoT/SoT.INTEGRATIONS.md",          description: "Integrations (WhisperKit, pyannote, Obsidian…)" }
+  LL:   { file: "SoT/SoT.LESSONS_LEARNED.md",       description: "Lessons learned (cross-session feedback)" }
+
+  # PRD/README-owned IDs
+  FEA:  { file: "PRD.md",    description: "Features (PRD-owned, v0.3)" }
+  RISK: { file: "PRD.md",    description: "Risks (PRD-owned, v0.5)" }
+  GTM:  { file: "PRD.md",    description: "Go-to-market (PRD-owned, v0.9 — unused: pricing/GTM deliberately skipped for this personal utility, see PRD Lifecycle Change Log v0.3 row)" }
+  KPI:  { file: "README.md", description: "KPI metrics (README-owned)" }
+
+  # Execution IDs
+  EPIC: { file: "epics/",    description: "Execution work packages" }
+
+# --- Required Cross-Reference Edges (opt-in semantic validation) ---
+# Read by scripts/validate-edges.py (delegated from validate-ids.sh check 4).
+# Left empty on adoption (2026-06-09) so the existing graph validates clean.
+# Candidate starter rules for this repo (enable deliberately, one at a time):
+#
+# required_edges:
+#   - { from: API, requires: TEST, direction: inbound,  severity: warn, description: "Every service contract needs a declared test" }
+#   - { from: BR,  requires: TEST, direction: inbound,  severity: warn, description: "Every business rule needs a verifying test" }
+required_edges: []
+
+# --- Agent Registry ---
+# Memory-only under the two-layer workspace architecture (agent definitions
+# live at MLG.Github/.claude/). In practice this repo has run single-persona
+# ("Claude Agent") with continuity carried by EPIC Session State + Cumulative
+# Carry-Forward blocks — see LL-202. Memory dirs are retained for harvest.
+agents:
+  - name: horizon
+    role: Strategy
+    lifecycle: "v0.1-v0.5"
+    path: ".claude/agents/horizon/"
+  - name: studio
+    role: Design
+    lifecycle: "v0.3-v0.6"
+    path: ".claude/agents/studio/"
+  - name: devlab
+    role: Build
+    lifecycle: "v0.6-v0.8"
+    path: ".claude/agents/devlab/"
+  - name: metro
+    role: Ops
+    lifecycle: "v0.9-v1.0"
+    path: ".claude/agents/metro/"
