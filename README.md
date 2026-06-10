@@ -71,6 +71,8 @@ template_version: "3.0.0"
 | EPIC-07 | SwiftUI Interface | ✅ Complete | EPIC-02, EPIC-05, EPIC-06 |
 | EPIC-08 | Pipeline Integration & Audio Lifecycle | ✅ Complete | EPIC-02→07 |
 | EPIC-09 | On-Device Summary (FEA-007) + Mac Release Validation | 🔵 Active | EPIC-05→08 |
+| EPIC-10 | Methodology Core Refresh (registry, rules, lessons — scaffolding only) | ✅ Complete | — |
+| EPIC-11 | Readiness Layer Adoption (scaffolding only) | ✅ Complete | EPIC-10 |
 
 ### KPI Metrics
 
