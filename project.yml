@@ -149,6 +149,13 @@ targets:
     platform: macOS
     sources:
       - path: TranscriptShadowTests
+      # Golden diarization fixtures are read at runtime by the Codable +
+      # sidecar tests. Bundle them into the .xctest so they resolve via
+      # Bundle(for:) — reading them from the source tree hangs when the
+      # repo lives under an iCloud-synced ~/Documents (CloudDocs mediates
+      # open() and stalls for the freshly-built app binary).
+      - path: sidecar/test_fixtures
+        buildPhase: resources
     dependencies:
       - target: TranscriptShadow
     settings:

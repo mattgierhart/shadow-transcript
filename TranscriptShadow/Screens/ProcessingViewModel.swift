@@ -9,15 +9,26 @@ import Foundation
 
 @MainActor
 final class ProcessingViewModel: ObservableObject {
+    // SCR-003 state. Release starts neutral; the demo placeholder copy below
+    // is DEBUG-only (F-2) — only reachable via the Cmd+2 demo flow, and it's
+    // overwritten the instant a real pipeline run starts (see runPipeline).
+    #if DEBUG
     @Published var title: String = "Q3 Planning · Eng + Design"
     @Published var elapsed: String = "47:12 captured"
-    @Published var estimatedRemaining: String = ""
     @Published var stages: [PipelineStage] = ProcessingView.mockStages
+    #else
+    @Published var title: String = ""
+    @Published var elapsed: String = ""
+    @Published var stages: [PipelineStage] = []
+    #endif
+    @Published var estimatedRemaining: String = ""
     @Published var error: String?
     @Published var isRunning: Bool = false
 
     let env: AppEnvironment
-    var onComplete: ((UUID) -> Void)?
+    /// (transcriptID, exportWarning?). The warning is non-nil when auto-export
+    /// failed but the transcript saved (F-1) — the caller surfaces it.
+    var onComplete: ((UUID, String?) -> Void)?
     var onCancel: (() -> Void)?
 
     private var pipelineTask: Task<Void, Never>?
@@ -66,12 +77,12 @@ final class ProcessingViewModel: ObservableObject {
         ]
 
         do {
-            let id = try await env.pipeline.process(audioURL: audioURL) { [weak self] progress in
+            let result = try await env.pipeline.process(audioURL: audioURL) { [weak self] progress in
                 Task { @MainActor [weak self] in
                     self?.apply(progress: progress)
                 }
             }
-            onComplete?(id)
+            onComplete?(result.id, result.exportWarning)
         } catch OrchestrationError.cancelled {
             error = "Cancelled"
             onCancel?()

@@ -85,22 +85,20 @@ final class DiarizationCodableTests: XCTestCase {
     // MARK: - Fixture loading
 
     private static func fixtureURL(named name: String) throws -> URL {
-        // Tests run with the repo root as CWD by default in Xcode test schemes.
-        // Walk up from this source file's location to find sidecar/test_fixtures/.
-        let thisFile = URL(fileURLWithPath: #filePath)
-        let repoRoot = thisFile
-            .deletingLastPathComponent()  // Diarization/
-            .deletingLastPathComponent()  // TranscriptShadowTests/
-            .deletingLastPathComponent()  // repo root
-        let url = repoRoot
-            .appendingPathComponent("sidecar")
-            .appendingPathComponent("test_fixtures")
-            .appendingPathComponent(name)
-        guard FileManager.default.fileExists(atPath: url.path) else {
+        // Resolve from the test bundle (fixtures are copied in via the
+        // TranscriptShadowTests `resources` build phase in project.yml).
+        // Reading from the source tree via #filePath hangs when the repo
+        // lives under an iCloud-synced ~/Documents: CloudDocs mediates the
+        // open() syscall and stalls for the freshly-built app binary. The
+        // .xctest bundle lives in DerivedData (~/Library), which is local.
+        let bundle = Bundle(for: DiarizationCodableTests.self)
+        let resource = (name as NSString).deletingPathExtension
+        let ext = (name as NSString).pathExtension
+        guard let url = bundle.url(forResource: resource, withExtension: ext) else {
             throw NSError(
                 domain: "DiarizationCodableTests",
                 code: 1,
-                userInfo: [NSLocalizedDescriptionKey: "fixture not found at \(url.path)"]
+                userInfo: [NSLocalizedDescriptionKey: "fixture \(name) not found in test bundle \(bundle.bundlePath)"]
             )
         }
         return url

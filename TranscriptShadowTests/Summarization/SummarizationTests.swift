@@ -21,7 +21,10 @@ final class SummarizationTests: XCTestCase {
                 wordCount: turns.reduce(0) { $0 + $1.text.split(separator: " ").count },
                 turnCount: turns.count
             ),
-            speakerMap: Dictionary(uniqueKeysWithValues: turns.map { ($0.canonicalSpeaker, $0.displayName) }),
+            // Speakers repeat across turns (Alice/Bob/Alice…), so collapse to
+            // one entry per canonical speaker. `uniqueKeysWithValues` would trap
+            // on the duplicate keys; keep the first display name (they match).
+            speakerMap: Dictionary(turns.map { ($0.canonicalSpeaker, $0.displayName) }, uniquingKeysWith: { first, _ in first }),
             warnings: [],
             turns: turns
         )
@@ -146,8 +149,8 @@ final class SummarizationTests: XCTestCase {
             cleanup: NoopCleanup()
         )
 
-        let id = try await orchestrator.process(audioURL: URL(fileURLWithPath: "/tmp/x.wav"))
-        let stored = try await store.fetch(id: id)
+        let result = try await orchestrator.process(audioURL: URL(fileURLWithPath: "/tmp/x.wav"))
+        let stored = try await store.fetch(id: result.id)
         XCTAssertNotNil(stored)
         XCTAssertEqual(summarizer.callCount, 1)
         XCTAssertTrue(stored?.markdown.contains("## Summary") == true,
@@ -173,8 +176,8 @@ final class SummarizationTests: XCTestCase {
             cleanup: NoopCleanup()
         )
 
-        let id = try await orchestrator.process(audioURL: URL(fileURLWithPath: "/tmp/x.wav"))
-        let stored = try await store.fetch(id: id)
+        let result = try await orchestrator.process(audioURL: URL(fileURLWithPath: "/tmp/x.wav"))
+        let stored = try await store.fetch(id: result.id)
         XCTAssertEqual(summarizer.callCount, 0, "Summarizer must not run when disabled")
         XCTAssertFalse(stored?.markdown.contains("## Summary") == true)
     }
@@ -198,8 +201,8 @@ final class SummarizationTests: XCTestCase {
         )
 
         // Save must still succeed even though summarization threw.
-        let id = try await orchestrator.process(audioURL: URL(fileURLWithPath: "/tmp/x.wav"))
-        let stored = try await store.fetch(id: id)
+        let result = try await orchestrator.process(audioURL: URL(fileURLWithPath: "/tmp/x.wav"))
+        let stored = try await store.fetch(id: result.id)
         XCTAssertNotNil(stored, "Save must survive a summarizer failure (non-fatal)")
         XCTAssertFalse(stored?.markdown.contains("## Summary") == true)
     }

@@ -8,13 +8,13 @@ struct ProcessingView: View {
     @StateObject private var vm: ProcessingViewModel
     let audioURL: URL?
     let onCancel: () -> Void
-    let onComplete: (UUID) -> Void
+    let onComplete: (UUID, String?) -> Void
 
     init(
         env: AppEnvironment,
         audioURL: URL? = nil,
         onCancel: @escaping () -> Void,
-        onComplete: @escaping (UUID) -> Void = { _ in }
+        onComplete: @escaping (UUID, String?) -> Void = { _, _ in }
     ) {
         _vm = StateObject(wrappedValue: ProcessingViewModel(env: env))
         self.audioURL = audioURL

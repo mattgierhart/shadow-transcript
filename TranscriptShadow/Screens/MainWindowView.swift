@@ -46,7 +46,21 @@ struct MainWindowView: View {
         .sheet(isPresented: Binding(get: { vm.showSettings }, set: { vm.showSettings = $0 })) {
             SettingsView(env: env)
         }
-        // Demo navigation — temporary until EPIC-08 wires real state.
+        // F-1: non-fatal auto-export failure surfaces as a dismissible banner.
+        .overlay(alignment: .top) {
+            if let warning = vm.exportWarning {
+                exportWarningBanner(warning)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 10)
+            }
+        }
+        // Settings (⌘,) — real, always present.
+        .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in
+            vm.openSettings()
+        }
+        #if DEBUG
+        // Demo navigation (Cmd+1..6) — DEBUG only (F-2). The Demo menu that
+        // posts these is itself #if DEBUG, so none of this ships in Release.
         .onReceive(NotificationCenter.default.publisher(for: .demoNavPreFlight)) { _ in
             vm.goToPreFlight()
         }
@@ -55,9 +69,6 @@ struct MainWindowView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .demoNavTranscript)) { _ in
             vm.selectTranscript(id: "t1")
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in
-            vm.openSettings()
         }
         .onReceive(NotificationCenter.default.publisher(for: .demoStartRecording)) { _ in
             hud.startRecording()
@@ -70,6 +81,7 @@ struct MainWindowView: View {
             hud.forcedRealization = .menuBar
             hud.startRecording()
         }
+        #endif
     }
 
     @ViewBuilder
@@ -87,25 +99,60 @@ struct MainWindowView: View {
                 env: env,
                 audioURL: url,
                 onCancel: { vm.goToPreFlight() },
-                onComplete: { id in vm.onPipelineComplete(transcriptID: id) }
+                onComplete: { id, warning in vm.onPipelineComplete(transcriptID: id, exportWarning: warning) }
             )
         case .transcript(let id):
             TranscriptView(env: env, transcriptID: id)
                 .id(id)
         }
     }
+
+    // F-1: dismissible banner for a non-fatal auto-export failure. Matches the
+    // PreFlightContent banner style. The transcript is already saved, so this
+    // warns rather than blocks.
+    private func exportWarningBanner(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Circle().fill(DesignColors.Status.warning).frame(width: 6, height: 6)
+                .padding(.top, 5)
+            Text(text)
+                .font(DesignFonts.ui(11.5))
+                .foregroundStyle(DesignColors.Status.warning)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
+            Button {
+                vm.exportWarning = nil
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(DesignColors.Status.warning)
+            }
+            .buttonStyle(.plain)
+            .help("Dismiss")
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(DesignColors.Status.warning.opacity(0.10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8).stroke(DesignColors.Status.warning.opacity(0.5), lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .frame(maxWidth: 560)
+    }
 }
 
 // MARK: - Demo navigation (temporary; remove when EPIC-08 wires real state)
 
 extension Notification.Name {
+    static let openSettings = Notification.Name("ShadowTranscript.openSettings")
+    #if DEBUG
     static let demoNavPreFlight = Notification.Name("ShadowTranscript.demoNavPreFlight")
     static let demoNavProcessing = Notification.Name("ShadowTranscript.demoNavProcessing")
     static let demoNavTranscript = Notification.Name("ShadowTranscript.demoNavTranscript")
-    static let openSettings = Notification.Name("ShadowTranscript.openSettings")
     static let demoStartRecording = Notification.Name("ShadowTranscript.demoStartRecording")
     static let demoForceNotchHUD = Notification.Name("ShadowTranscript.demoForceNotchHUD")
     static let demoForceMenuBarHUD = Notification.Name("ShadowTranscript.demoForceMenuBarHUD")
+    #endif
 }
 
 #Preview("Pre-flight") {

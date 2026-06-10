@@ -261,20 +261,18 @@ final class PyannoteSidecarDiarizationServiceTests: XCTestCase {
     }
 
     private static func fixturePath(named name: String) throws -> String {
-        let thisFile = URL(fileURLWithPath: #filePath)
-        let repoRoot = thisFile
-            .deletingLastPathComponent()  // Diarization/
-            .deletingLastPathComponent()  // TranscriptShadowTests/
-            .deletingLastPathComponent()  // repo root
-        let url = repoRoot
-            .appendingPathComponent("sidecar")
-            .appendingPathComponent("test_fixtures")
-            .appendingPathComponent(name)
-        guard FileManager.default.fileExists(atPath: url.path) else {
+        // Resolve from the test bundle, not the source tree — see
+        // DiarizationCodableTests.fixtureURL. A source-tree read via #filePath
+        // hangs under an iCloud-synced ~/Documents (CloudDocs mediates the
+        // open() syscall and stalls for the app binary).
+        let bundle = Bundle(for: PyannoteSidecarDiarizationServiceTests.self)
+        let resource = (name as NSString).deletingPathExtension
+        let ext = (name as NSString).pathExtension
+        guard let url = bundle.url(forResource: resource, withExtension: ext) else {
             throw NSError(
                 domain: "PyannoteSidecarDiarizationServiceTests",
                 code: 1,
-                userInfo: [NSLocalizedDescriptionKey: "fixture not found at \(url.path)"]
+                userInfo: [NSLocalizedDescriptionKey: "fixture \(name) not found in test bundle \(bundle.bundlePath)"]
             )
         }
         return url.path
