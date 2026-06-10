@@ -2,7 +2,7 @@
 version: 2.0
 purpose: Source of Truth for deployment configuration, environments, secrets inventory, procedures, runbooks, and monitoring.
 id_prefix: DEP-XXX, RUN-XXX, MON-XXX, SEC-XXX
-last_updated: YYYY-MM-DD
+last_updated: 2026-05-09
 authority: This is a SoT file - IDs here are referenced by PRD.md, EPICs, and operations docs
 ---
 <!-- SECTION: template-structure -->

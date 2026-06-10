@@ -1,6 +1,6 @@
 ---
 title: "Unique ID System"
-updated: "2026-01-12"
+updated: "2026-06-09"
 authority: "PRD Led Context Engineering"
 ---
 <!-- SECTION: template-structure -->
@@ -46,6 +46,9 @@ This file serves as the **governance guide** for the ID system and the **central
 | **DEP** | Deployment | `SoT.DEPLOYMENT.md` | v0.8 Release |
 | **MON** | Monitoring | `SoT.DEPLOYMENT.md` | v0.8 Release |
 | **RUN** | Runbook | `SoT.DEPLOYMENT.md` | v0.8 Release |
+| **SEC** | Secret (local addition) | `SoT.DEPLOYMENT.md` | v0.8 Release |
+| **ENV** | Environment (local addition) | `SoT.TECHNICAL_DECISIONS.md` | v0.6 Architecture |
+| **LL** | Lesson Learned | `SoT.LESSONS_LEARNED.md` | Any (Phase E harvest) |
 
 #### IDs in PRD/README (Not SoT Files)
 
@@ -116,11 +119,12 @@ CFD-089 (Request: Dark Mode)
 | `SoT.API_CONTRACTS.md` | API-XXX | ~120 | Endpoint specifications |
 | `SoT.DATA_MODEL.md` | DBT-XXX | ~120 | Database schema |
 | `SoT.TESTING.md` | TEST-XXX | ~120 | Test specifications |
-| `SoT.DEPLOYMENT.md` | DEP, RUN, MON | ~130 | Operations & deployment |
+| `SoT.DEPLOYMENT.md` | DEP, RUN, MON, SEC | ~130 | Operations & deployment |
 | `SoT.customer_feedback.md` | CFD-XXX | ~120 | Customer insights |
 | `SoT.DESIGN_COMPONENTS.md` | DES-XXX | ~100 | UI components |
-| `SoT.TECHNICAL_DECISIONS.md` | TECH, ARC | ~115 | Tech & architecture |
+| `SoT.TECHNICAL_DECISIONS.md` | TECH, ARC, ENV | ~115 | Tech & architecture |
 | `SoT.INTEGRATIONS.md` | INT-XXX | ~105 | Third-party services |
+| `SoT.LESSONS_LEARNED.md` | LL-XXX | ~250 | Cross-session lessons (adopted 2026-06-09) |
 
 <!-- /CUSTOMIZABLE: entries -->
 
@@ -140,6 +144,7 @@ When forking, validate:
 
 | Date | Change |
 |------|--------|
+| 2026-06-09 | EPIC-10: registered local SEC-/ENV- additions and new LL- prefix; domain-profile.yaml pointer un-dangled (registry restored, see ARC-004) |
 | 2026-01-12 | Standardized: Updated file references, added INT-XXX, clarified PRD vs SoT homes |
 | 2026-01-12 | Added 8 missing ID prefixes. Organized by PRD stage |
 | 2025-12-22 | Combined UNIQUE_ID_SYSTEM and ID_REGISTRY into one |

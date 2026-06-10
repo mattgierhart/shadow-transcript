@@ -1,8 +1,8 @@
 ---
 title: "Source-of-Truth Library Guide"
 scope: "SoT/"
-updated: "2026-02-12"
-template_version: "3.0.0"
+updated: "2026-06-09"
+template_version: "3.2.0"
 ---
 
 # Source-of-Truth (SoT) Library
@@ -22,16 +22,19 @@ Each file focuses on one artifact type with a consistent ID prefix (~100-150 lin
 | `SoT.API_CONTRACTS.md` | API-XXX | API endpoint specifications |
 | `SoT.DATA_MODEL.md` | DBT-XXX | Database tables and schema |
 | `SoT.TESTING.md` | TEST-XXX | Test cases and coverage |
-| `SoT.DEPLOYMENT.md` | DEP, RUN, MON | Deployment, runbooks, monitoring |
+| `SoT.DEPLOYMENT.md` | DEP, RUN, MON, SEC | Deployment, runbooks, monitoring, secrets |
 | `SoT.customer_feedback.md` | CFD-XXX | Customer feedback and insights |
 | `SoT.DESIGN_COMPONENTS.md` | DES-XXX | UI components and design tokens |
-| `SoT.TECHNICAL_DECISIONS.md` | TECH, ARC | Tech stack and architecture |
+| `SoT.TECHNICAL_DECISIONS.md` | TECH, ARC, ENV | Tech stack, architecture, environment |
 | `SoT.INTEGRATIONS.md` | INT-XXX | Third-party service integrations |
+| `SoT.LESSONS_LEARNED.md` | LL-XXX | Cross-session behavioral feedback |
 
 **IDs in PRD/README** (not SoT files): FEA-XXX, RISK-XXX, GTM-XXX, KPI-XXX
 <!-- /SECTION: sot-registry -->
 
 > See [SoT.UNIQUE_ID_SYSTEM.md](SoT.UNIQUE_ID_SYSTEM.md) for full ID specifications.
+
+> **The as-built layer (v0.7)**: the IDs in these files are the *spec* layer of the knowledge graph. During build execution the product's code becomes a second layer, bridged back to these IDs via the `@implements` tags in code (see `.claude/rules/04-coding-standards.md`). The devgraph emitter is not yet adopted in this repo; the schema it would follow is [`../docs/DEVELOPMENT_GRAPH.md`](../docs/DEVELOPMENT_GRAPH.md).
 
 ## How to Initialize
 
