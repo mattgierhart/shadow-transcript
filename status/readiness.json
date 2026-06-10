@@ -1,0 +1,3186 @@
+{
+  "last_computed": "2026-06-10T04:39:35.181417+00:00",
+  "computed_by": "compute-prd-readiness@0.2.0",
+  "schema_version": "1.0",
+  "sot_files": {
+    "SoT/SoT.API_CONTRACTS.md": {
+      "target": "SoT/SoT.API_CONTRACTS.md",
+      "work_type": "sot",
+      "score": 42.6,
+      "weighted_score": 67.6,
+      "penalty": 25,
+      "cap_applied": null,
+      "caps": [],
+      "entry_count": 8,
+      "consumed_by_epics": [
+        "EPIC-02",
+        "EPIC-03",
+        "EPIC-04",
+        "EPIC-05",
+        "EPIC-06",
+        "EPIC-08",
+        "EPIC-09"
+      ],
+      "dimensions": {
+        "entry_count": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "entry_depth": {
+          "score": 0.0,
+          "weight": 0.294
+        },
+        "cross_ref_density": {
+          "score": 87.5,
+          "weight": 0.235
+        },
+        "orphan_rate": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "status_coverage": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "confidence_coverage": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "entry_depth",
+          "ref": "API-001",
+          "reason": "API-001 is only 17 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "API-002",
+          "reason": "API-002 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "API-101",
+          "reason": "API-101 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "API-102",
+          "reason": "API-102 is only 21 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-102 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "API-201",
+          "reason": "API-201 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-201 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "API-202",
+          "reason": "API-202 is only 20 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-202 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "API-301",
+          "reason": "API-301 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-301 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "API-401",
+          "reason": "API-401 is only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-401 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "API-102",
+          "reason": "API-102 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link API-102 to related BR-/API-/UJ- entries."
+        }
+      ]
+    },
+    "SoT/SoT.BUSINESS_RULES.md": {
+      "target": "SoT/SoT.BUSINESS_RULES.md",
+      "work_type": "sot",
+      "score": 24.0,
+      "weighted_score": 49.0,
+      "penalty": 25,
+      "cap_applied": null,
+      "caps": [],
+      "entry_count": 12,
+      "consumed_by_epics": [
+        "EPIC-01",
+        "EPIC-02",
+        "EPIC-03",
+        "EPIC-04",
+        "EPIC-05",
+        "EPIC-06",
+        "EPIC-08",
+        "EPIC-09"
+      ],
+      "dimensions": {
+        "entry_count": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "entry_depth": {
+          "score": 0.0,
+          "weight": 0.294
+        },
+        "cross_ref_density": {
+          "score": 8.3,
+          "weight": 0.235
+        },
+        "orphan_rate": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "status_coverage": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "confidence_coverage": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "entry_depth",
+          "ref": "BR-101",
+          "reason": "BR-101 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "BR-102",
+          "reason": "BR-102 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-102 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "BR-103",
+          "reason": "BR-103 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-103 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "BR-104",
+          "reason": "BR-104 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-104 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "BR-201",
+          "reason": "BR-201 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-201 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "BR-202",
+          "reason": "BR-202 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-202 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "BR-203",
+          "reason": "BR-203 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-203 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "BR-301",
+          "reason": "BR-301 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-301 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "BR-302",
+          "reason": "BR-302 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-302 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "BR-401",
+          "reason": "BR-401 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-401 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "BR-402",
+          "reason": "BR-402 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-402 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "BR-501",
+          "reason": "BR-501 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-501 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "BR-101",
+          "reason": "BR-101 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link BR-101 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "BR-102",
+          "reason": "BR-102 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link BR-102 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "BR-103",
+          "reason": "BR-103 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link BR-103 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "BR-201",
+          "reason": "BR-201 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link BR-201 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "BR-202",
+          "reason": "BR-202 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link BR-202 to related BR-/API-/UJ- entries."
+        }
+      ]
+    },
+    "SoT/SoT.DATA_MODEL.md": {
+      "target": "SoT/SoT.DATA_MODEL.md",
+      "work_type": "sot",
+      "score": 58.6,
+      "weighted_score": 70.6,
+      "penalty": 12,
+      "cap_applied": null,
+      "caps": [],
+      "entry_count": 4,
+      "consumed_by_epics": [
+        "EPIC-06",
+        "EPIC-08",
+        "EPIC-09"
+      ],
+      "dimensions": {
+        "entry_count": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "entry_depth": {
+          "score": 0.0,
+          "weight": 0.294
+        },
+        "cross_ref_density": {
+          "score": 100.0,
+          "weight": 0.235
+        },
+        "orphan_rate": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "status_coverage": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "confidence_coverage": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "entry_depth",
+          "ref": "DBT-001",
+          "reason": "DBT-001 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DBT-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DBT-002",
+          "reason": "DBT-002 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DBT-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DBT-003",
+          "reason": "DBT-003 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DBT-003 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DBT-101",
+          "reason": "DBT-101 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DBT-101 with rationale, schema, or required sub-sections."
+        }
+      ]
+    },
+    "SoT/SoT.DEPLOYMENT.md": {
+      "target": "SoT/SoT.DEPLOYMENT.md",
+      "work_type": "sot",
+      "score": 31.2,
+      "weighted_score": 48.2,
+      "penalty": 17,
+      "cap_applied": null,
+      "caps": [],
+      "entry_count": 5,
+      "consumed_by_epics": [],
+      "dimensions": {
+        "entry_count": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "entry_depth": {
+          "score": 40.0,
+          "weight": 0.294
+        },
+        "cross_ref_density": {
+          "score": 0.0,
+          "weight": 0.235
+        },
+        "orphan_rate": {
+          "score": 40.0,
+          "weight": 0.176
+        },
+        "status_coverage": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "confidence_coverage": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "entry_depth",
+          "ref": "DEP-001",
+          "reason": "DEP-001 is only 16 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DEP-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DEP-002",
+          "reason": "DEP-002 is only 10 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DEP-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "MON-001",
+          "reason": "MON-001 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand MON-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "SEC-001",
+          "reason": "SEC-001 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link SEC-001 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "DEP-001",
+          "reason": "DEP-001 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link DEP-001 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "DEP-002",
+          "reason": "DEP-002 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link DEP-002 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "RUN-001",
+          "reason": "RUN-001 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link RUN-001 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "MON-001",
+          "reason": "MON-001 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link MON-001 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "orphan_rate",
+          "ref": "DEP-001",
+          "reason": "DEP-001 is never referenced outside SoT/SoT.DEPLOYMENT.md — orphaned.",
+          "severity": "low",
+          "fix": "Ensure DEP-001 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
+        },
+        {
+          "dimension": "orphan_rate",
+          "ref": "RUN-001",
+          "reason": "RUN-001 is never referenced outside SoT/SoT.DEPLOYMENT.md — orphaned.",
+          "severity": "low",
+          "fix": "Ensure RUN-001 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
+        },
+        {
+          "dimension": "orphan_rate",
+          "ref": "MON-001",
+          "reason": "MON-001 is never referenced outside SoT/SoT.DEPLOYMENT.md — orphaned.",
+          "severity": "low",
+          "fix": "Ensure MON-001 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
+        }
+      ]
+    },
+    "SoT/SoT.DESIGN_COMPONENTS.md": {
+      "target": "SoT/SoT.DESIGN_COMPONENTS.md",
+      "work_type": "sot",
+      "score": 37.8,
+      "weighted_score": 62.8,
+      "penalty": 25,
+      "cap_applied": null,
+      "caps": [],
+      "entry_count": 19,
+      "consumed_by_epics": [
+        "EPIC-07"
+      ],
+      "dimensions": {
+        "entry_count": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "entry_depth": {
+          "score": 10.5,
+          "weight": 0.294
+        },
+        "cross_ref_density": {
+          "score": 57.9,
+          "weight": 0.235
+        },
+        "orphan_rate": {
+          "score": 94.7,
+          "weight": 0.176
+        },
+        "status_coverage": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "confidence_coverage": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-001",
+          "reason": "DES-001 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-002",
+          "reason": "DES-002 is only 25 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-003",
+          "reason": "DES-003 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-003 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-004",
+          "reason": "DES-004 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-004 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-005",
+          "reason": "DES-005 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-005 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-101",
+          "reason": "DES-101 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-102",
+          "reason": "DES-102 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-102 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-104",
+          "reason": "DES-104 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-104 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-105",
+          "reason": "DES-105 is only 20 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-105 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-201",
+          "reason": "DES-201 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-201 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-202",
+          "reason": "DES-202 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-202 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-203",
+          "reason": "DES-203 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-203 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-301",
+          "reason": "DES-301 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-301 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-302",
+          "reason": "DES-302 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-302 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-303",
+          "reason": "DES-303 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-303 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-304",
+          "reason": "DES-304 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-304 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "DES-305",
+          "reason": "DES-305 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-305 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "DES-201",
+          "reason": "DES-201 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link DES-201 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "DES-202",
+          "reason": "DES-202 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link DES-202 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "DES-203",
+          "reason": "DES-203 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link DES-203 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "DES-301",
+          "reason": "DES-301 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link DES-301 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "DES-302",
+          "reason": "DES-302 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link DES-302 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "orphan_rate",
+          "ref": "DES-202",
+          "reason": "DES-202 is never referenced outside SoT/SoT.DESIGN_COMPONENTS.md — orphaned.",
+          "severity": "low",
+          "fix": "Ensure DES-202 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
+        }
+      ]
+    },
+    "SoT/SoT.INTEGRATIONS.md": {
+      "target": "SoT/SoT.INTEGRATIONS.md",
+      "work_type": "sot",
+      "score": 49.9,
+      "weighted_score": 65.9,
+      "penalty": 16,
+      "cap_applied": null,
+      "caps": [],
+      "entry_count": 5,
+      "consumed_by_epics": [
+        "EPIC-02",
+        "EPIC-03",
+        "EPIC-06"
+      ],
+      "dimensions": {
+        "entry_count": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "entry_depth": {
+          "score": 0.0,
+          "weight": 0.294
+        },
+        "cross_ref_density": {
+          "score": 80.0,
+          "weight": 0.235
+        },
+        "orphan_rate": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "status_coverage": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "confidence_coverage": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "entry_depth",
+          "ref": "INT-001",
+          "reason": "INT-001 is only 19 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand INT-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "INT-101",
+          "reason": "INT-101 is only 29 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand INT-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "INT-102",
+          "reason": "INT-102 is only 35 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand INT-102 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "INT-201",
+          "reason": "INT-201 is only 31 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand INT-201 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "INT-202",
+          "reason": "INT-202 is only 38 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand INT-202 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "INT-102",
+          "reason": "INT-102 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link INT-102 to related BR-/API-/UJ- entries."
+        }
+      ]
+    },
+    "SoT/SoT.LESSONS_LEARNED.md": {
+      "target": "SoT/SoT.LESSONS_LEARNED.md",
+      "work_type": "sot",
+      "score": 62.2,
+      "weighted_score": 76.2,
+      "penalty": 14,
+      "cap_applied": null,
+      "caps": [],
+      "entry_count": 16,
+      "consumed_by_epics": [],
+      "dimensions": {
+        "entry_count": {
+          "score": 100.0,
+          "weight": 0.2
+        },
+        "entry_depth": {
+          "score": 81.2,
+          "weight": 0.333
+        },
+        "cross_ref_density": {
+          "score": 100.0,
+          "weight": 0.267
+        },
+        "orphan_rate": {
+          "score": 12.5,
+          "weight": 0.2
+        },
+        "status_coverage": {
+          "status": "not_applicable"
+        },
+        "confidence_coverage": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "entry_depth",
+          "ref": "LL-001",
+          "reason": "LL-001 is only 187 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand LL-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "LL-004",
+          "reason": "LL-004 is only 131 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand LL-004 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "LL-106",
+          "reason": "LL-106 is only 134 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand LL-106 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "orphan_rate",
+          "ref": "LL-002",
+          "reason": "LL-002 is never referenced outside SoT/SoT.LESSONS_LEARNED.md — orphaned.",
+          "severity": "low",
+          "fix": "Ensure LL-002 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
+        },
+        {
+          "dimension": "orphan_rate",
+          "ref": "LL-003",
+          "reason": "LL-003 is never referenced outside SoT/SoT.LESSONS_LEARNED.md — orphaned.",
+          "severity": "low",
+          "fix": "Ensure LL-003 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
+        },
+        {
+          "dimension": "orphan_rate",
+          "ref": "LL-004",
+          "reason": "LL-004 is never referenced outside SoT/SoT.LESSONS_LEARNED.md — orphaned.",
+          "severity": "low",
+          "fix": "Ensure LL-004 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
+        },
+        {
+          "dimension": "orphan_rate",
+          "ref": "LL-005",
+          "reason": "LL-005 is never referenced outside SoT/SoT.LESSONS_LEARNED.md — orphaned.",
+          "severity": "low",
+          "fix": "Ensure LL-005 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
+        },
+        {
+          "dimension": "orphan_rate",
+          "ref": "LL-101",
+          "reason": "LL-101 is never referenced outside SoT/SoT.LESSONS_LEARNED.md — orphaned.",
+          "severity": "low",
+          "fix": "Ensure LL-101 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
+        }
+      ]
+    },
+    "SoT/SoT.TECHNICAL_DECISIONS.md": {
+      "target": "SoT/SoT.TECHNICAL_DECISIONS.md",
+      "work_type": "sot",
+      "score": 36.1,
+      "weighted_score": 61.1,
+      "penalty": 25,
+      "cap_applied": null,
+      "caps": [],
+      "entry_count": 13,
+      "consumed_by_epics": [
+        "EPIC-01",
+        "EPIC-02",
+        "EPIC-03",
+        "EPIC-04",
+        "EPIC-06",
+        "EPIC-08",
+        "EPIC-09"
+      ],
+      "dimensions": {
+        "entry_count": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "entry_depth": {
+          "score": 23.1,
+          "weight": 0.294
+        },
+        "cross_ref_density": {
+          "score": 30.8,
+          "weight": 0.235
+        },
+        "orphan_rate": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "status_coverage": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "confidence_coverage": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "entry_depth",
+          "ref": "TECH-001",
+          "reason": "TECH-001 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TECH-002",
+          "reason": "TECH-002 is only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TECH-003",
+          "reason": "TECH-003 is only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-003 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TECH-004",
+          "reason": "TECH-004 is only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-004 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TECH-005",
+          "reason": "TECH-005 is only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-005 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TECH-006",
+          "reason": "TECH-006 is only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-006 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TECH-007",
+          "reason": "TECH-007 is only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-007 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "ARC-002",
+          "reason": "ARC-002 is only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand ARC-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "ENV-001",
+          "reason": "ENV-001 is only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand ENV-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TECH-008",
+          "reason": "TECH-008 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-008 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "TECH-001",
+          "reason": "TECH-001 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link TECH-001 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "TECH-002",
+          "reason": "TECH-002 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link TECH-002 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "TECH-003",
+          "reason": "TECH-003 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link TECH-003 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "TECH-004",
+          "reason": "TECH-004 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link TECH-004 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "TECH-005",
+          "reason": "TECH-005 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link TECH-005 to related BR-/API-/UJ- entries."
+        }
+      ]
+    },
+    "SoT/SoT.TESTING.md": {
+      "target": "SoT/SoT.TESTING.md",
+      "work_type": "sot",
+      "score": 41.2,
+      "weighted_score": 66.2,
+      "penalty": 25,
+      "cap_applied": null,
+      "caps": [],
+      "entry_count": 27,
+      "consumed_by_epics": [
+        "EPIC-01",
+        "EPIC-02",
+        "EPIC-03",
+        "EPIC-04",
+        "EPIC-05",
+        "EPIC-06",
+        "EPIC-08",
+        "EPIC-09"
+      ],
+      "dimensions": {
+        "entry_count": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "entry_depth": {
+          "score": 0.0,
+          "weight": 0.294
+        },
+        "cross_ref_density": {
+          "score": 81.5,
+          "weight": 0.235
+        },
+        "orphan_rate": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "status_coverage": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "confidence_coverage": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-001",
+          "reason": "TEST-001 is only 21 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-002",
+          "reason": "TEST-002 is only 25 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-003",
+          "reason": "TEST-003 is only 16 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-003 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-004",
+          "reason": "TEST-004 is only 31 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-004 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-005",
+          "reason": "TEST-005 is only 22 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-005 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-101",
+          "reason": "TEST-101 is only 33 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-102",
+          "reason": "TEST-102 is only 16 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-102 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-103",
+          "reason": "TEST-103 is only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-103 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-104",
+          "reason": "TEST-104 is only 35 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-104 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-201",
+          "reason": "TEST-201 is only 34 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-201 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-202",
+          "reason": "TEST-202 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-202 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-203",
+          "reason": "TEST-203 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-203 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-204",
+          "reason": "TEST-204 is only 27 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-204 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-301",
+          "reason": "TEST-301 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-301 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-302",
+          "reason": "TEST-302 is only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-302 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-303",
+          "reason": "TEST-303 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-303 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-401",
+          "reason": "TEST-401 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-401 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-402",
+          "reason": "TEST-402 is only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-402 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-403",
+          "reason": "TEST-403 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-403 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-404",
+          "reason": "TEST-404 is only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-404 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-405",
+          "reason": "TEST-405 is only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-405 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-501",
+          "reason": "TEST-501 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-501 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-502",
+          "reason": "TEST-502 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-502 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-503",
+          "reason": "TEST-503 is only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-503 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-504",
+          "reason": "TEST-504 is only 27 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-504 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-601",
+          "reason": "TEST-601 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-601 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "TEST-602",
+          "reason": "TEST-602 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-602 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "TEST-201",
+          "reason": "TEST-201 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link TEST-201 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "TEST-202",
+          "reason": "TEST-202 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link TEST-202 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "TEST-203",
+          "reason": "TEST-203 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link TEST-203 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "TEST-204",
+          "reason": "TEST-204 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link TEST-204 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "TEST-504",
+          "reason": "TEST-504 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link TEST-504 to related BR-/API-/UJ- entries."
+        }
+      ]
+    },
+    "SoT/SoT.USER_JOURNEYS.md": {
+      "target": "SoT/SoT.USER_JOURNEYS.md",
+      "work_type": "sot",
+      "score": 96.9,
+      "weighted_score": 97.9,
+      "penalty": 1,
+      "cap_applied": null,
+      "caps": [],
+      "entry_count": 11,
+      "consumed_by_epics": [
+        "EPIC-07"
+      ],
+      "dimensions": {
+        "entry_count": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "entry_depth": {
+          "score": 100.0,
+          "weight": 0.294
+        },
+        "cross_ref_density": {
+          "score": 90.9,
+          "weight": 0.235
+        },
+        "orphan_rate": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "status_coverage": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "confidence_coverage": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "cross_ref_density",
+          "ref": "UJ-002",
+          "reason": "UJ-002 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link UJ-002 to related BR-/API-/UJ- entries."
+        }
+      ]
+    },
+    "SoT/SoT.customer_feedback.md": {
+      "target": "SoT/SoT.customer_feedback.md",
+      "work_type": "sot",
+      "score": 22.1,
+      "weighted_score": 47.1,
+      "penalty": 25,
+      "cap_applied": null,
+      "caps": [],
+      "entry_count": 7,
+      "consumed_by_epics": [],
+      "dimensions": {
+        "entry_count": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "entry_depth": {
+          "score": 0.0,
+          "weight": 0.294
+        },
+        "cross_ref_density": {
+          "score": 0.0,
+          "weight": 0.235
+        },
+        "orphan_rate": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "status_coverage": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "confidence_coverage": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "entry_depth",
+          "ref": "CFD-001",
+          "reason": "CFD-001 is only 20 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand CFD-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "CFD-002",
+          "reason": "CFD-002 is only 23 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand CFD-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "CFD-003",
+          "reason": "CFD-003 is only 19 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand CFD-003 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "CFD-004",
+          "reason": "CFD-004 is only 21 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand CFD-004 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "CFD-101",
+          "reason": "CFD-101 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand CFD-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "CFD-102",
+          "reason": "CFD-102 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand CFD-102 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "entry_depth",
+          "ref": "CFD-103",
+          "reason": "CFD-103 is only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand CFD-103 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "CFD-001",
+          "reason": "CFD-001 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link CFD-001 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "CFD-002",
+          "reason": "CFD-002 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link CFD-002 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "CFD-003",
+          "reason": "CFD-003 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link CFD-003 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "CFD-004",
+          "reason": "CFD-004 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link CFD-004 to related BR-/API-/UJ- entries."
+        },
+        {
+          "dimension": "cross_ref_density",
+          "ref": "CFD-101",
+          "reason": "CFD-101 references no other IDs — isolated in the knowledge graph.",
+          "severity": "low",
+          "fix": "Link CFD-101 to related BR-/API-/UJ- entries."
+        }
+      ]
+    }
+  },
+  "epics": {
+    "EPIC-01": {
+      "target": "EPIC-01",
+      "work_type": "epic",
+      "state": "Unknown",
+      "score": 39.7,
+      "weighted_score": 64.7,
+      "penalty": 25,
+      "cap_applied": 55,
+      "caps": [
+        {
+          "rule": "test_coverage_zero",
+          "cap": 55,
+          "reason": "test_coverage_declared is 0 — v0.7 requires TEST- entries before build.",
+          "caused_by": "SoT/SoT.TESTING.md",
+          "caused_by_score": 41.2
+        }
+      ],
+      "threshold_warn": 70,
+      "threshold_block": 50,
+      "dimensions": {
+        "spec_resolution": {
+          "score": 100.0,
+          "weight": 0.235
+        },
+        "spec_depth": {
+          "score": 0.0,
+          "weight": 0.176
+        },
+        "test_coverage_declared": {
+          "score": 0.0,
+          "weight": 0.176
+        },
+        "upstream_gate": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "dependency_readiness": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "ambiguity_load": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "confidence_avg": {
+          "status": "not_applicable"
+        },
+        "status_maturity": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "file_readiness": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "implementation_coverage": {
+          "status": "not_applicable"
+        },
+        "architecture_conformance": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "spec_depth",
+          "ref": "ARC-002",
+          "reason": "ARC-002 in SoT/SoT.TECHNICAL_DECISIONS.md has only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand ARC-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "BR-201",
+          "reason": "BR-201 in SoT/SoT.BUSINESS_RULES.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-201 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "BR-401",
+          "reason": "BR-401 in SoT/SoT.BUSINESS_RULES.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-401 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "ENV-001",
+          "reason": "ENV-001 in SoT/SoT.TECHNICAL_DECISIONS.md has only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand ENV-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TECH-001",
+          "reason": "TECH-001 in SoT/SoT.TECHNICAL_DECISIONS.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TECH-002",
+          "reason": "TECH-002 in SoT/SoT.TECHNICAL_DECISIONS.md has only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TECH-006",
+          "reason": "TECH-006 in SoT/SoT.TECHNICAL_DECISIONS.md has only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-006 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TECH-007",
+          "reason": "TECH-007 in SoT/SoT.TECHNICAL_DECISIONS.md has only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-007 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "BR-201",
+          "reason": "BR-201 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies BR-201."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "BR-401",
+          "reason": "BR-401 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies BR-401."
+        }
+      ],
+      "referenced_ids_count": 8,
+      "file": "epics/EPIC-01-project-scaffolding.md"
+    },
+    "EPIC-02": {
+      "target": "EPIC-02",
+      "work_type": "epic",
+      "state": "Unknown",
+      "score": 30.3,
+      "weighted_score": 55.3,
+      "penalty": 25,
+      "cap_applied": 55,
+      "caps": [
+        {
+          "rule": "test_coverage_zero",
+          "cap": 55,
+          "reason": "test_coverage_declared is 0 — v0.7 requires TEST- entries before build.",
+          "caused_by": "SoT/SoT.TESTING.md",
+          "caused_by_score": 41.2
+        },
+        {
+          "rule": "spec_resolution_low",
+          "cap": 60,
+          "reason": "spec_resolution below 80% — too many referenced IDs don't resolve.",
+          "caused_by": "epics/",
+          "caused_by_score": null
+        }
+      ],
+      "threshold_warn": 70,
+      "threshold_block": 50,
+      "dimensions": {
+        "spec_resolution": {
+          "score": 60.0,
+          "weight": 0.235
+        },
+        "spec_depth": {
+          "score": 0.0,
+          "weight": 0.176
+        },
+        "test_coverage_declared": {
+          "score": 0.0,
+          "weight": 0.176
+        },
+        "upstream_gate": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "dependency_readiness": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "ambiguity_load": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "confidence_avg": {
+          "status": "not_applicable"
+        },
+        "status_maturity": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "file_readiness": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "implementation_coverage": {
+          "status": "not_applicable"
+        },
+        "architecture_conformance": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "spec_resolution",
+          "ref": "EPIC-08",
+          "reason": "EPIC-08 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define EPIC-08 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "epics/",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_resolution",
+          "ref": "RISK-006",
+          "reason": "RISK-006 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define RISK-006 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "API-001",
+          "reason": "API-001 in SoT/SoT.API_CONTRACTS.md has only 17 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "API-002",
+          "reason": "API-002 in SoT/SoT.API_CONTRACTS.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-004",
+          "reason": "TEST-004 in SoT/SoT.TESTING.md has only 31 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-004 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "API-001",
+          "reason": "API-001 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies API-001."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "API-002",
+          "reason": "API-002 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies API-002."
+        }
+      ],
+      "referenced_ids_count": 5,
+      "file": "epics/EPIC-02b-audio-artifact-contract.md"
+    },
+    "EPIC-03": {
+      "target": "EPIC-03",
+      "work_type": "epic",
+      "state": "Unknown",
+      "score": 37.4,
+      "weighted_score": 62.4,
+      "penalty": 25,
+      "cap_applied": 55,
+      "caps": [
+        {
+          "rule": "test_coverage_zero",
+          "cap": 55,
+          "reason": "test_coverage_declared is 0 — v0.7 requires TEST- entries before build.",
+          "caused_by": "SoT/SoT.TESTING.md",
+          "caused_by_score": 41.2
+        }
+      ],
+      "threshold_warn": 70,
+      "threshold_block": 50,
+      "dimensions": {
+        "spec_resolution": {
+          "score": 90.0,
+          "weight": 0.235
+        },
+        "spec_depth": {
+          "score": 0.0,
+          "weight": 0.176
+        },
+        "test_coverage_declared": {
+          "score": 0.0,
+          "weight": 0.176
+        },
+        "upstream_gate": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "dependency_readiness": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "ambiguity_load": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "confidence_avg": {
+          "status": "not_applicable"
+        },
+        "status_maturity": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "file_readiness": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "implementation_coverage": {
+          "status": "not_applicable"
+        },
+        "architecture_conformance": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "spec_resolution",
+          "ref": "FEA-002",
+          "reason": "FEA-002 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define FEA-002 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "API-101",
+          "reason": "API-101 in SoT/SoT.API_CONTRACTS.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "BR-101",
+          "reason": "BR-101 in SoT/SoT.BUSINESS_RULES.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "BR-202",
+          "reason": "BR-202 in SoT/SoT.BUSINESS_RULES.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-202 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "INT-101",
+          "reason": "INT-101 in SoT/SoT.INTEGRATIONS.md has only 29 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand INT-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TECH-002",
+          "reason": "TECH-002 in SoT/SoT.TECHNICAL_DECISIONS.md has only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-101",
+          "reason": "TEST-101 in SoT/SoT.TESTING.md has only 33 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-102",
+          "reason": "TEST-102 in SoT/SoT.TESTING.md has only 16 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-102 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-103",
+          "reason": "TEST-103 in SoT/SoT.TESTING.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-103 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-104",
+          "reason": "TEST-104 in SoT/SoT.TESTING.md has only 35 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-104 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "API-101",
+          "reason": "API-101 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies API-101."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "BR-101",
+          "reason": "BR-101 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies BR-101."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "BR-202",
+          "reason": "BR-202 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies BR-202."
+        }
+      ],
+      "referenced_ids_count": 10,
+      "file": "epics/EPIC-03-transcription-pipeline.md"
+    },
+    "EPIC-04": {
+      "target": "EPIC-04",
+      "work_type": "epic",
+      "state": "Unknown",
+      "score": 36.8,
+      "weighted_score": 61.8,
+      "penalty": 25,
+      "cap_applied": 55,
+      "caps": [
+        {
+          "rule": "test_coverage_zero",
+          "cap": 55,
+          "reason": "test_coverage_declared is 0 — v0.7 requires TEST- entries before build.",
+          "caused_by": "SoT/SoT.TESTING.md",
+          "caused_by_score": 41.2
+        }
+      ],
+      "threshold_warn": 70,
+      "threshold_block": 50,
+      "dimensions": {
+        "spec_resolution": {
+          "score": 87.5,
+          "weight": 0.235
+        },
+        "spec_depth": {
+          "score": 0.0,
+          "weight": 0.176
+        },
+        "test_coverage_declared": {
+          "score": 0.0,
+          "weight": 0.176
+        },
+        "upstream_gate": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "dependency_readiness": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "ambiguity_load": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "confidence_avg": {
+          "status": "not_applicable"
+        },
+        "status_maturity": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "file_readiness": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "implementation_coverage": {
+          "status": "not_applicable"
+        },
+        "architecture_conformance": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "spec_resolution",
+          "ref": "FEA-003",
+          "reason": "FEA-003 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define FEA-003 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "API-102",
+          "reason": "API-102 in SoT/SoT.API_CONTRACTS.md has only 21 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-102 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "ARC-002",
+          "reason": "ARC-002 in SoT/SoT.TECHNICAL_DECISIONS.md has only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand ARC-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "BR-101",
+          "reason": "BR-101 in SoT/SoT.BUSINESS_RULES.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-201",
+          "reason": "TEST-201 in SoT/SoT.TESTING.md has only 34 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-201 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-202",
+          "reason": "TEST-202 in SoT/SoT.TESTING.md has only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-202 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-203",
+          "reason": "TEST-203 in SoT/SoT.TESTING.md has only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-203 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-204",
+          "reason": "TEST-204 in SoT/SoT.TESTING.md has only 27 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-204 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "API-102",
+          "reason": "API-102 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies API-102."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "BR-101",
+          "reason": "BR-101 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies BR-101."
+        }
+      ],
+      "referenced_ids_count": 8,
+      "file": "epics/EPIC-04b-diarization-swift-bridge.md"
+    },
+    "EPIC-05": {
+      "target": "EPIC-05",
+      "work_type": "epic",
+      "state": "Unknown",
+      "score": 30.9,
+      "weighted_score": 55.9,
+      "penalty": 25,
+      "cap_applied": 55,
+      "caps": [
+        {
+          "rule": "test_coverage_zero",
+          "cap": 55,
+          "reason": "test_coverage_declared is 0 — v0.7 requires TEST- entries before build.",
+          "caused_by": "SoT/SoT.TESTING.md",
+          "caused_by_score": 41.2
+        },
+        {
+          "rule": "spec_resolution_low",
+          "cap": 60,
+          "reason": "spec_resolution below 80% — too many referenced IDs don't resolve.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        }
+      ],
+      "threshold_warn": 70,
+      "threshold_block": 50,
+      "dimensions": {
+        "spec_resolution": {
+          "score": 62.5,
+          "weight": 0.235
+        },
+        "spec_depth": {
+          "score": 0.0,
+          "weight": 0.176
+        },
+        "test_coverage_declared": {
+          "score": 0.0,
+          "weight": 0.176
+        },
+        "upstream_gate": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "dependency_readiness": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "ambiguity_load": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "confidence_avg": {
+          "status": "not_applicable"
+        },
+        "status_maturity": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "file_readiness": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "implementation_coverage": {
+          "status": "not_applicable"
+        },
+        "architecture_conformance": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "spec_resolution",
+          "ref": "FEA-003",
+          "reason": "FEA-003 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define FEA-003 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_resolution",
+          "ref": "FEA-004",
+          "reason": "FEA-004 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define FEA-004 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_resolution",
+          "ref": "RISK-005",
+          "reason": "RISK-005 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define RISK-005 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "API-201",
+          "reason": "API-201 in SoT/SoT.API_CONTRACTS.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-201 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "BR-301",
+          "reason": "BR-301 in SoT/SoT.BUSINESS_RULES.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-301 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-301",
+          "reason": "TEST-301 in SoT/SoT.TESTING.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-301 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-302",
+          "reason": "TEST-302 in SoT/SoT.TESTING.md has only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-302 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-303",
+          "reason": "TEST-303 in SoT/SoT.TESTING.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-303 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "API-201",
+          "reason": "API-201 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies API-201."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "BR-301",
+          "reason": "BR-301 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies BR-301."
+        }
+      ],
+      "referenced_ids_count": 8,
+      "file": "epics/EPIC-05-transcript-formatting.md"
+    },
+    "EPIC-06": {
+      "target": "EPIC-06",
+      "work_type": "epic",
+      "state": "Unknown",
+      "score": 36.9,
+      "weighted_score": 61.9,
+      "penalty": 25,
+      "cap_applied": 55,
+      "caps": [
+        {
+          "rule": "test_coverage_zero",
+          "cap": 55,
+          "reason": "test_coverage_declared is 0 — v0.7 requires TEST- entries before build.",
+          "caused_by": "SoT/SoT.TESTING.md",
+          "caused_by_score": 41.2
+        }
+      ],
+      "threshold_warn": 70,
+      "threshold_block": 50,
+      "dimensions": {
+        "spec_resolution": {
+          "score": 88.2,
+          "weight": 0.235
+        },
+        "spec_depth": {
+          "score": 0.0,
+          "weight": 0.176
+        },
+        "test_coverage_declared": {
+          "score": 0.0,
+          "weight": 0.176
+        },
+        "upstream_gate": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "dependency_readiness": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "ambiguity_load": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "confidence_avg": {
+          "status": "not_applicable"
+        },
+        "status_maturity": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "file_readiness": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "implementation_coverage": {
+          "status": "not_applicable"
+        },
+        "architecture_conformance": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "spec_resolution",
+          "ref": "FEA-005",
+          "reason": "FEA-005 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define FEA-005 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_resolution",
+          "ref": "FEA-006",
+          "reason": "FEA-006 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define FEA-006 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "API-202",
+          "reason": "API-202 in SoT/SoT.API_CONTRACTS.md has only 20 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-202 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "BR-301",
+          "reason": "BR-301 in SoT/SoT.BUSINESS_RULES.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-301 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "BR-302",
+          "reason": "BR-302 in SoT/SoT.BUSINESS_RULES.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-302 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DBT-001",
+          "reason": "DBT-001 in SoT/SoT.DATA_MODEL.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DBT-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DBT-002",
+          "reason": "DBT-002 in SoT/SoT.DATA_MODEL.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DBT-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DBT-003",
+          "reason": "DBT-003 in SoT/SoT.DATA_MODEL.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DBT-003 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DBT-101",
+          "reason": "DBT-101 in SoT/SoT.DATA_MODEL.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DBT-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "INT-001",
+          "reason": "INT-001 in SoT/SoT.INTEGRATIONS.md has only 19 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand INT-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TECH-005",
+          "reason": "TECH-005 in SoT/SoT.TECHNICAL_DECISIONS.md has only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-005 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TECH-007",
+          "reason": "TECH-007 in SoT/SoT.TECHNICAL_DECISIONS.md has only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-007 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-401",
+          "reason": "TEST-401 in SoT/SoT.TESTING.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-401 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-402",
+          "reason": "TEST-402 in SoT/SoT.TESTING.md has only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-402 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-403",
+          "reason": "TEST-403 in SoT/SoT.TESTING.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-403 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-404",
+          "reason": "TEST-404 in SoT/SoT.TESTING.md has only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-404 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-405",
+          "reason": "TEST-405 in SoT/SoT.TESTING.md has only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-405 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "API-202",
+          "reason": "API-202 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies API-202."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "BR-301",
+          "reason": "BR-301 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies BR-301."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "BR-302",
+          "reason": "BR-302 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies BR-302."
+        }
+      ],
+      "referenced_ids_count": 17,
+      "file": "epics/EPIC-06-storage-and-export.md"
+    },
+    "EPIC-07": {
+      "target": "EPIC-07",
+      "work_type": "epic",
+      "state": "Unknown",
+      "score": 63.3,
+      "weighted_score": 88.3,
+      "penalty": 25,
+      "cap_applied": null,
+      "caps": [],
+      "threshold_warn": 70,
+      "threshold_block": 50,
+      "dimensions": {
+        "spec_resolution": {
+          "score": 93.3,
+          "weight": 0.235
+        },
+        "spec_depth": {
+          "score": 42.9,
+          "weight": 0.176
+        },
+        "test_coverage_declared": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "upstream_gate": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "dependency_readiness": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "ambiguity_load": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "confidence_avg": {
+          "status": "not_applicable"
+        },
+        "status_maturity": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "file_readiness": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "implementation_coverage": {
+          "status": "not_applicable"
+        },
+        "architecture_conformance": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "spec_resolution",
+          "ref": "RISK-002",
+          "reason": "RISK-002 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define RISK-002 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_resolution",
+          "ref": "RISK-004",
+          "reason": "RISK-004 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define RISK-004 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-001",
+          "reason": "DES-001 in SoT/SoT.DESIGN_COMPONENTS.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-002",
+          "reason": "DES-002 in SoT/SoT.DESIGN_COMPONENTS.md has only 25 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-002 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-003",
+          "reason": "DES-003 in SoT/SoT.DESIGN_COMPONENTS.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-003 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-004",
+          "reason": "DES-004 in SoT/SoT.DESIGN_COMPONENTS.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-004 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-005",
+          "reason": "DES-005 in SoT/SoT.DESIGN_COMPONENTS.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-005 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-101",
+          "reason": "DES-101 in SoT/SoT.DESIGN_COMPONENTS.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-102",
+          "reason": "DES-102 in SoT/SoT.DESIGN_COMPONENTS.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-102 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-104",
+          "reason": "DES-104 in SoT/SoT.DESIGN_COMPONENTS.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-104 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-201",
+          "reason": "DES-201 in SoT/SoT.DESIGN_COMPONENTS.md has only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-201 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-202",
+          "reason": "DES-202 in SoT/SoT.DESIGN_COMPONENTS.md has only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-202 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-203",
+          "reason": "DES-203 in SoT/SoT.DESIGN_COMPONENTS.md has only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-203 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-301",
+          "reason": "DES-301 in SoT/SoT.DESIGN_COMPONENTS.md has only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-301 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-302",
+          "reason": "DES-302 in SoT/SoT.DESIGN_COMPONENTS.md has only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-302 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-303",
+          "reason": "DES-303 in SoT/SoT.DESIGN_COMPONENTS.md has only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-303 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-304",
+          "reason": "DES-304 in SoT/SoT.DESIGN_COMPONENTS.md has only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-304 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DES-305",
+          "reason": "DES-305 in SoT/SoT.DESIGN_COMPONENTS.md has only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DES-305 with rationale, schema, or required sub-sections."
+        }
+      ],
+      "referenced_ids_count": 30,
+      "file": "epics/EPIC-07-ui-implementation.md"
+    },
+    "EPIC-08": {
+      "target": "EPIC-08",
+      "work_type": "epic",
+      "state": "Unknown",
+      "score": 36.8,
+      "weighted_score": 61.8,
+      "penalty": 25,
+      "cap_applied": 55,
+      "caps": [
+        {
+          "rule": "test_coverage_zero",
+          "cap": 55,
+          "reason": "test_coverage_declared is 0 — v0.7 requires TEST- entries before build.",
+          "caused_by": "SoT/SoT.TESTING.md",
+          "caused_by_score": 41.2
+        },
+        {
+          "rule": "spec_resolution_low",
+          "cap": 60,
+          "reason": "spec_resolution below 80% — too many referenced IDs don't resolve.",
+          "caused_by": "README.md",
+          "caused_by_score": null
+        }
+      ],
+      "threshold_warn": 70,
+      "threshold_block": 50,
+      "dimensions": {
+        "spec_resolution": {
+          "score": 75.0,
+          "weight": 0.235
+        },
+        "spec_depth": {
+          "score": 16.7,
+          "weight": 0.176
+        },
+        "test_coverage_declared": {
+          "score": 0.0,
+          "weight": 0.176
+        },
+        "upstream_gate": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "dependency_readiness": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "ambiguity_load": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "confidence_avg": {
+          "status": "not_applicable"
+        },
+        "status_maturity": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "file_readiness": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "implementation_coverage": {
+          "status": "not_applicable"
+        },
+        "architecture_conformance": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "spec_resolution",
+          "ref": "KPI-001",
+          "reason": "KPI-001 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define KPI-001 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "README.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_resolution",
+          "ref": "KPI-002",
+          "reason": "KPI-002 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define KPI-002 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "README.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_resolution",
+          "ref": "KPI-003",
+          "reason": "KPI-003 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define KPI-003 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "README.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_resolution",
+          "ref": "RISK-006",
+          "reason": "RISK-006 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define RISK-006 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "API-001",
+          "reason": "API-001 in SoT/SoT.API_CONTRACTS.md has only 17 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "API-301",
+          "reason": "API-301 in SoT/SoT.API_CONTRACTS.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-301 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "BR-101",
+          "reason": "BR-101 in SoT/SoT.BUSINESS_RULES.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "BR-102",
+          "reason": "BR-102 in SoT/SoT.BUSINESS_RULES.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-102 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "BR-103",
+          "reason": "BR-103 in SoT/SoT.BUSINESS_RULES.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-103 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DBT-101",
+          "reason": "DBT-101 in SoT/SoT.DATA_MODEL.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DBT-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-501",
+          "reason": "TEST-501 in SoT/SoT.TESTING.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-501 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-502",
+          "reason": "TEST-502 in SoT/SoT.TESTING.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-502 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-503",
+          "reason": "TEST-503 in SoT/SoT.TESTING.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-503 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-504",
+          "reason": "TEST-504 in SoT/SoT.TESTING.md has only 27 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-504 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "API-001",
+          "reason": "API-001 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies API-001."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "API-301",
+          "reason": "API-301 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies API-301."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "BR-101",
+          "reason": "BR-101 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies BR-101."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "BR-102",
+          "reason": "BR-102 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies BR-102."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "BR-103",
+          "reason": "BR-103 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies BR-103."
+        }
+      ],
+      "referenced_ids_count": 16,
+      "file": "epics/EPIC-08-pipeline-integration.md"
+    },
+    "EPIC-09": {
+      "target": "EPIC-09",
+      "work_type": "epic",
+      "state": "Unknown",
+      "score": 43.8,
+      "weighted_score": 68.8,
+      "penalty": 25,
+      "cap_applied": 60,
+      "caps": [
+        {
+          "rule": "spec_resolution_low",
+          "cap": 60,
+          "reason": "spec_resolution below 80% — too many referenced IDs don't resolve.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        }
+      ],
+      "threshold_warn": 70,
+      "threshold_block": 50,
+      "dimensions": {
+        "spec_resolution": {
+          "score": 75.0,
+          "weight": 0.235
+        },
+        "spec_depth": {
+          "score": 16.7,
+          "weight": 0.176
+        },
+        "test_coverage_declared": {
+          "score": 40.0,
+          "weight": 0.176
+        },
+        "upstream_gate": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "dependency_readiness": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "ambiguity_load": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "confidence_avg": {
+          "status": "not_applicable"
+        },
+        "status_maturity": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "file_readiness": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "implementation_coverage": {
+          "status": "not_applicable"
+        },
+        "architecture_conformance": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "spec_resolution",
+          "ref": "FEA-007",
+          "reason": "FEA-007 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define FEA-007 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_resolution",
+          "ref": "KPI-001",
+          "reason": "KPI-001 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define KPI-001 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "README.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_resolution",
+          "ref": "KPI-002",
+          "reason": "KPI-002 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define KPI-002 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "README.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_resolution",
+          "ref": "RISK-008",
+          "reason": "RISK-008 referenced in EPIC Section 3 but not defined in any SoT/PRD file.",
+          "severity": "high",
+          "fix": "Define RISK-008 in its SoT file, or remove the reference from Section 3.",
+          "caused_by": "PRD.md",
+          "caused_by_score": null
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "API-201",
+          "reason": "API-201 in SoT/SoT.API_CONTRACTS.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-201 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "API-202",
+          "reason": "API-202 in SoT/SoT.API_CONTRACTS.md has only 20 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-202 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "API-401",
+          "reason": "API-401 in SoT/SoT.API_CONTRACTS.md has only 12 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand API-401 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "BR-101",
+          "reason": "BR-101 in SoT/SoT.BUSINESS_RULES.md has only 15 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-101 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "BR-104",
+          "reason": "BR-104 in SoT/SoT.BUSINESS_RULES.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand BR-104 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "DBT-001",
+          "reason": "DBT-001 in SoT/SoT.DATA_MODEL.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand DBT-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TECH-008",
+          "reason": "TECH-008 in SoT/SoT.TECHNICAL_DECISIONS.md has only 13 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TECH-008 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-504",
+          "reason": "TEST-504 in SoT/SoT.TESTING.md has only 27 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-504 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-601",
+          "reason": "TEST-601 in SoT/SoT.TESTING.md has only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-601 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "TEST-602",
+          "reason": "TEST-602 in SoT/SoT.TESTING.md has only 14 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand TEST-602 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "API-201",
+          "reason": "API-201 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies API-201."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "API-202",
+          "reason": "API-202 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies API-202."
+        },
+        {
+          "dimension": "test_coverage_declared",
+          "ref": "BR-101",
+          "reason": "BR-101 has no TEST- entry referencing it.",
+          "severity": "high",
+          "fix": "Add a TEST- entry in SoT.TESTING.md that implements/verifies BR-101."
+        }
+      ],
+      "referenced_ids_count": 16,
+      "file": "epics/EPIC-09-summary-and-release-validation.md"
+    }
+  },
+  "stages": {
+    "v0.8": {
+      "target": "v0.8",
+      "work_type": "stage",
+      "gate_description": "v0.7 → v0.8 (Build → Deployment)",
+      "score": 38.4,
+      "weighted_score": 63.4,
+      "penalty": 25,
+      "cap_applied": null,
+      "caps": [],
+      "threshold_warn": 70,
+      "threshold_block": 50,
+      "dimensions": {
+        "required_ids_present": {
+          "score": 100.0,
+          "weight": 0.3
+        },
+        "relevant_sot_readiness": {
+          "score": 41.6,
+          "weight": 0.3
+        },
+        "cross_ref_integrity": {
+          "score": 65.1,
+          "weight": 0.2
+        },
+        "downstream_epic_readiness": {
+          "score": 39.5,
+          "weight": 0.2
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "relevant_sot_readiness",
+          "ref": "SoT/SoT.TESTING.md",
+          "reason": "SoT/SoT.TESTING.md scores 41.2 — drags down stage readiness.",
+          "severity": "medium",
+          "caused_by": "SoT/SoT.TESTING.md",
+          "caused_by_score": 41.2,
+          "fix": "Raise SoT/SoT.TESTING.md to ≥70 to clear this dimension."
+        },
+        {
+          "dimension": "relevant_sot_readiness",
+          "ref": "SoT/SoT.API_CONTRACTS.md",
+          "reason": "SoT/SoT.API_CONTRACTS.md scores 42.6 — drags down stage readiness.",
+          "severity": "medium",
+          "caused_by": "SoT/SoT.API_CONTRACTS.md",
+          "caused_by_score": 42.6,
+          "fix": "Raise SoT/SoT.API_CONTRACTS.md to ≥70 to clear this dimension."
+        },
+        {
+          "dimension": "relevant_sot_readiness",
+          "ref": "SoT/SoT.DATA_MODEL.md",
+          "reason": "SoT/SoT.DATA_MODEL.md scores 58.6 — drags down stage readiness.",
+          "severity": "medium",
+          "caused_by": "SoT/SoT.DATA_MODEL.md",
+          "caused_by_score": 58.6,
+          "fix": "Raise SoT/SoT.DATA_MODEL.md to ≥70 to clear this dimension."
+        },
+        {
+          "dimension": "relevant_sot_readiness",
+          "ref": "SoT/SoT.BUSINESS_RULES.md",
+          "reason": "SoT/SoT.BUSINESS_RULES.md scores 24.0 — drags down stage readiness.",
+          "severity": "high",
+          "caused_by": "SoT/SoT.BUSINESS_RULES.md",
+          "caused_by_score": 24.0,
+          "fix": "Raise SoT/SoT.BUSINESS_RULES.md to ≥70 to clear this dimension."
+        },
+        {
+          "dimension": "cross_ref_integrity",
+          "reason": "73 dangling ID reference(s) across repo: API-006, API-045, API-099, API-199, API-299...",
+          "severity": "high",
+          "fix": "Define the referenced IDs, or remove the references."
+        },
+        {
+          "dimension": "downstream_epic_readiness",
+          "ref": "EPIC-01",
+          "reason": "EPIC-01 scores 39.7 — below warn threshold (70).",
+          "severity": "high",
+          "fix": "Address unmet_criteria in EPIC-01 before advancing stage."
+        },
+        {
+          "dimension": "downstream_epic_readiness",
+          "ref": "EPIC-02",
+          "reason": "EPIC-02 scores 30.3 — below warn threshold (70).",
+          "severity": "high",
+          "fix": "Address unmet_criteria in EPIC-02 before advancing stage."
+        },
+        {
+          "dimension": "downstream_epic_readiness",
+          "ref": "EPIC-03",
+          "reason": "EPIC-03 scores 37.4 — below warn threshold (70).",
+          "severity": "high",
+          "fix": "Address unmet_criteria in EPIC-03 before advancing stage."
+        },
+        {
+          "dimension": "downstream_epic_readiness",
+          "ref": "EPIC-04",
+          "reason": "EPIC-04 scores 36.8 — below warn threshold (70).",
+          "severity": "high",
+          "fix": "Address unmet_criteria in EPIC-04 before advancing stage."
+        },
+        {
+          "dimension": "downstream_epic_readiness",
+          "ref": "EPIC-05",
+          "reason": "EPIC-05 scores 30.9 — below warn threshold (70).",
+          "severity": "high",
+          "fix": "Address unmet_criteria in EPIC-05 before advancing stage."
+        },
+        {
+          "dimension": "downstream_epic_readiness",
+          "ref": "EPIC-06",
+          "reason": "EPIC-06 scores 36.9 — below warn threshold (70).",
+          "severity": "high",
+          "fix": "Address unmet_criteria in EPIC-06 before advancing stage."
+        },
+        {
+          "dimension": "downstream_epic_readiness",
+          "ref": "EPIC-07",
+          "reason": "EPIC-07 scores 63.3 — below warn threshold (70).",
+          "severity": "medium",
+          "fix": "Address unmet_criteria in EPIC-07 before advancing stage."
+        },
+        {
+          "dimension": "downstream_epic_readiness",
+          "ref": "EPIC-08",
+          "reason": "EPIC-08 scores 36.8 — below warn threshold (70).",
+          "severity": "high",
+          "fix": "Address unmet_criteria in EPIC-08 before advancing stage."
+        },
+        {
+          "dimension": "downstream_epic_readiness",
+          "ref": "EPIC-09",
+          "reason": "EPIC-09 scores 43.8 — below warn threshold (70).",
+          "severity": "high",
+          "fix": "Address unmet_criteria in EPIC-09 before advancing stage."
+        }
+      ]
+    }
+  },
+  "summary": {
+    "sot_files_total": 11,
+    "sot_files_passing": 1,
+    "epics_total": 9,
+    "epics_passing": 0,
+    "threshold": 70,
+    "top_blockers": [
+      {
+        "file": "SoT/SoT.BUSINESS_RULES.md",
+        "score": 24.0,
+        "blocks": 8,
+        "blocking_epics": [
+          "EPIC-01",
+          "EPIC-02",
+          "EPIC-03",
+          "EPIC-04",
+          "EPIC-05",
+          "EPIC-06",
+          "EPIC-08",
+          "EPIC-09"
+        ],
+        "impact": 608.0
+      },
+      {
+        "file": "SoT/SoT.TESTING.md",
+        "score": 41.2,
+        "blocks": 8,
+        "blocking_epics": [
+          "EPIC-01",
+          "EPIC-02",
+          "EPIC-03",
+          "EPIC-04",
+          "EPIC-05",
+          "EPIC-06",
+          "EPIC-08",
+          "EPIC-09"
+        ],
+        "impact": 470.0
+      },
+      {
+        "file": "SoT/SoT.TECHNICAL_DECISIONS.md",
+        "score": 36.1,
+        "blocks": 7,
+        "blocking_epics": [
+          "EPIC-01",
+          "EPIC-02",
+          "EPIC-03",
+          "EPIC-04",
+          "EPIC-06",
+          "EPIC-08",
+          "EPIC-09"
+        ],
+        "impact": 447.0
+      },
+      {
+        "file": "SoT/SoT.API_CONTRACTS.md",
+        "score": 42.6,
+        "blocks": 7,
+        "blocking_epics": [
+          "EPIC-02",
+          "EPIC-03",
+          "EPIC-04",
+          "EPIC-05",
+          "EPIC-06",
+          "EPIC-08",
+          "EPIC-09"
+        ],
+        "impact": 402.0
+      },
+      {
+        "file": "SoT/SoT.INTEGRATIONS.md",
+        "score": 49.9,
+        "blocks": 3,
+        "blocking_epics": [
+          "EPIC-02",
+          "EPIC-03",
+          "EPIC-06"
+        ],
+        "impact": 150.0
+      }
+    ],
+    "current_stage": {
+      "target": "v0.8",
+      "score": 38.4,
+      "passing": false
+    }
+  }
+}
