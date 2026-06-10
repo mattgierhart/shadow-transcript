@@ -34,7 +34,7 @@ readiness_inputs:
 - **Last Action**: Readiness suite committed; first `status/readiness.json` computed; EPIC_TEMPLATE 3.3.0 shipped with Codex Gate merged into Phase D.
 - **Stopping Point**: Complete.
 - **Next Steps**: After EPIC-09 closes the v0.8 gate, consider (a) tuning `dimension_overrides` for pre-readiness EPICs/SoT conventions so scores reflect reality, (b) enabling starter `required_edges` rules one at a time, (c) the deferred devgraph emitter if the HeartBeat data contract needs a second producer.
-- **Context**: First readiness computation scores stage v0.8 at 38.4 BLOCK (exit 2). Expected and honest: EPIC-01..09 and the SoT entry conventions predate readiness (no `readiness_inputs` frontmatter, no confidence markers, TEST- mapping differs), and retrofitting closed EPICs is forbidden. The suite's value here is forward-looking (EPIC-12+ on template 3.3.0) plus machine-readable status for the portfolio loop.
+- **Context**: First readiness computation scores stage v0.8 at 38.4 BLOCK (exit 2). Expected and honest: EPIC-01..09 and the SoT entry conventions predate readiness (no `readiness_inputs` frontmatter, no confidence markers, TEST- mapping differs), and retrofitting closed EPICs is forbidden. The suite's value here is forward-looking (future EPICs on template 3.3.0) plus machine-readable status for the portfolio loop.
 
 ### Assumptions & Ambiguities Log
 

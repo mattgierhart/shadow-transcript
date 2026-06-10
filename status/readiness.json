@@ -1,5 +1,5 @@
 {
-  "last_computed": "2026-06-10T04:39:35.181417+00:00",
+  "last_computed": "2026-06-10T04:44:24.028305+00:00",
   "computed_by": "compute-prd-readiness@0.2.0",
   "schema_version": "1.0",
   "sot_files": {
@@ -751,13 +751,16 @@
     "SoT/SoT.LESSONS_LEARNED.md": {
       "target": "SoT/SoT.LESSONS_LEARNED.md",
       "work_type": "sot",
-      "score": 62.2,
-      "weighted_score": 76.2,
+      "score": 69.7,
+      "weighted_score": 83.7,
       "penalty": 14,
       "cap_applied": null,
       "caps": [],
       "entry_count": 16,
-      "consumed_by_epics": [],
+      "consumed_by_epics": [
+        "EPIC-10",
+        "EPIC-11"
+      ],
       "dimensions": {
         "entry_count": {
           "score": 100.0,
@@ -772,7 +775,7 @@
           "weight": 0.267
         },
         "orphan_rate": {
-          "score": 12.5,
+          "score": 50.0,
           "weight": 0.2
         },
         "status_coverage": {
@@ -806,13 +809,6 @@
         },
         {
           "dimension": "orphan_rate",
-          "ref": "LL-002",
-          "reason": "LL-002 is never referenced outside SoT/SoT.LESSONS_LEARNED.md — orphaned.",
-          "severity": "low",
-          "fix": "Ensure LL-002 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
-        },
-        {
-          "dimension": "orphan_rate",
           "ref": "LL-003",
           "reason": "LL-003 is never referenced outside SoT/SoT.LESSONS_LEARNED.md — orphaned.",
           "severity": "low",
@@ -827,17 +823,24 @@
         },
         {
           "dimension": "orphan_rate",
-          "ref": "LL-005",
-          "reason": "LL-005 is never referenced outside SoT/SoT.LESSONS_LEARNED.md — orphaned.",
+          "ref": "LL-102",
+          "reason": "LL-102 is never referenced outside SoT/SoT.LESSONS_LEARNED.md — orphaned.",
           "severity": "low",
-          "fix": "Ensure LL-005 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
+          "fix": "Ensure LL-102 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
         },
         {
           "dimension": "orphan_rate",
-          "ref": "LL-101",
-          "reason": "LL-101 is never referenced outside SoT/SoT.LESSONS_LEARNED.md — orphaned.",
+          "ref": "LL-103",
+          "reason": "LL-103 is never referenced outside SoT/SoT.LESSONS_LEARNED.md — orphaned.",
           "severity": "low",
-          "fix": "Ensure LL-101 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
+          "fix": "Ensure LL-103 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
+        },
+        {
+          "dimension": "orphan_rate",
+          "ref": "LL-104",
+          "reason": "LL-104 is never referenced outside SoT/SoT.LESSONS_LEARNED.md — orphaned.",
+          "severity": "low",
+          "fix": "Ensure LL-104 is cited from EPICs, PRD, or related SoT entries — or remove if unused."
         }
       ]
     },
@@ -857,7 +860,9 @@
         "EPIC-04",
         "EPIC-06",
         "EPIC-08",
-        "EPIC-09"
+        "EPIC-09",
+        "EPIC-10",
+        "EPIC-11"
       ],
       "dimensions": {
         "entry_count": {
@@ -2955,6 +2960,159 @@
       ],
       "referenced_ids_count": 16,
       "file": "epics/EPIC-09-summary-and-release-validation.md"
+    },
+    "EPIC-10": {
+      "target": "EPIC-10",
+      "work_type": "epic",
+      "state": "Unknown",
+      "score": 87.9,
+      "weighted_score": 96.9,
+      "penalty": 9,
+      "cap_applied": null,
+      "caps": [],
+      "threshold_warn": 70,
+      "threshold_block": 50,
+      "dimensions": {
+        "spec_resolution": {
+          "score": 100.0,
+          "weight": 0.235
+        },
+        "spec_depth": {
+          "score": 82.4,
+          "weight": 0.176
+        },
+        "test_coverage_declared": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "upstream_gate": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "dependency_readiness": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "ambiguity_load": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "confidence_avg": {
+          "status": "not_applicable"
+        },
+        "status_maturity": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "file_readiness": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "implementation_coverage": {
+          "status": "not_applicable"
+        },
+        "architecture_conformance": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "spec_depth",
+          "ref": "LL-001",
+          "reason": "LL-001 in SoT/SoT.LESSONS_LEARNED.md has only 187 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand LL-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "LL-004",
+          "reason": "LL-004 in SoT/SoT.LESSONS_LEARNED.md has only 131 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand LL-004 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "spec_depth",
+          "ref": "LL-106",
+          "reason": "LL-106 in SoT/SoT.LESSONS_LEARNED.md has only 134 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand LL-106 with rationale, schema, or required sub-sections."
+        }
+      ],
+      "referenced_ids_count": 17,
+      "file": "epics/EPIC-10-methodology-core-refresh.md"
+    },
+    "EPIC-11": {
+      "target": "EPIC-11",
+      "work_type": "epic",
+      "state": "Unknown",
+      "score": 66.4,
+      "weighted_score": 79.4,
+      "penalty": 13,
+      "cap_applied": null,
+      "caps": [],
+      "threshold_warn": 70,
+      "threshold_block": 50,
+      "dimensions": {
+        "spec_resolution": {
+          "score": 100.0,
+          "weight": 0.235
+        },
+        "spec_depth": {
+          "score": 50.0,
+          "weight": 0.176
+        },
+        "test_coverage_declared": {
+          "score": 100.0,
+          "weight": 0.176
+        },
+        "upstream_gate": {
+          "score": 100.0,
+          "weight": 0.118
+        },
+        "dependency_readiness": {
+          "score": 0.0,
+          "weight": 0.118
+        },
+        "ambiguity_load": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "confidence_avg": {
+          "status": "not_applicable"
+        },
+        "status_maturity": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "file_readiness": {
+          "score": 100.0,
+          "weight": 0.059
+        },
+        "implementation_coverage": {
+          "status": "not_applicable"
+        },
+        "architecture_conformance": {
+          "status": "not_applicable"
+        }
+      },
+      "unmet_criteria": [
+        {
+          "dimension": "spec_depth",
+          "ref": "LL-001",
+          "reason": "LL-001 in SoT/SoT.LESSONS_LEARNED.md has only 187 words — likely a stub.",
+          "severity": "medium",
+          "fix": "Expand LL-001 with rationale, schema, or required sub-sections."
+        },
+        {
+          "dimension": "dependency_readiness",
+          "ref": "EPIC-10",
+          "reason": "Dependency EPIC-10 state is 'Unknown', needs 'Complete'.",
+          "severity": "high",
+          "fix": "Complete EPIC-10 before starting this EPIC."
+        }
+      ],
+      "referenced_ids_count": 2,
+      "file": "epics/EPIC-11-readiness-layer-adoption.md"
     }
   },
   "stages": {
@@ -2962,8 +3120,8 @@
       "target": "v0.8",
       "work_type": "stage",
       "gate_description": "v0.7 → v0.8 (Build → Deployment)",
-      "score": 38.4,
-      "weighted_score": 63.4,
+      "score": 39.9,
+      "weighted_score": 64.9,
       "penalty": 25,
       "cap_applied": null,
       "caps": [],
@@ -2979,11 +3137,11 @@
           "weight": 0.3
         },
         "cross_ref_integrity": {
-          "score": 65.1,
+          "score": 65.7,
           "weight": 0.2
         },
         "downstream_epic_readiness": {
-          "score": 39.5,
+          "score": 46.4,
           "weight": 0.2
         }
       },
@@ -3026,7 +3184,7 @@
         },
         {
           "dimension": "cross_ref_integrity",
-          "reason": "73 dangling ID reference(s) across repo: API-006, API-045, API-099, API-199, API-299...",
+          "reason": "72 dangling ID reference(s) across repo: API-006, API-045, API-099, API-199, API-299...",
           "severity": "high",
           "fix": "Define the referenced IDs, or remove the references."
         },
@@ -3092,6 +3250,13 @@
           "reason": "EPIC-09 scores 43.8 — below warn threshold (70).",
           "severity": "high",
           "fix": "Address unmet_criteria in EPIC-09 before advancing stage."
+        },
+        {
+          "dimension": "downstream_epic_readiness",
+          "ref": "EPIC-11",
+          "reason": "EPIC-11 scores 66.4 — below warn threshold (70).",
+          "severity": "medium",
+          "fix": "Address unmet_criteria in EPIC-11 before advancing stage."
         }
       ]
     }
@@ -3099,8 +3264,8 @@
   "summary": {
     "sot_files_total": 11,
     "sot_files_passing": 1,
-    "epics_total": 9,
-    "epics_passing": 0,
+    "epics_total": 11,
+    "epics_passing": 1,
     "threshold": 70,
     "top_blockers": [
       {
@@ -3120,6 +3285,23 @@
         "impact": 608.0
       },
       {
+        "file": "SoT/SoT.TECHNICAL_DECISIONS.md",
+        "score": 36.1,
+        "blocks": 9,
+        "blocking_epics": [
+          "EPIC-01",
+          "EPIC-02",
+          "EPIC-03",
+          "EPIC-04",
+          "EPIC-06",
+          "EPIC-08",
+          "EPIC-09",
+          "EPIC-10",
+          "EPIC-11"
+        ],
+        "impact": 575.0
+      },
+      {
         "file": "SoT/SoT.TESTING.md",
         "score": 41.2,
         "blocks": 8,
@@ -3134,21 +3316,6 @@
           "EPIC-09"
         ],
         "impact": 470.0
-      },
-      {
-        "file": "SoT/SoT.TECHNICAL_DECISIONS.md",
-        "score": 36.1,
-        "blocks": 7,
-        "blocking_epics": [
-          "EPIC-01",
-          "EPIC-02",
-          "EPIC-03",
-          "EPIC-04",
-          "EPIC-06",
-          "EPIC-08",
-          "EPIC-09"
-        ],
-        "impact": 447.0
       },
       {
         "file": "SoT/SoT.API_CONTRACTS.md",
@@ -3179,7 +3346,7 @@
     ],
     "current_stage": {
       "target": "v0.8",
-      "score": 38.4,
+      "score": 39.9,
       "passing": false
     }
   }
