@@ -76,3 +76,6 @@ xcuserdata/
 sidecar/.venv/
 sidecar/dist/
 sidecar/build/
+
+# Claude Code local memory (machine-specific, per workspace convention)
+CLAUDE.local.md

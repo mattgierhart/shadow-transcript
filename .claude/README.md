@@ -1,118 +1,41 @@
-# .claude Directory
+# .claude Directory — shadow-transcript (repo-local layer)
 
-This directory contains Claude Code configuration following Anthropic's official structure.
+This repo runs under the **MLG.Github two-layer workspace architecture** (ARC-004 in
+[`SoT/SoT.TECHNICAL_DECISIONS.md`](../SoT/SoT.TECHNICAL_DECISIONS.md)):
 
-<!-- SECTION: directory-tree -->
-## Structure
+- **Workspace layer** (`MLG.Github/.claude/`) provides all skills (prd-v*, ghm-*, codex-*),
+  hooks, and agent definitions. They are available when sessions launch from the workspace root.
+  None of that tooling is duplicated here — the local copies were deliberately removed on
+  2026-04-24 (commit `f01edf0`). **Never re-copy skills/hooks/AGENT.md into this repo.**
+- **Repo layer** (this directory) carries only repo-specific data:
 
 ```text
 .claude/
-├── domain-profile.yaml         # ID prefix registry, skill taxonomy, agent registry
-├── VERSION                     # Template version (semver)
-├── skills/                     # PRD lifecycle + methodology skills
-│   ├── SKILL_TEMPLATE/         # Template for creating new skills
-│   ├── prd-v01-*/              # v0.1 Spark: Problem & Value (2 skills)
-│   ├── prd-v02-*/              # v0.2 Market: Segments & Classification (2 skills)
-│   ├── prd-v03-*/              # v0.3 Commercial: Features, Moat, Pricing (4 skills)
-│   ├── prd-v04-*/              # v0.4 Journeys: Personas & Flows (3 skills)
-│   ├── prd-v05-*/              # v0.5 Red Team: Risks & Tech Stack (2 skills)
-│   ├── prd-v06-*/              # v0.6 Architecture: Design & Specs (2 skills)
-│   ├── prd-v07-*/              # v0.7 Build: Implementation (3 skills)
-│   ├── prd-v08-*/              # v0.8 Release: Deployment & Ops (3 skills)
-│   ├── prd-v09-*/              # v0.9 Launch: GTM & Metrics (3 skills)
-│   ├── ghm-status-sync/        # Methodology: Sync README dashboard
-│   ├── ghm-id-register/        # Methodology: Validate & register SoT IDs
-│   ├── ghm-gate-check/         # Methodology: Validate gate criteria
-│   ├── ghm-sot-builder/        # Methodology: Create new SoT files
-│   └── ghm-harvest/            # Methodology: Extract temps to SoT
-├── hooks/                      # Event-triggered automation
-│   ├── HOOK_CONTRACT.md        # Universal hook interface specification
-│   ├── context-validation.sh   # SessionStart: Load 3+1 files
-│   ├── context-validation.md   # Documentation
-│   ├── context-density-gate.sh # UserPromptSubmit: Epic/gate assessment
-│   ├── context-density-gate.md # Documentation
-│   ├── sot-update-trigger.sh   # Stop: SoT update reminder
-│   └── sot-update-trigger.md   # Documentation
-├── agents/                     # Agent definitions (subdirectories)
-│   ├── horizon/                # Strategy Agent (v0.1-v0.5)
-│   │   ├── AGENT.md            # Identity, responsibilities, skills
-│   │   └── MEMORY.md           # Project memory (RESET ON FORK)
-│   ├── studio/                 # Design Agent (v0.3-v0.6)
-│   │   ├── AGENT.md
-│   │   └── MEMORY.md
-│   ├── werk/                   # Build Agent (v0.6-v0.8)
-│   │   ├── AGENT.md
-│   │   └── MEMORY.md
-│   └── metro/                  # Ops Agent (v0.9-v1.0)
-│       ├── AGENT.md
-│       └── MEMORY.md
-├── settings.json               # Hook configuration
-└── settings.local.json         # Local permissions (gitignored)
-```
-<!-- /SECTION: directory-tree -->
-
-## Skills
-
-Skills are specialized knowledge sets invoked via `/skill-name`.
-
-### Naming Convention
-
-| Prefix | Type | Example | When Used |
-|--------|------|---------|-----------|
-| `prd-v{XX}-` | PRD Lifecycle | `/prd-v01-problem-framing` | At specific PRD stage |
-| `ghm-` | Methodology | `/ghm-gate-check` | Anytime (workflow ops) |
-
-### Skill Structure
-
-```text
-skills/prd-v01-problem-framing/
-├── SKILL.md                    # Skill definition with prompts
-├── assets/                     # Templates for outputs
-│   └── problem-statement-template.md
-└── references/                 # Supporting documentation
-    ├── examples.md
-    └── research-prompts.md
+├── domain-profile.yaml   # THIS repo's ID-prefix registry (registry data, not tooling).
+│                         # Consumed by scripts/validate-ids.sh, validate-edges.py, readiness.
+├── rules/                # Operating rules, auto-loaded by Claude Code (01-08):
+│   ├── 01-session-protocols.md
+│   ├── 02-document-ecosystem.md
+│   ├── 03-documentation-discipline.md
+│   ├── 04-coding-standards.md
+│   ├── 05-lifecycle-gates.md        # includes the local Codex Gate (LL-001)
+│   ├── 06-cross-agent-communication.md
+│   ├── 07-readiness-protocol.md
+│   └── 08-skill-execution-modes.md
+├── agents/               # MEMORY.md only (project knowledge harvest targets).
+│   ├── horizon/  studio/  devlab/  metro/
+│   └── (definitions/AGENT.md live at the workspace root; this repo has run
+│        single-persona to date — see LL-202)
+├── settings.json         # Minimal per-repo override stub
+└── settings.local.json   # Machine-local permissions (gitignored)
 ```
 
-<!-- SECTION: hooks-table -->
-## Hooks
+## Notes
 
-Hooks are event-triggered automation. Configured in `settings.json`, documented in `hooks/`. See [HOOK_CONTRACT.md](hooks/HOOK_CONTRACT.md) for the universal interface specification.
-
-| Hook | Trigger | Script | Purpose |
-|------|---------|--------|---------|
-| Context Validation | SessionStart | `context-validation.sh` | Inject 3+1 file reading order |
-| Context Density Gate | UserPromptSubmit | `context-density-gate.sh` | Assess epic/gate context readiness |
-| SoT Update Trigger | Stop | `sot-update-trigger.sh` | Remind about spec updates |
-
-All hooks are POSIX shell scripts with zero external dependencies.
-
-### Hook Execution Order
-
-**SessionStart**: `context-validation` runs first, injecting reading order.
-
-**UserPromptSubmit**: `context-density-gate` runs only when prompt matches epic/gate patterns.
-
-**Stop**: `sot-update-trigger` runs, reminding about SoT updates.
-<!-- /SECTION: hooks-table -->
-
-<!-- SECTION: agents-table -->
-## Agents
-
-Four primary agents form the AI team. Each agent has an `AGENT.md` (identity + skills) and `MEMORY.md` (project-specific memory, reset on fork):
-
-| Agent | Directory | Role | Lifecycle |
-|-------|-----------|------|-----------|
-| **HORIZON** | `agents/horizon/` | Strategy | v0.1-v0.5 |
-| **STUDIO** | `agents/studio/` | Design | v0.3-v0.6 |
-| **WERK** | `agents/werk/` | Build | v0.6-v0.8 |
-| **METRO** | `agents/metro/` | Ops | v0.9-v1.0 |
-
-See [`.claude/domain-profile.yaml`](domain-profile.yaml) for the full agent registry and skill taxonomy (core vs domain).
-<!-- /SECTION: agents-table -->
-
-## Reference
-
-- [Claude Code Skills](https://code.claude.com/docs/en/skills)
-- [Claude Code Hooks](https://code.claude.com/docs/en/hooks)
-- [Claude Code Sub-agents](https://code.claude.com/docs/en/sub-agents)
+- **Standalone use**: cloning this repo outside the MLG.Github workspace loses skills and hooks.
+  Run the workspace `/localize` command to copy the methodology in if that ever matters.
+- **Validators stay local** (`scripts/validate-ids.sh`, `scripts/validate-edges.py`,
+  `scripts/readiness.py`) so CI and the portfolio readiness loop work without the workspace.
+- **History**: this file previously described the fork-era local skills/hooks/agents tree
+  (24 skills, 3 hooks, WERK agent). That structure was removed in `f01edf0`; see git history
+  if you need it.
