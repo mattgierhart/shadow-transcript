@@ -71,6 +71,7 @@ template_version: "3.0.0"
 | EPIC-07 | SwiftUI Interface | ✅ Complete | EPIC-02, EPIC-05, EPIC-06 |
 | EPIC-08 | Pipeline Integration & Audio Lifecycle | ✅ Complete | EPIC-02→07 |
 | EPIC-09 | On-Device Summary (FEA-007) + Mac Release Validation | 🔵 Active | EPIC-05→08 |
+| EPIC-10 | FluidAudio Native Diarization Spike (purr-inspired; targets RISK-001/003) | ⚪ Planned (Spike) | EPIC-04a/04b |
 
 ### KPI Metrics
 
