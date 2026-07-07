@@ -17,6 +17,14 @@ template_version: "3.0.0"
 
 ## Session State (The "Brain Dump")
 
+- **Strategic note (2026-07-07, cloud session)**: Evaluated forking/replicating
+  [Meetily](https://github.com/Zackriya-Solutions/meetily) as an alternative
+  base. **Conclusion: stay the course** — Meetily's MIT Community Edition lacks
+  our three defining P0 features (FEA-003 diarization is Pro-only/proprietary,
+  FEA-004 speaker-labeled markdown, FEA-005 Obsidian export), while this repo
+  already ships all of them with 213 tests green. Full analysis + harvest list
+  + decision options: `temp/meetily-evaluation-2026-07-07.md`. No change to
+  Phase D next steps below; decision on Option A vs B rests with the user.
 - **Last Action**: 2026-06-04 (Mac build + validation session):
   - **Build + full suite green on the Mac** (macOS 26.5 / Xcode 26.4.1, macOS
     26.4 SDK). The app compiles *including* `FoundationModelsSummarizer` — its
